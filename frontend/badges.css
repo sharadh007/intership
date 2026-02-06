@@ -1,0 +1,57 @@
+/* Verification Status Badges */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+}
+
+.badge-verified {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #34d399;
+}
+
+.badge-unverified {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+}
+
+.badge-expired {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #9ca3af;
+}
+
+/* Dark Mode Overrides */
+[data-color-scheme="dark"] .badge-verified {
+  background-color: rgba(6, 95, 70, 0.4);
+  color: #a7f3d0;
+  border-color: #059669;
+}
+
+[data-color-scheme="dark"] .badge-unverified {
+  background-color: rgba(146, 64, 14, 0.4);
+  color: #fde68a;
+  border-color: #d97706;
+}
+
+[data-color-scheme="dark"] .badge-expired {
+  background-color: rgba(55, 65, 81, 0.6);
+  color: #d1d5db;
+  border-color: #4b5563;
+}
+
+/* Add margin to internship company name to accommodate badge if needed */
+.internship-company {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
