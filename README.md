@@ -78,8 +78,8 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/sharadh007/SOI_PROJECT-main-main.git
-cd SOI_PROJECT-main-main
+git clone https://github.com/sharadh007/intership.git
+cd intership
 ```
 
 ### 2. Install Backend Dependencies
@@ -210,7 +210,7 @@ npm start
 ## 📁 Project Structure
 
 ```
-SOI_PROJECT-main-main/
+intership/
 ├── backend/
 │   ├── config/
 │   │   ├── db.js              # PostgreSQL connection
