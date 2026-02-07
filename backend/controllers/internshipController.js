@@ -1,44 +1,14 @@
 const pool = require('../config/database');
 const { normalizeInternshipData, checkDuplicate } = require('../services/internshipService');
+const { getInternships, filterInternships, getAllLocations, getAllSkills } = require('../services/csvDataService');
 
 // Get all internships with filtering
+// Get all internships with filtering (simulated via CSV service)
 const getAllInternships = async (req, res) => {
   try {
-    const { sector, state, company, source_type } = req.query;
-
-    let query = 'SELECT * FROM internships WHERE 1=1';
-    let params = [];
-    let paramCount = 1;
-
-    if (sector) {
-      query += ` AND LOWER(sector) LIKE LOWER($${paramCount})`;
-      params.push(`%${sector}%`);
-      paramCount++;
-    }
-
-    if (state) {
-      // Assuming location might store "City, State" or just "State"
-      query += ` AND LOWER(location) LIKE LOWER($${paramCount})`;
-      params.push(`%${state}%`);
-      paramCount++;
-    }
-
-    if (company) {
-      query += ` AND LOWER(company) LIKE LOWER($${paramCount})`;
-      params.push(`%${company}%`);
-      paramCount++;
-    }
-
-    if (source_type) {
-      query += ` AND source_type = $${paramCount}`;
-      params.push(source_type);
-      paramCount++;
-    }
-
-    query += ' ORDER BY created_at DESC';
-
-    const result = await pool.query(query, params);
-    res.json({ success: true, count: result.rows.length, data: result.rows });
+    // Redirect to the filter function which uses the CSV service and supports pagination
+    // This ensures consistency and uses the CSV data as requested
+    return filterByLocationAndSkills(req, res);
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: 'Server Error' });
@@ -223,6 +193,76 @@ const setVerificationStatus = async (req, res) => {
   }
 };
 
+// Filter internships by location and skills with pagination
+// Filter internships by location and skills with pagination (from CSV data)
+const filterByLocationAndSkills = async (req, res) => {
+  try {
+    const { location, skills, page = 1, limit = 15 } = req.query;
+
+    // Get all internships from CSV
+    const allInternships = getInternships();
+
+    // Parse skills array
+    let skillsArray = [];
+    if (skills && skills !== '') {
+      skillsArray = Array.isArray(skills) ? skills :
+        (typeof skills === 'string' ? skills.split(',').map(s => s.trim()) : []);
+      skillsArray = skillsArray.filter(s => s !== '' && s !== undefined);
+    }
+
+    // Filter internships
+    let filtered = filterInternships(allInternships, location, skillsArray);
+
+    // Get total count
+    const total = filtered.length;
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.max(1, Math.min(10000, parseInt(limit)));
+    const offset = (pageNum - 1) * limitNum;
+
+    // Paginate results
+    const paginatedData = filtered.slice(offset, offset + limitNum);
+    const totalPages = Math.ceil(total / limitNum);
+
+    res.json({
+      success: true,
+      data: paginatedData,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: total,
+        totalPages: totalPages,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1
+      }
+    });
+  } catch (error) {
+    console.error('Error filtering internships:', error);
+    res.status(500).json({ success: false, error: 'Filtering Failed', message: error.message });
+  }
+};
+
+// Get filter options from CSV data
+const getFilterOptions = async (req, res) => {
+  try {
+    const allInternships = getInternships();
+
+    // Get unique locations from CSV data
+    const locations = getAllLocations(allInternships);
+
+    // Get unique skills from CSV data
+    const skills = getAllSkills(allInternships);
+
+    res.json({
+      success: true,
+      locations: locations.slice(0, 100),
+      skills: skills.slice(0, 200)
+    });
+  } catch (error) {
+    console.error('Error getting filter options:', error);
+    res.status(500).json({ success: false, error: 'Failed to get filter options', message: error.message });
+  }
+};
+
 module.exports = {
   getAllInternships,
   createInternship,
@@ -230,5 +270,7 @@ module.exports = {
   uploadFromGovPortal,
   updateInternship,
   deleteInternship,
-  setVerificationStatus
+  setVerificationStatus,
+  filterByLocationAndSkills,
+  getFilterOptions
 };

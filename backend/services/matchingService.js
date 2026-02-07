@@ -13,6 +13,8 @@ const getDeterministicMatches = async (student, allInternships) => {
         checkEligibility(student, i)
     );
 
+    console.log(`Matching Service: ${eligible.length} eligible out of ${allInternships.length}`);
+
     // 2. Score using the Unified Matching Engine
     const scored = eligible.map(i => {
         const result = matchingAlgorithm.getMatchScore(student, i);
@@ -29,6 +31,10 @@ const getDeterministicMatches = async (student, allInternships) => {
 
     // 3. Sort (Rank by highest match score)
     const sorted = scored.sort((a, b) => b.matchScore - a.matchScore);
+
+    if (sorted.length > 0) {
+        console.log(`Top Score: ${sorted[0].matchScore}, Location Tier: ${sorted[0].scoreBreakdown.locationTier}`);
+    }
 
     // 4. Return Top 5
     return sorted.slice(0, 5);

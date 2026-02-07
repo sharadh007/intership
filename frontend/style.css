@@ -2753,3 +2753,110 @@ body {
   border-color: #0d9488;
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
+
+/* Pagination Styles */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+  border-radius: 12px;
+  border: 1px solid #e0e7ff;
+}
+
+.page-info {
+  font-weight: 600;
+  color: #1e293b;
+  min-width: 80px;
+  text-align: center;
+}
+
+#prevPageBtn,
+#nextPageBtn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #2d8a94 0%, #1e808f 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+#prevPageBtn:hover,
+#nextPageBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(45, 138, 148, 0.3);
+}
+
+#prevPageBtn:disabled,
+#nextPageBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Recommendation cards grid - show 3 columns on large screens */
+.recommendation-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.recommendation-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 1px solid #e0e7ff;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.recommendation-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(45, 138, 148, 0.15);
+  border-color: #2d8a94;
+}
+
+.recommendation-number {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #2d8a94 0%, #1e808f 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+/* Mobile responsive pagination */
+@media (max-width: 768px) {
+  .pagination-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #prevPageBtn,
+  #nextPageBtn {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .recommendation-cards {
+    grid-template-columns: 1fr;
+  }
+}

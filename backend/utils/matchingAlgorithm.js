@@ -1,27 +1,28 @@
 // Enhanced matching algorithm with STRICT HIERARCHICAL LOCATION PRIORITY
+// Priority: Location First → Skill Relevance Second
 // 1. Exact City Match (Tier 1)
 // 2. Same State Match (Tier 2)
 // 3. Nearby Region Match (Tier 3)
 // 4. Global/Other (Tier 4)
 
-// Weights - Adjusted for Location Priority and Match Accuracy
+// Weights for Match Score Calculation
 const WEIGHTS = {
-  RESUME_SKILLS: 0.40,  // Increased as per requirement
-  PROFILE_SKILLS: 0.20,
-  EDUCATION: 0.15,
-  LOCATION: 0.25,       // Explicit weight for score calculation
-  // Experience and Industry are part of the base validation/checks
-  EXPERIENCE: 0.0,      // Handled via eligibility checks or merged into skills/resume
-  INDUSTRY: 0.0         // Handled via strict/soft filters usually, but we'll keeping it low or merged
+  RESUME_SKILLS: 0.40,  // 40% - Skills from resume
+  PROFILE_SKILLS: 0.30, // 30% - Skills from profile
+  EDUCATION: 0.15,      // 15% - Education match
+  LOCATION: 0.15        // 15% - Location bonus (not primary sorting factor)
 };
 
 // Location Score Mapping for Match Percentage
 const LOCATION_TIER_SCORES = {
-  1: 100, // Tier 1
-  2: 75,  // Tier 2
-  3: 50,  // Tier 3
-  4: 0    // Tier 4
+  1: 100, // Tier 1 - Exact City
+  2: 75,  // Tier 2 - Same State
+  3: 50,  // Tier 3 - Nearby
+  4: 25   // Tier 4 - Other (reduced penalty)
 };
+
+// Minimum skill matches required for good ranking
+const MIN_SKILL_MATCHES = 2;
 
 // --- DATASETS ---
 
@@ -125,38 +126,33 @@ const calculateLocationTier = (userLocStr, internLocStr) => {
   const user = normalizeLocation(userLocStr);
   const intern = normalizeLocation(internLocStr);
 
-  // If user has no preference, default to Tier 4 (or Tier 1 if we want to be generous, but strict logic implies strict matching)
-  // Request says: "User location preference is strictly enforced". 
-  // If user didn't provide location, we can't strict match. assuming Tier 1 only if input matches functionality.
-  // Ideally if no user location, distance is irrelevant, so maybe Tier 1. 
-  // But let's assume specific input.
   if (!user.city && !user.state) {
-    // Treat as neutral/global
-    return { tier: 4, score: 0, label: 'Global' };
+    // No location preference - treat all as Tier 4
+    return { tier: 4, score: LOCATION_TIER_SCORES[4], label: 'Any Location' };
   }
 
   // Tier 1: Exact City Match
   if (user.city && intern.city && user.city === intern.city) {
-    return { tier: 1, score: 100, label: 'City Match' };
-  }
-
-  // Tier 3: Nearby City (Adjacency List) - Priority OVER State Match for strict filtering
-  if (user.city && intern.city && NEARBY_CITIES[user.city] && NEARBY_CITIES[user.city].includes(intern.city)) {
-    return { tier: 3, score: 50, label: 'Nearby City' };
+    return { tier: 1, score: LOCATION_TIER_SCORES[1], label: 'City Match' };
   }
 
   // Tier 2: Same State Match
   if (user.state && intern.state && user.state === intern.state) {
-    return { tier: 2, score: 75, label: 'State Match' };
+    return { tier: 2, score: LOCATION_TIER_SCORES[2], label: 'State Match' };
   }
 
-  // Tier 3: Nearby State (Adjacency List)
+  // Tier 3: Nearby City
+  if (user.city && intern.city && NEARBY_CITIES[user.city] && NEARBY_CITIES[user.city].includes(intern.city)) {
+    return { tier: 3, score: LOCATION_TIER_SCORES[3], label: 'Nearby City' };
+  }
+
+  // Tier 3: Nearby State
   if (user.state && intern.state && NEARBY_STATES[user.state] && NEARBY_STATES[user.state].includes(intern.state)) {
-    return { tier: 3, score: 50, label: 'Nearby State' };
+    return { tier: 3, score: LOCATION_TIER_SCORES[3], label: 'Nearby State' };
   }
 
   // Tier 4: Other
-  return { tier: 4, score: 0, label: 'Far' };
+  return { tier: 4, score: LOCATION_TIER_SCORES[4], label: 'Other Location' };
 };
 
 // --- MATCH SCORING ---
@@ -166,9 +162,9 @@ const calculateMatchMetaData = (studentProfile, internship) => {
   const profileSkills = studentProfile.skills || [];
   const resumeSkills = resumeData.extractedSkills || [];
 
-  // 1. Skill Scores
-  const resumeSkillScore = calculateSkillMatch(resumeSkills, internship.skills);
-  const profileSkillScore = calculateSkillMatch(profileSkills, internship.skills);
+  // 1. Skill Scores with match count
+  const resumeSkillResult = calculateSkillMatchDetailed(resumeSkills, internship.skills);
+  const profileSkillResult = calculateSkillMatchDetailed(profileSkills, internship.skills);
 
   // 2. Education Score
   const educationScore = calculateEducationMatch(studentProfile.qualification, resumeData.educationLevel, internship.requirements);
@@ -176,33 +172,32 @@ const calculateMatchMetaData = (studentProfile, internship) => {
   // 3. Location Tier & Score
   const locResult = calculateLocationTier(studentProfile.preferredState, internship.location);
 
+  // 4. Calculate total skill matches
+  const totalSkillMatches = resumeSkillResult.matchCount + profileSkillResult.matchCount;
 
-  // 4. Final Score Component Calculation
-  // Weighted Sum:
-  // Resume Skills (40%) + Profile Skills (20%) + Education (15%) + Location (25%)
-
-  const weightedScore =
-    (resumeSkillScore * WEIGHTS.RESUME_SKILLS) +
-    (profileSkillScore * WEIGHTS.PROFILE_SKILLS) +
+  // 5. Calculate weighted match score (NOT including location tier bonus yet)
+  const skillScore =
+    (resumeSkillResult.score * WEIGHTS.RESUME_SKILLS) +
+    (profileSkillResult.score * WEIGHTS.PROFILE_SKILLS) +
     (educationScore * WEIGHTS.EDUCATION) +
     (locResult.score * WEIGHTS.LOCATION);
 
-  let finalScore = Math.round(weightedScore);
+  // Round to whole number
+  let finalScore = Math.round(skillScore);
 
-  // OVERRIDE: If Location is Tier 1 (Exact City), FORCE 100% Match
-  if (locResult.tier === 1) {
-    finalScore = 100;
-  }
+  // Ensure score is between 0-100
+  finalScore = Math.max(0, Math.min(100, finalScore));
 
   return {
-    contentScore: finalScore, // Renaming for consistency, but this IS the final score
     finalScore: finalScore,
     locationTier: locResult.tier,
     locationLabel: locResult.label,
     locationScore: locResult.score,
-    resumeSkillScore,
-    profileSkillScore,
-    educationScore
+    resumeSkillScore: resumeSkillResult.score,
+    profileSkillScore: profileSkillResult.score,
+    educationScore: educationScore,
+    totalSkillMatches: totalSkillMatches,
+    hasMinimumSkills: totalSkillMatches >= MIN_SKILL_MATCHES
   };
 };
 
@@ -216,7 +211,8 @@ const getRankedRecommendations = (studentProfile, internships, limit = 50) => {
     return {
       ...internship,
       ...meta,
-      matchPercentage: meta.finalScore + '%'
+      matchPercentage: meta.finalScore + '%',
+      matchLabel: getMatchLabel(meta.finalScore)
     };
   });
 
@@ -225,33 +221,77 @@ const getRankedRecommendations = (studentProfile, internships, limit = 50) => {
   let strictFiltered = [];
 
   if (userLoc.city) {
-    // User specified a CITY (e.g., "Coimbatore")
-    // ALLOW: Tier 1 (Exact City), Tier 3 (Nearby City)
-    // BLOCK: Tier 2 (State Match - unless it's nearby), Tier 4 (Far)
-    strictFiltered = processed.filter(p => p.locationTier === 1 || p.locationTier === 3);
+    // User specified a CITY (e.g., "Chennai")
+    // ALLOW: Tier 1 (Exact City), Tier 2 (Same State), Tier 3 (Nearby)
+    // BLOCK: Tier 4 (Far) unless no results in Tier 1-3
+    strictFiltered = processed.filter(p => p.locationTier <= 3);
+
+    // If no results in preferred tiers, expand to Tier 4
+    if (strictFiltered.length === 0) {
+      strictFiltered = processed;
+    }
   } else if (userLoc.state) {
     // User specified a STATE (e.g., "Tamil Nadu")
     // ALLOW: Tier 2 (State Match), Tier 3 (Nearby State)
-    // NOTE: Tier 1 is naturally included in Tier 2 conceptually if we matched by state,
-    // but our logic separates them. If input is State, we usually won't get Tier 1 (City Match)
-    // because user didn't give a city. BUT if the internship has that state, it's a Tier 2 match.
-    // BLOCK: Tier 4 (Far)
+    // Expand to Tier 4 if insufficient results
     strictFiltered = processed.filter(p => p.locationTier <= 3);
+
+    if (strictFiltered.length === 0) {
+      strictFiltered = processed;
+    }
   } else {
-    // No location preference or unknown -> Show all (Fallback)
+    // No location preference -> Show all
     strictFiltered = processed;
   }
 
-  // Debug log for filtered count
-  // console.log(`[Matching] Input: "${studentProfile.preferredState}" -> City: ${userLoc.city}, State: ${userLoc.state}. Found: ${strictFiltered.length} / ${processed.length}`);
+  // HIERARCHICAL GROUPING with SKILL-BASED RANKING within each tier
+  const tier1 = strictFiltered
+    .filter(p => p.locationTier === 1)
+    .sort((a, b) => {
+      // Within Tier 1: Sort by skill matches first, then by final score
+      if (b.totalSkillMatches !== a.totalSkillMatches) {
+        return b.totalSkillMatches - a.totalSkillMatches;
+      }
+      return b.finalScore - a.finalScore;
+    });
 
-  // HIERARCHICAL GROUPING of the FILTERED results
-  const tier1 = strictFiltered.filter(p => p.locationTier === 1).sort((a, b) => b.finalScore - a.finalScore);
-  const tier2 = strictFiltered.filter(p => p.locationTier === 2).sort((a, b) => b.finalScore - a.finalScore);
-  const tier3 = strictFiltered.filter(p => p.locationTier === 3).sort((a, b) => b.finalScore - a.finalScore);
-  const tier4 = strictFiltered.filter(p => p.locationTier === 4).sort((a, b) => b.finalScore - a.finalScore);
+  const tier2 = strictFiltered
+    .filter(p => p.locationTier === 2)
+    .sort((a, b) => {
+      // Within Tier 2: Prioritize those with minimum skill matches
+      if (a.hasMinimumSkills !== b.hasMinimumSkills) {
+        return b.hasMinimumSkills - a.hasMinimumSkills;
+      }
+      if (b.totalSkillMatches !== a.totalSkillMatches) {
+        return b.totalSkillMatches - a.totalSkillMatches;
+      }
+      return b.finalScore - a.finalScore;
+    });
 
-  // Concatenate Tiers
+  const tier3 = strictFiltered
+    .filter(p => p.locationTier === 3)
+    .sort((a, b) => {
+      // Within Tier 3: Prioritize those with minimum skill matches
+      if (a.hasMinimumSkills !== b.hasMinimumSkills) {
+        return b.hasMinimumSkills - a.hasMinimumSkills;
+      }
+      if (b.totalSkillMatches !== a.totalSkillMatches) {
+        return b.totalSkillMatches - a.totalSkillMatches;
+      }
+      return b.finalScore - a.finalScore;
+    });
+
+  const tier4 = strictFiltered
+    .filter(p => p.locationTier === 4)
+    .sort((a, b) => {
+      // Within Tier 4: Sort by skill relevance only
+      if (b.totalSkillMatches !== a.totalSkillMatches) {
+        return b.totalSkillMatches - a.totalSkillMatches;
+      }
+      return b.finalScore - a.finalScore;
+    });
+
+  // Concatenate Tiers (Location Priority First)
   const ranked = [...tier1, ...tier2, ...tier3, ...tier4];
 
   return ranked.slice(0, limit);
@@ -259,24 +299,45 @@ const getRankedRecommendations = (studentProfile, internships, limit = 50) => {
 
 // --- HELPERS ---
 
-const calculateSkillMatch = (userSkills, internshipSkillsStr) => {
-  if (!internshipSkillsStr) return 50;
-  if (!userSkills || userSkills.length === 0) return 10;
+// Enhanced skill matching with detailed count tracking
+const calculateSkillMatchDetailed = (userSkills, internshipSkillsStr) => {
+  if (!internshipSkillsStr) return { score: 50, matchCount: 0 };
+  if (!userSkills || userSkills.length === 0) return { score: 10, matchCount: 0 };
+
   const iSkills = internshipSkillsStr.split(',').map(s => s.trim().toLowerCase());
   const uSkills = userSkills.map(s => s.toLowerCase());
 
+  let matchCount = 0;
+
   // Check for exact matches and similar matches
-  const matchedCount = iSkills.reduce((acc, iSkill) => {
+  const matchedSkills = iSkills.reduce((acc, iSkill) => {
     const hasMatch = uSkills.some(uSkill =>
       uSkill === iSkill ||
       uSkill.includes(iSkill) ||
       iSkill.includes(uSkill) ||
       areSkillsSimilar(uSkill, iSkill)
     );
-    return acc + (hasMatch ? 1 : 0);
-  }, 0);
 
-  return (matchedCount / iSkills.length) * 100;
+    if (hasMatch) {
+      matchCount++;
+      acc.push(iSkill);
+    }
+    return acc;
+  }, []);
+
+  const score = (matchCount / iSkills.length) * 100;
+
+  return {
+    score: Math.round(score),
+    matchCount: matchCount,
+    matchedSkills: matchedSkills
+  };
+};
+
+// Legacy function for backward compatibility
+const calculateSkillMatch = (userSkills, internshipSkillsStr) => {
+  const result = calculateSkillMatchDetailed(userSkills, internshipSkillsStr);
+  return result.score;
 };
 
 const areSkillsSimilar = (skill1, skill2) => {

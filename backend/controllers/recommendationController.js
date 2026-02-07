@@ -42,9 +42,9 @@ const getRecommendations = async (req, res) => {
       SELECT * FROM internships 
       WHERE verification_status = 'verified'
     `;
-    // Note: If table columns differ from JSON, we map them below.
     const result = await pool.query(internshipQuery);
     const allInternships = result.rows;
+
 
     // 2. Use enhanced matching algorithm
     const recommendations = matchingAlgorithm.getRankedRecommendations(
@@ -57,7 +57,8 @@ const getRecommendations = async (req, res) => {
     console.log(`\n--- Recommendation Debug [User: ${name}, Loc: ${preferredState}] ---`);
     recommendations.slice(0, 3).forEach((rec, i) => {
       console.log(`#${i + 1} ${rec.company} (${rec.location})`);
-      console.log(`   Score: ${rec.finalScore} | LocScore: ${rec.locationScore} | StateMismatch: ${rec.isStateMismatch}`);
+      console.log(`   Score: ${rec.finalScore}% | LocTier: ${rec.locationTier} (${rec.locationLabel}) | Skills: ${rec.totalSkillMatches} matches`);
+      console.log(`   Breakdown: Resume=${rec.resumeSkillScore}%, Profile=${rec.profileSkillScore}%, Edu=${rec.educationScore}%, Loc=${rec.locationScore}%`);
     });
     console.log("----------------------------------------------------------------\n");
 
@@ -75,9 +76,27 @@ const getRecommendations = async (req, res) => {
         stipend: rec.stipend,
         duration: rec.duration,
         description: rec.description,
-        matchScore: rec.finalScore,
-        matchPercentage: rec.matchScore + '%',
-        matchLabel: rec.matchLabel
+        skills: rec.skills,
+        perks: rec.perks,
+        intern_type: rec.intern_type,
+        requirements: rec.requirements,
+        hiring_since: rec.hiring_since,
+        opening: rec.opening,
+        number_of_applications: rec.number_of_applications,
+        hired_candidate: rec.hired_candidate,
+        website_link: rec.website_link,
+        // Matching metadata
+        finalScore: rec.finalScore,
+        matchPercentage: rec.finalScore,
+        matchLabel: rec.matchLabel,
+        locationTier: rec.locationTier,
+        locationLabel: rec.locationLabel,
+        locationScore: rec.locationScore,
+        totalSkillMatches: rec.totalSkillMatches,
+        hasMinimumSkills: rec.hasMinimumSkills,
+        resumeSkillScore: rec.resumeSkillScore,
+        profileSkillScore: rec.profileSkillScore,
+        educationScore: rec.educationScore
       }))
     });
 

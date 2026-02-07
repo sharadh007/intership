@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const generateInterviewResponse = async (history, role, company) => {
     try {
         const systemPrompt = `
-        You are an expert AI Interview Coach for the Prime Minister's Internship Scheme.
+        You are an expert AI Interview Coach helping students prepare for internship interviews across India.
         Your goal is to conduct a professional mock interview for the role of "${role}" at "${company}".
         
         Guidelines:

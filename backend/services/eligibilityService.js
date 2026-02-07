@@ -20,13 +20,17 @@ const checkEligibility = (student, internship) => {
     // If internship is IT/Technical, require CSE/IT background
     if (internship.sector === 'Information Technology') {
         const isIT = sQual.includes('computer') || sQual.includes('it') || sQual.includes('cse') || sQual.includes('technology');
-        if (!isIT) return false; // REJECT if not IT student for IT role
+        if (!isIT) {
+            // console.log(`Rejecting ${student.name} for IT role due to qualification: ${sQual}`);
+            return false;
+        }
     }
 
     // 3. CGPA Check (Score >= 6.0)
     // User Rule: CGPA >= 6.0 -> PASS
     // If student CGPA < 6.0, REJECT
     if (student.cgpa && parseFloat(student.cgpa) < 6.0) {
+        console.log(`Rejecting due to low CGPA: ${student.cgpa}`);
         return false;
     }
 

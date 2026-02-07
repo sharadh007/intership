@@ -68,6 +68,7 @@ const getAIRecommendations = async (req, res) => {
             name,
             skills: Array.isArray(skills) ? skills : (skills || '').split(','),
             preferred_state: preferredState,
+            preferredState: preferredState, // Added for compatibility with matchingAlgorithm
             qualification,
             cgpa: cgpa || 7.5 // Default if missing
         };
@@ -76,6 +77,9 @@ const getAIRecommendations = async (req, res) => {
         const result = await pool.query('SELECT * FROM internships');
         const allInternships = result.rows;
 
+        console.log(`🔍 [AI Controller] User: ${name}, State: ${preferredState}, Skills: ${student.skills.length}`);
+        console.log(`🔍 [AI Controller] Total Internships in DB: ${allInternships.length}`);
+
         if (allInternships.length === 0) {
             return res.json({ success: true, recommendations: [] });
         }
@@ -83,6 +87,8 @@ const getAIRecommendations = async (req, res) => {
         // 3. Run Deterministic Matching Engine
         // (Filter -> Score -> Sort -> Top 5)
         const topMatches = await getDeterministicMatches(student, allInternships);
+
+        console.log(`🔍 [AI Controller] Top Matches Found: ${topMatches.length}`);
 
         // 4. Generate AI Explanations for these Top 5
         const finalResults = await generateExplanations(student, topMatches);
@@ -102,4 +108,29 @@ const getAIRecommendations = async (req, res) => {
     }
 };
 
-module.exports = { getAIRecommendations, handleResumeAnalysis, handleCoverLetter, handleInterviewChat };
+const handleMatchExplanation = async (req, res) => {
+    try {
+        const { student, internship } = req.body;
+
+        if (!student || !internship) {
+            return res.status(400).json({ success: false, error: "Missing student or internship data" });
+        }
+
+        console.log(`🤖 [AI Controller] Explaining Match: ${internship.role} @ ${internship.company}`);
+
+        // Reuse existing service (expects array)
+        const explainedInternships = await generateExplanations(student, [internship]);
+
+        if (explainedInternships && explainedInternships.length > 0) {
+            res.json({ success: true, explanation: explainedInternships[0].aiExplanation });
+        } else {
+            throw new Error("Failed to generate explanation");
+        }
+
+    } catch (error) {
+        console.error("❌ [AI Controller] Explanation Error:", error);
+        res.status(500).json({ success: false, error: "AI Explanation Failed" });
+    }
+};
+
+module.exports = { getAIRecommendations, handleResumeAnalysis, handleCoverLetter, handleInterviewChat, handleMatchExplanation };

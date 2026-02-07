@@ -7,12 +7,16 @@ const {
   uploadFromGovPortal,
   updateInternship,
   deleteInternship,
-  setVerificationStatus
+  setVerificationStatus,
+  filterByLocationAndSkills,
+  getFilterOptions
 } = require('../controllers/internshipController');
 
 const { protectAdmin } = require('../middleware/authMiddleware');
 
 // Public Routes
+router.get('/filter', filterByLocationAndSkills);      // Filter by location and skills with pagination
+router.get('/options/all', getFilterOptions);           // Get available filter options
 router.get('/', getAllInternships);
 
 // Admin Routes (Protected)
