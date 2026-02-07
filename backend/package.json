@@ -1,7 +1,7 @@
 {
-  "name": "pm-internship-backend",
+  "name": "internhub-india-backend",
   "version": "1.0.0",
-  "description": "Backend for PM Internship Scheme Portal",
+  "description": "Backend for InternHub India - AI-Powered Internship Platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

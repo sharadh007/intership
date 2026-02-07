@@ -1,6 +1,6 @@
-# 🎓 PM Internship Scheme Portal
+# 🎓 InternHub India - AI-Powered Internship Platform
 
-A comprehensive full-stack web application for managing internship opportunities with AI-powered features including resume analysis, personalized recommendations, cover letter generation, and interview coaching.
+A comprehensive full-stack web application connecting students with internship opportunities across India. Features AI-powered resume analysis, personalized recommendations, cover letter generation, and interview coaching to help students find their perfect internship match.
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Node](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)
@@ -25,10 +25,10 @@ A comprehensive full-stack web application for managing internship opportunities
 
 ### 🎯 Core Features
 - **User Authentication**: Secure Firebase-based authentication with JWT tokens
-- **Internship Browsing**: Browse 500+ AI-generated internship opportunities
-- **Advanced Filtering**: Filter by location, sector, duration, and more
+- **Nationwide Coverage**: Browse 500+ internship opportunities across all states of India
+- **Advanced Filtering**: Filter by location, sector, duration, stipend, and more
 - **Real-time Search**: Instant search across companies, roles, and locations
-- **Application Management**: Track application status and history
+- **Application Management**: Track application status and history across multiple internships
 
 ### 🤖 AI-Powered Features
 - **Resume Analysis**: AI-powered resume parsing and skill extraction using Groq/Gemini
@@ -96,7 +96,7 @@ npm install
 psql -U postgres
 
 # Create database
-CREATE DATABASE pm_internship;
+CREATE DATABASE internhub_india;
 
 # Exit psql
 \q
@@ -106,7 +106,7 @@ CREATE DATABASE pm_internship;
 
 ```bash
 # Run the schema creation script
-psql -U postgres -d pm_internship -f database/schema.sql
+psql -U postgres -d internhub_india -f database/schema.sql
 ```
 
 ### 5. Seed Database with Internships
@@ -130,7 +130,7 @@ NODE_ENV=development
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=pm_internship
+DB_NAME=internhub_india
 DB_USER=postgres
 DB_PASSWORD=your_postgres_password
 
@@ -576,4 +576,4 @@ For support, email sharadhb7@gmail.com or open an issue in the GitHub repository
 
 ---
 
-**Made with ❤️ for students seeking internship opportunities**
+**Made with ❤️ for students seeking internship opportunities across India** 🇮🇳
