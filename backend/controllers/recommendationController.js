@@ -48,10 +48,18 @@ const getRecommendations = async (req, res) => {
     const allInternships = result.rows;
 
     // ── JS-side Pre-Filter (faster: reduce before Python embedding) ────────────
-    const prefLoc = (preferredState || '').toLowerCase().trim();
+    const prefLocs = (preferredState || '').toLowerCase().split(',').map(l => l.trim()).filter(l => l && l !== 'any');
+
     const isRemoteKeyword = (loc) => {
       const l = (loc || '').toLowerCase();
       return l.includes('remote') || l.includes('work from home') || l.includes('wfh') || l.includes('work-from-home');
+    };
+
+    const matchesLocation = (jobLoc) => {
+      if (prefLocs.length === 0) return true;
+      const jLoc = (jobLoc || '').toLowerCase();
+      if (jLoc.includes('pan india')) return true;
+      return prefLocs.some(p => jLoc.includes(p) || p.includes(jLoc));
     };
 
     let candidateInternships = allInternships;
@@ -63,14 +71,11 @@ const getRecommendations = async (req, res) => {
       // Exclude all WFH/remote jobs
       const officeJobs = allInternships.filter(i => !isRemoteKeyword(i.location));
 
-      if (prefLoc && prefLoc !== 'any') {
-        // Try narrowing by location: city match, then state, then all office
-        const cityMatch = officeJobs.filter(i =>
-          (i.location || '').toLowerCase().includes(prefLoc) ||
-          prefLoc.includes((i.location || '').toLowerCase())
-        );
-        // Fallback chain: city → all office
-        candidateInternships = cityMatch.length >= 5 ? cityMatch : officeJobs;
+      if (prefLocs.length > 0) {
+        // Try narrowing by location: match any of the preferred locations
+        const locMatch = officeJobs.filter(i => matchesLocation(i.location));
+        // Fallback chain: locations → all office
+        candidateInternships = locMatch.length >= 5 ? locMatch : officeJobs;
       } else {
         candidateInternships = officeJobs;
       }
@@ -78,17 +83,41 @@ const getRecommendations = async (req, res) => {
       // Include remote + location-matching office jobs
       candidateInternships = allInternships.filter(i => {
         if (isRemoteKeyword(i.location)) return true;
-        if (!prefLoc || prefLoc === 'any') return true;
-        const loc = (i.location || '').toLowerCase();
-        return loc.includes(prefLoc) || prefLoc.includes(loc) || loc.includes('pan india');
+        return matchesLocation(i.location);
       });
-      if (candidateInternships.length === 0) candidateInternships = allInternships;
     }
 
-    // If JS pre-filter wiped everything, fall back to all (Python will handle it)
-    if (candidateInternships.length === 0) candidateInternships = allInternships;
+    // ── LIGHTWEIGHT PRE-RANKING (Cheap filter to reduce Python burden) ──────────
+    // This maintains accuracy by keeping the best candidates but speeds up AI analysis
+    if (candidateInternships.length > 100) {
+      const userSkillSet = studentProfile.skills.map(s => s.toLowerCase());
 
-    console.log(`🧠 PYTHON RAG ENGINE: ${candidateInternships.length}/${allInternships.length} internships selected for ${name} (${workPreference}, loc: ${prefLoc || 'any'})...`);
+      const scoredCandidates = candidateInternships.map(job => {
+        let kScore = 0;
+        const jobText = (
+          (job.role || '') + ' ' +
+          (job.company || '') + ' ' +
+          (job.skills_required || job.skills || '')
+        ).toLowerCase();
+
+        // Count keyword hits
+        userSkillSet.forEach(skill => {
+          if (jobText.includes(skill)) kScore += 1;
+        });
+
+        return { ...job, kScore };
+      });
+
+      // Sort by keyword relevance and take top 100 for deep semantic analysis
+      candidateInternships = scoredCandidates
+        .sort((a, b) => b.kScore - a.kScore)
+        .slice(0, 100);
+    }
+
+    // If still wiped or empty (unlikely), fall back to a small set of allInternships
+    if (candidateInternships.length === 0) candidateInternships = allInternships.slice(0, 20);
+
+    console.log(`🚀 ACCELERATED MATCHING: Processing ${candidateInternships.length} candidates for ${name}...`);
 
     // 2. Spawn Python Process
     const pythonScript = path.join(__dirname, '../engine/matcher.py');

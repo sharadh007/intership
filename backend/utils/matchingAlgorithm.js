@@ -123,36 +123,51 @@ const normalizeLocation = (input) => {
 };
 
 const calculateLocationTier = (userLocStr, internLocStr) => {
-  const user = normalizeLocation(userLocStr);
-  const intern = normalizeLocation(internLocStr);
+  const userLocs = (userLocStr || '').split(',').map(l => l.trim()).filter(l => l);
 
-  if (!user.city && !user.state) {
+  if (userLocs.length === 0 || userLocs.some(l => l.toLowerCase() === 'any')) {
     // No location preference - treat all as Tier 4
     return { tier: 4, score: LOCATION_TIER_SCORES[4], label: 'Any Location' };
   }
 
-  // Tier 1: Exact City Match
-  if (user.city && intern.city && user.city === intern.city) {
-    return { tier: 1, score: LOCATION_TIER_SCORES[1], label: 'City Match' };
+  const intern = normalizeLocation(internLocStr);
+  let bestResult = { tier: 4, score: LOCATION_TIER_SCORES[4], label: 'Other Location' };
+
+  for (const ul of userLocs) {
+    const user = normalizeLocation(ul);
+    if (!user.city && !user.state) continue;
+
+    let currentTier = 4;
+    let currentLabel = 'Other Location';
+
+    // Tier 1: Exact City Match
+    if (user.city && intern.city && user.city === intern.city) {
+      currentTier = 1;
+      currentLabel = 'City Match';
+    }
+    // Tier 2: Same State Match
+    else if (user.state && intern.state && user.state === intern.state) {
+      currentTier = 2;
+      currentLabel = 'State Match';
+    }
+    // Tier 3: Nearby City
+    else if (user.city && intern.city && NEARBY_CITIES[user.city] && NEARBY_CITIES[user.city].includes(intern.city)) {
+      currentTier = 3;
+      currentLabel = 'Nearby City';
+    }
+    // Tier 3: Nearby State
+    else if (user.state && intern.state && NEARBY_STATES[user.state] && NEARBY_STATES[user.state].includes(intern.state)) {
+      currentTier = 3;
+      currentLabel = 'Nearby State';
+    }
+
+    if (currentTier < bestResult.tier) {
+      bestResult = { tier: currentTier, score: LOCATION_TIER_SCORES[currentTier], label: currentLabel };
+    }
+    if (currentTier === 1) break; // Can't get better than Tier 1
   }
 
-  // Tier 2: Same State Match
-  if (user.state && intern.state && user.state === intern.state) {
-    return { tier: 2, score: LOCATION_TIER_SCORES[2], label: 'State Match' };
-  }
-
-  // Tier 3: Nearby City
-  if (user.city && intern.city && NEARBY_CITIES[user.city] && NEARBY_CITIES[user.city].includes(intern.city)) {
-    return { tier: 3, score: LOCATION_TIER_SCORES[3], label: 'Nearby City' };
-  }
-
-  // Tier 3: Nearby State
-  if (user.state && intern.state && NEARBY_STATES[user.state] && NEARBY_STATES[user.state].includes(intern.state)) {
-    return { tier: 3, score: LOCATION_TIER_SCORES[3], label: 'Nearby State' };
-  }
-
-  // Tier 4: Other
-  return { tier: 4, score: LOCATION_TIER_SCORES[4], label: 'Other Location' };
+  return bestResult;
 };
 
 // --- MATCH SCORING ---
@@ -175,7 +190,7 @@ const calculateMatchMetaData = (studentProfile, internship) => {
   // 4. Calculate total skill matches
   const totalSkillMatches = resumeSkillResult.matchCount + profileSkillResult.matchCount;
 
-  // 5. Calculate weighted match score (NOT including location tier bonus yet)
+  // 5. Calculate weighted match score
   const skillScore =
     (resumeSkillResult.score * WEIGHTS.RESUME_SKILLS) +
     (profileSkillResult.score * WEIGHTS.PROFILE_SKILLS) +
@@ -184,8 +199,6 @@ const calculateMatchMetaData = (studentProfile, internship) => {
 
   // Round to whole number
   let finalScore = Math.round(skillScore);
-
-  // Ensure score is between 0-100
   finalScore = Math.max(0, Math.min(100, finalScore));
 
   return {
@@ -217,25 +230,14 @@ const getRankedRecommendations = (studentProfile, internships, limit = 50) => {
   });
 
   // STRICT FILTERING LOGIC
-  const userLoc = normalizeLocation(studentProfile.preferredState);
+  const prefLocs = (studentProfile.preferredState || '').split(',').map(l => l.trim()).filter(l => l && l.toLowerCase() !== 'any');
   let strictFiltered = [];
 
-  if (userLoc.city) {
-    // User specified a CITY (e.g., "Chennai")
-    // ALLOW: Tier 1 (Exact City), Tier 2 (Same State), Tier 3 (Nearby)
-    // BLOCK: Tier 4 (Far) unless no results in Tier 1-3
+  if (prefLocs.length > 0) {
+    // If any location is specified, prioritize Tier 1-3 matches
     strictFiltered = processed.filter(p => p.locationTier <= 3);
 
-    // If no results in preferred tiers, expand to Tier 4
-    if (strictFiltered.length === 0) {
-      strictFiltered = processed;
-    }
-  } else if (userLoc.state) {
-    // User specified a STATE (e.g., "Tamil Nadu")
-    // ALLOW: Tier 2 (State Match), Tier 3 (Nearby State)
-    // Expand to Tier 4 if insufficient results
-    strictFiltered = processed.filter(p => p.locationTier <= 3);
-
+    // If no results in preferred tiers, expand to all
     if (strictFiltered.length === 0) {
       strictFiltered = processed;
     }

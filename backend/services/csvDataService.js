@@ -135,10 +135,12 @@ const filterInternships = (allInternships, userLocation, userSkills) => {
       return true;
     }
 
-    const locations = parseLocationFromString(internship.location);
-    return locations.some(loc =>
-      loc.toLowerCase().includes(userLocation.toLowerCase()) ||
-      userLocation.toLowerCase().includes(loc.toLowerCase())
+    const userLocs = userLocation.toLowerCase().split(',').map(l => l.trim()).filter(l => l);
+    const jobLocs = parseLocationFromString(internship.location).map(l => l.toLowerCase());
+
+    return jobLocs.some(jLoc =>
+      userLocs.some(uLoc => jLoc.includes(uLoc) || uLoc.includes(jLoc)) ||
+      jLoc.includes('pan india')
     );
   });
 

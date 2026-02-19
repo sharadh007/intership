@@ -133,7 +133,7 @@ def build_job_text(job: dict) -> str:
 def compute_similarities(student_text: str, job_texts: list) -> list:
     """Batch-encode all texts and compute cosine similarities at once (fast)."""
     all_texts = [student_text] + job_texts
-    embeddings = model.encode(all_texts, show_progress_bar=False, batch_size=32)
+    embeddings = model.encode(all_texts, show_progress_bar=False, batch_size=128)
     student_vec = embeddings[0:1]
     job_vecs = embeddings[1:]
     scores = cosine_similarity(student_vec, job_vecs)[0]
@@ -227,7 +227,7 @@ Only output the JSON array, no other text."""
 
         thread = threading.Thread(target=call_gemini, daemon=True)
         thread.start()
-        thread.join(timeout=8)  # Max 8 seconds for Gemini (faster fallback)
+        thread.join(timeout=4)  # Max 4 seconds for Gemini (Faster loading)
 
         if results[0]:
             # Parse Gemini output
@@ -312,8 +312,17 @@ def process_matching(data: dict) -> list:
     student['skills'] = all_student_skills
 
     # ── Location / WFH Pre-Filter ─────────────────────────────────────────────
-    pref_loc = (student.get('preferred_state') or '').lower().strip()
+    pref_loc_raw = (student.get('preferred_state') or '').lower().strip()
+    pref_locs = [l.strip() for l in pref_loc_raw.split(',') if l.strip()]
     filtered = []
+
+    def matches_location(job_loc_str, preferred_list):
+        if not preferred_list or 'any' in preferred_list:
+            return True
+        j_loc = (job_loc_str or '').lower().strip()
+        if 'pan india' in j_loc:
+            return True
+        return any(p in j_loc or j_loc in p for p in preferred_list)
 
     for job in internships:
         job_loc = (job.get('location') or '').lower().strip()
@@ -328,13 +337,7 @@ def process_matching(data: dict) -> list:
         elif work_preference == 'both':
             # Include remote jobs OR location-matching office jobs
             if not is_remote:
-                loc_ok = (
-                    not pref_loc
-                    or pref_loc in job_loc
-                    or job_loc in pref_loc
-                    or 'pan india' in job_loc
-                )
-                if not loc_ok:
+                if not matches_location(job_loc, pref_locs):
                     continue
 
         else:  # 'office' default — user wants an in-person internship
@@ -342,14 +345,8 @@ def process_matching(data: dict) -> list:
             if is_remote:
                 continue
             # Now apply location check for office jobs
-            if pref_loc and pref_loc not in ('any', ''):
-                loc_ok = (
-                    pref_loc in job_loc
-                    or job_loc in pref_loc
-                    or 'pan india' in job_loc
-                )
-                if not loc_ok:
-                    continue
+            if not matches_location(job_loc, pref_locs):
+                continue
 
         filtered.append(job)
 
@@ -387,21 +384,23 @@ def process_matching(data: dict) -> list:
         
         final_score = min(0.99, semantic_score + boost)
 
-        # ── STEP 7: Gap Analysis per job ─────────────────────────────────────
-        gap = compute_gap_analysis(all_student_skills, job)
-
         scored.append({
             **job,
             'match_score': final_score,
             'match_percentage': f"{int(final_score * 100)}%",
             'semantic_score': round(semantic_score, 4),
-            'skill_boost': round(boost, 4),
-            'gap_analysis': gap,
+            'skill_boost': round(boost, 4)
         })
 
     # ── Ranking ───────────────────────────────────────────────────────────────
     scored.sort(key=lambda x: x['match_score'], reverse=True)
-    top_results = scored[:10]
+    top_results_pool = scored[:20] # Only analyze top 20 candidates
+
+    # ── STEP 7: Gap Analysis (Now only for top matches) ───────────────────────
+    for res in top_results_pool:
+        res['gap_analysis'] = compute_gap_analysis(all_student_skills, res)
+
+    top_results = top_results_pool[:10]
 
     # ── STEP 5 & 6: LLM Re-ranking + Explainability ───────────────────────────
     final_results = gemini_rerank_and_explain(student, top_results, parsed_resume)

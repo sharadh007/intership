@@ -473,9 +473,14 @@ function clearAllForms() {
   document.querySelectorAll('input[type="text"], input[type="email"], input[type="number"], input[type="tel"], select').forEach(input => {
     input.value = '';
   });
-  document.querySelectorAll('.recommendations-container, #recommendations, .rec-card').forEach(el => {
+  // Only clear dynamic content containers, not the structural ones
+  const dynamicContainers = [
+    document.getElementById('recommendationCards'),
+    document.getElementById('aiResultsSection'),
+    document.getElementById('browseInternshipsList')
+  ];
+  dynamicContainers.forEach(el => {
     if (el) {
-      el.style.display = 'none';
       el.innerHTML = '';
     }
   });
@@ -583,8 +588,8 @@ const Profile = {
   },
 
   renderFieldReadMode(key, value) {
-    const el = $(`val_${key} `);
-    const container = $(`container_${key} `);
+    const el = $(`val_${key}`);
+    const container = $(`container_${key}`);
     const cleanVal = (value || '--').toString().trim();
 
     // Always enforce the correct structure (Value + Edit Button)
@@ -620,7 +625,7 @@ const Profile = {
   toggleEdit(key) {
     console.log(`✏️ Editing ${key} `);
     try {
-      const container = $(`container_${key} `);
+      const container = $(`container_${key}`);
       if (!container) {
         console.error(`Container not found for ${key}`);
         return;
@@ -679,7 +684,7 @@ const Profile = {
 
 
       // Focus input
-      const input = $(`input_${key} `);
+      const input = $(`input_${key}`);
       if (input) {
         input.focus();
         input.select(); // Highlight text to verify focus
@@ -729,7 +734,7 @@ const Profile = {
     btn.textContent = '...';
     btn.disabled = true;
 
-    fetch(`${API_BASE} /students/`, {
+    fetch(`${API_BASE}/students/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -761,7 +766,7 @@ const Profile = {
     if (!user) return;
 
     // Optional: Call backend to delete user data
-    // fetch(`${ API_BASE } /students/${ user.uid } `, { method: 'DELETE' });
+    // fetch(`${API_BASE}/students/${user.uid}`, { method: 'DELETE' });
 
     user.delete().then(() => {
       alert("Account deleted.");
@@ -782,7 +787,7 @@ const Profile = {
   saveField(key) {
     if (!auth.currentUser) return;
 
-    const input = $(`input_${key} `);
+    const input = $(`input_${key}`);
     if (!input) return;
 
     const newValue = input.value.trim();
@@ -1767,7 +1772,8 @@ async function getAIRecommendations() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...currentProfile,
-        skills: currentProfile.skills || [] // Ensure skills is array
+        preferredState: currentProfile.location || currentProfile.preferredState || currentProfile.state || '',
+        skills: Array.isArray(currentProfile.skills) ? currentProfile.skills : (currentProfile.skills || '').split(',').map(s => s.trim()).filter(Boolean)
       })
     });
 
@@ -2298,13 +2304,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   // Load internships data from backend
   await loadIntershipDataFromBackend();
-
-  // After data is loaded, initialize filters and browse page
-  populateFilters();
-  populateBrowseFilters();
-  initializeBrowseAllPage();
-
-  console.log('✅ Internships loaded and browse page initialized');
 });
 
 
@@ -2316,227 +2315,8 @@ function scrollToProfile() {
   }
 }
 
-// Handle Quick Profile Form Submission
-async function handleQuickProfileSubmit(event) {
-  event.preventDefault();
-
-  const formData = new FormData(event.target);
-  const profileData = {};
-
-  for (let [key, value] of formData.entries()) {
-    profileData[key] = value;
-  }
-
-  // Save profile data to memory and localStorage
-  savedProfileData = profileData;
-  try {
-    localStorage.setItem('userProfile', JSON.stringify(profileData));
-  } catch (e) {
-    console.log('Note: Could not save to localStorage');
-  }
-
-  // Show loading state
-  const btn = event.target.querySelector('button[type="submit"]');
-  const originalText = btn.textContent;
-  btn.textContent = 'Finding Internships...';
-  btn.disabled = true;
-
-  try {
-    // Hide form and show recommendations section
-    const section = document.getElementById('recommendationsSection');
-    if (section) section.style.display = 'block';
-
-    // Extract location and skills
-    const location = profileData.location || '';
-    const skills = profileData.skills ? profileData.skills.split(',').map(s => s.trim()).filter(s => s) : [];
-
-    // Reset pagination to first page
-    paginationState.currentPage = 1;
-
-    // Fetch internships with filters and pagination
-    await fetchInternshipsWithFilters(location, skills);
-
-  } catch (error) {
-    console.error("Error:", error);
-    const cardsContainer = document.getElementById('recommendationCards');
-    if (cardsContainer) {
-      cardsContainer.innerHTML = '<p style="text-align: center; padding: 20px; color: #d32f2f;">❌ Error loading internships. Please try again.</p>';
-    }
-  } finally {
-    btn.textContent = originalText;
-    btn.disabled = false;
-  }
-}
-
-
-// Intelligent Recommendation Algorithm
-function getIntelligentRecommendations(profileData) {
-  const skills = profileData.skills.toLowerCase();
-  const careerGoal = profileData.career.toLowerCase();
-  const industry = profileData.industry.toLowerCase();
-  const location = profileData.location.toLowerCase();
-  const field = profileData.field.toLowerCase();
-  const experience = parseInt(profileData.experience) || 0;
-
-  // Score each internship
-  const scoredInternships = internships.map(internship => {
-    let score = 0;
-
-    // Skills matching (50% weight - 50 points max)
-    const internshipSkills = internship.skills.toLowerCase();
-    const skillsList = skills.split(',').map(s => s.trim());
-    let skillMatches = 0;
-    skillsList.forEach(skill => {
-      if (internshipSkills.includes(skill) || internship.role.toLowerCase().includes(skill) || internship.description.toLowerCase().includes(skill)) {
-        skillMatches++;
-      }
-    });
-    score += Math.min((skillMatches / skillsList.length) * 50, 50);
-
-    // Career Goal matching (25% weight - 25 points max)
-    if (careerGoal.includes('technical') && (internship.sector === 'Information Technology' || internship.role.toLowerCase().includes('engineer') || internship.role.toLowerCase().includes('technical'))) {
-      score += 25;
-    } else if (careerGoal.includes('management') && (internship.role.toLowerCase().includes('management') || internship.role.toLowerCase().includes('manager'))) {
-      score += 25;
-    } else if (careerGoal.includes('finance') && (internship.sector.includes('Banking') || internship.sector.includes('Finance') || internship.sector.includes('Insurance'))) {
-      score += 25;
-    } else if (careerGoal.includes('operations') && internship.role.toLowerCase().includes('operations')) {
-      score += 20;
-    } else if (careerGoal.includes('sales') && internship.role.toLowerCase().includes('sales')) {
-      score += 20;
-    }
-
-    // Industry Preference matching (25% weight - 25 points max)
-    if (industry === 'it' && internship.sector === 'Information Technology') {
-      score += 25;
-    } else if (industry === 'finance' && (internship.sector.includes('Banking') || internship.sector.includes('Finance'))) {
-      score += 25;
-    } else if (industry === 'automotive' && internship.sector === 'Automotive') {
-      score += 25;
-    } else if (industry === 'energy' && (internship.sector.includes('Energy') || internship.sector.includes('Power'))) {
-      score += 25;
-    } else if (industry === 'manufacturing' && internship.sector === 'Manufacturing') {
-      score += 25;
-    } else if (industry === 'fmcg' && internship.sector === 'FMCG') {
-      score += 25;
-    } else if (industry === 'construction' && internship.sector === 'Construction') {
-      score += 25;
-    } else if (industry === 'healthcare' && internship.sector === 'Healthcare') {
-      score += 25;
-    } else if (industry === 'consulting' && internship.sector === 'Information Technology') {
-      score += 15;
-    }
-
-    // Location preference (bonus 10 points)
-    const locationsList = location.split(',').map(l => l.trim());
-    locationsList.forEach(loc => {
-      if (internship.location.toLowerCase().includes(loc)) {
-        score += 10;
-      }
-    });
-
-    // Field of study matching (bonus 5 points)
-    if (field === 'cse' && internship.sector === 'Information Technology') {
-      score += 5;
-    } else if (field === 'commerce' && (internship.sector.includes('Banking') || internship.sector.includes('Finance'))) {
-      score += 5;
-    } else if (field === 'me' && (internship.sector === 'Automotive' || internship.sector === 'Manufacturing')) {
-      score += 5;
-    }
-
-    return {
-      internship,
-      score
-    };
-  });
-
-  // Sort by score and return top 3-5
-  scoredInternships.sort((a, b) => b.score - a.score);
-  const topCount = Math.min(5, Math.max(3, scoredInternships.filter(s => s.score > 20).length));
-  return scoredInternships.slice(0, topCount).map(s => s.internship);
-}
-
-// Display Quick Profile Recommendations
-function displayQuickProfileRecommendations(profileData, recommendations) {
-  // Check if recommendations section exists, if not create it
-  let recsSection = document.getElementById('quickProfileRecommendations');
-  if (!recsSection) {
-    recsSection = document.createElement('div');
-    recsSection.id = 'quickProfileRecommendations';
-    recsSection.className = 'recommendations-display';
-    const profileSection = document.querySelector('.profile-section .container');
-    profileSection.appendChild(recsSection);
-  }
-
-  recsSection.innerHTML = `
-    <div class="recommendations-header">
-      <h2>Hello, ${profileData.firstName}! 👋</h2>
-      <p>We found ${recommendations.length} matching internships! Here are our top recommendations based on your profile:</p>
-    </div>
-
-    <div class="recommendation-cards" id="quickRecommendationCards">
-      ${recommendations.map((internship, index) => `
-        <div class="recommendation-card" onclick="openModal(${JSON.stringify(internship).replace(/"/g, '&quot;')})">
-          <div class="recommendation-number num-${index + 1}">${index + 1}</div>
-          <div class="recommendation-content">
-            <div style="margin-bottom: 5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              ${internship.verification_status === 'verified' ? '<span class="badge badge-verified">Verified</span>' :
-      internship.verification_status === 'expired' ? '<span class="badge badge-expired">Expired</span>' :
-        '<span class="badge badge-unverified">Unverified</span>'}
-              <span style="display:inline-block; background:${internship.matchScore >= 80 ? '#2ecc71' : internship.matchScore >= 60 ? '#f1c40f' : '#e74c3c'}; color:white; padding: 4px 10px; border-radius: 20px; font-size: 0.85em; font-weight: 600;">
-                🔥 ${internship.matchScore}% Match Accuracy
-              </span>
-            </div>
-            
-            <h3 class="recommendation-title">${internship.role}</h3>
-            <p class="recommendation-company">${internship.company}</p>
-            <div class="recommendation-details">
-              <span class="recommendation-detail">📍 ${internship.location}</span>
-              <span class="recommendation-detail">🏢 ${internship.sector}</span>
-              <span class="recommendation-detail">⏱️ ${internship.duration}</span>
-              <span class="recommendation-detail">💰 ₹${internship.stipend.toLocaleString()}/month</span>
-            </div>
-            
-             <!-- AI Explanation Section -->
-            <div style="background: #f0f7ff; border-top: 1px solid #cce5ff; padding: 15px; font-size: 0.9em; color: #004085; border-radius: 8px; margin-top: 10px;">
-               <div style="margin-bottom: 8px;">
-                 <strong>💡 Why this matches you:</strong> 
-                 <span style="display:block; margin-top:4px;">${internship.aiExplanation.summary || "Good match based on your profile."}</span>
-               </div>
-
-               ${internship.aiExplanation.reasons ? `
-               <ul style="margin: 5px 0 10px 20px; padding: 0;">
-                 ${internship.aiExplanation.reasons.map(Reason => `<li>${Reason}</li>`).join('')}
-               </ul>
-               ` : ''}
-
-               ${internship.aiExplanation.improvements && internship.aiExplanation.improvements.length > 0 ? `
-               <div style="margin-top: 10px; border-top: 1px dashed #b8daff; padding-top: 8px;">
-                 <strong>📈 How to improve your fit:</strong>
-                 <ul style="margin: 5px 0 0 20px; padding: 0; color: #555;">
-                   ${internship.aiExplanation.improvements.map(imp => `<li>${imp}</li>`).join('')}
-                 </ul>
-               </div>
-               ` : ''}
-            </div>
-
-            <p class="recommendation-description" style="margin-top: 10px;">${internship.description}</p>
-          </div>
-          <div class="recommendation-action">
-            <button class="btn btn-primary" onclick="event.stopPropagation(); openModal(${JSON.stringify(internship).replace(/"/g, '&quot;')})">View Details</button>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-
-    <div class="recommendation-actions">
-      <button class="btn btn-outline btn-large" onclick="backToQuickProfileForm()">← Back to Form</button>
-      <button class="btn btn-primary btn-large" onclick="navigateToSection('browse-all')">Browse All Internships →</button>
-    </div>
-    `;
-
-  recsSection.style.display = 'block';
-}
+// Removed redundant functions to clean up app.js
+// Redundant functions removed for cleanup
 
 // Back to Quick Profile Form
 function backToQuickProfileForm() {
@@ -2628,7 +2408,7 @@ function navigateToFindInternships() {
   navigateToSection('find-internships');
   // Switch to browse tab
   setTimeout(() => {
-    switchTab('browse');
+    switchTab('recommendations');
   }, 100);
 }
 
@@ -2654,6 +2434,7 @@ function initializeLanguage() {
   });
 }
 
+// Update Language UI
 function updateLanguage() {
   const elements = document.querySelectorAll('[data-translate]');
   elements.forEach(element => {
@@ -2668,13 +2449,7 @@ function updateLanguage() {
   if (searchInput) {
     searchInput.placeholder = translations[currentLanguage]['search-placeholder'] || 'Search...';
   }
-
-  // Reload internships to update language
-  loadInternships();
-  filterInternships();
 }
-
-// Note: internships and filteredBrowseAll are declared earlier in the file
 
 // Load internships data from backend
 async function loadIntershipDataFromBackend() {
@@ -2701,82 +2476,7 @@ async function loadIntershipDataFromBackend() {
   }
 }
 
-// Load Internships (legacy - no longer used)
-function loadInternships() {
-  // Internships are now loaded in browse tab via loadBrowseInternships()
-}
-
-function createInternshipCard(internship) {
-  const card = document.createElement('div');
-  card.className = 'internship-card';
-  card.onclick = () => openModal(internship);
-
-  let badgeHtml = '';
-  if (internship.verification_status === 'verified') {
-    badgeHtml = '<span class="badge badge-verified">Verified</span>';
-  } else if (internship.verification_status === 'expired') {
-    badgeHtml = '<span class="badge badge-expired">Expired</span>';
-  } else {
-    badgeHtml = '<span class="badge badge-unverified">Unverified</span>';
-  }
-
-  card.innerHTML = `
-    <h3 class="internship-company">${badgeHtml} ${internship.company}</h3>
-    <p class="internship-role">${internship.role}</p>
-    <div class="internship-details">
-      <div class="internship-detail">
-        <span class="detail-icon">📍</span>
-        <span>${internship.location}</span>
-      </div>
-      <div class="internship-detail">
-        <span class="detail-icon">🏢</span>
-        <span>${internship.sector}</span>
-      </div>
-      <div class="internship-detail">
-        <span class="detail-icon">⏱️</span>
-        <span>${internship.duration}</span>
-      </div>
-    </div>
-    <div class="internship-footer">
-      <span class="internship-stipend">₹${internship.stipend.toLocaleString()}/month</span>
-      <button class="btn btn-primary" data-translate="btn-view-details">${translations[currentLanguage]['btn-view-details']}</button>
-    </div>
-    `;
-
-  return card;
-}
-
-// Search Functionality (for Browse tab)
-function searchInternships() {
-  const searchInput = document.getElementById('searchInput');
-  const searchTerm = searchInput.value.toLowerCase();
-
-  const filtered = internships.filter(internship => {
-    return internship.company.toLowerCase().includes(searchTerm) ||
-      internship.role.toLowerCase().includes(searchTerm) ||
-      internship.location.toLowerCase().includes(searchTerm) ||
-      internship.sector.toLowerCase().includes(searchTerm);
-  });
-
-  // Display in browse tab
-  const container = document.getElementById('browseInternshipsList');
-  container.innerHTML = '';
-
-  if (filtered.length === 0) {
-    container.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--color-text-secondary); grid-column: 1/-1;">No internships found matching your search.</p>';
-    return;
-  }
-
-  filtered.forEach(internship => {
-    const card = createInternshipCard(internship);
-    container.appendChild(card);
-  });
-}
-
-// Populate Filters (legacy - kept for compatibility)
-function populateFilters() {
-  // This function is kept for compatibility but filters are now in browse tab
-}
+// Redundant browse functions removed
 
 // Modal
 function openModal(internship) {
@@ -3010,16 +2710,19 @@ function switchTab(tabName) {
   const recommendationsTab = document.getElementById('recommendations-tab');
   const browseTab = document.getElementById('browse-tab');
 
-  if (tabName === 'recommendations') {
-    recommendationsTab.classList.add('active');
-    browseTab.classList.remove('active');
-  } else {
-    recommendationsTab.classList.remove('active');
-    browseTab.classList.add('active');
+  if (recommendationsTab) {
+    if (tabName === 'recommendations') recommendationsTab.classList.add('active');
+    else recommendationsTab.classList.remove('active');
+  }
+
+  if (browseTab) {
+    if (tabName === 'browse') browseTab.classList.add('active');
+    else browseTab.classList.remove('active');
   }
 }
 
 // Handle Quick Profile Form Submission
+// Handle Quick Profile Form Submission (Unified)
 async function handleQuickProfileSubmit(event) {
   event.preventDefault();
   console.log('📝 Quick Profile Form submitted');
@@ -3032,13 +2735,18 @@ async function handleQuickProfileSubmit(event) {
   const name = `${firstName} ${lastName}`.trim();
   const qualification = formData.get('education') || formData.get('field') || '';
   const skillsInput = formData.get('skills') || '';
-  const preferredState = formData.get('location') || '';
+  const preferredState = formData.get('preferredState') || formData.get('location') || '';
   const preferredSector = formData.get('industry') || 'Any';
   const workPreference = formData.get('workPreference') || 'office';
-  const age = '20'; // Default age
+  const age = '21'; // Default compliant age
   const resumeText = document.getElementById('resumeTextData') ? document.getElementById('resumeTextData').value : '';
 
   console.log('📋 Form data extracted:', { name, qualification, skillsInput, preferredState, preferredSector, workPreference });
+
+  // Update global state for other functions
+  currentProfile = {
+    name, age, qualification, skills: skillsInput, preferredState, preferredSector, workPreference
+  };
 
   // Call the recommendations API
   await callRecommendationsAPI(name, age, qualification, skillsInput, preferredState, preferredSector, workPreference, resumeText);
@@ -3136,69 +2844,137 @@ async function callRecommendationsAPI(name, age, qualification, skillsInput, pre
   }
 }
 
+let loaderInterval = null;
+
 function showRecommendationsLoading() {
-  let container = document.getElementById('recommendationResults');
-  if (!container) {
-    // Create container if it doesn't exist
-    container = document.createElement('div');
-    container.id = 'recommendationResults';
-    container.style.cssText = 'margin: 20px; padding: 20px;';
-    document.body.appendChild(container);
+  const homeSection = document.getElementById('home');
+  const findSection = document.getElementById('find-internships');
+  const formSection = document.getElementById('profileFormSection');
+  const loader = document.getElementById('matchingLoader');
+  const resultsSection = document.getElementById('recommendationsSection');
+  const quickProfileCard = document.querySelector('.profile-form-card');
+
+  // 1. Context Switching
+  // If we are on the home page, switch to find-internships section where the results/loader live
+  if (homeSection && homeSection.classList.contains('active')) {
+    homeSection.classList.remove('active');
+    if (findSection) findSection.classList.add('active');
+
+    // Update nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+      const href = link.getAttribute('href');
+      if (href === '#find-internships') link.classList.add('active');
+      else link.classList.remove('active');
+    });
+
+    // Ensure recommendations tab is showing if it exists
+    const recTab = document.getElementById('recommendations-tab');
+    if (recTab) recTab.classList.add('active');
   }
-  container.innerHTML = '<p style="text-align: center; padding: 40px; font-size: 18px;">🔍 Finding best internships for you...</p>';
-  container.scrollIntoView({ behavior: 'smooth' });
+
+  // 2. Hide Other Sections
+  if (formSection) formSection.style.display = 'none';
+  if (quickProfileCard) quickProfileCard.style.display = 'none';
+  if (resultsSection) resultsSection.style.display = 'none';
+
+  // 3. Show Loader & Reset Content
+  if (loader) {
+    loader.style.display = 'flex';
+    loader.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    const statusText = document.getElementById('loaderStatus');
+    const subtext = document.getElementById('loaderSubtext');
+    const progress = document.getElementById('loaderProgress');
+
+    const stages = [
+      { status: 'Analyzing Your Profile...', sub: 'Our AI is scanning 10,000+ data points to find your perfect internship DNA.', progress: 'Initializing semantic engine...' },
+      { status: 'Fetching Top Opportunities...', sub: 'Filtering through nationwide databases to identify verified companies matching your skills.', progress: 'Scanning 500+ verified listings...' },
+      { status: 'Semantic Skill Matching...', sub: 'Evaluating technical compatibility and industry relevance for each role.', progress: 'Mapping skill vectors...' },
+      { status: 'Finalizing Recommendations...', sub: 'Applying strict location priority and work preference filters for maximum accuracy.', progress: 'LLM re-ranking in progress...' },
+      { status: 'Almost There...', sub: 'Structuring your personalized dashboard with career growth insights.', progress: 'Finalizing UI components...' }
+    ];
+
+    let currentStage = 0;
+    if (loaderInterval) clearInterval(loaderInterval);
+
+    loaderInterval = setInterval(() => {
+      currentStage = (currentStage + 1) % stages.length;
+      if (statusText) statusText.innerText = stages[currentStage].status;
+      if (subtext) subtext.innerText = stages[currentStage].sub;
+      if (progress) progress.innerText = stages[currentStage].progress;
+    }, 4000);
+  }
 }
 
 function hideRecommendationsLoading() {
-  const container = document.getElementById('recommendationResults');
-  if (container) {
-    container.innerHTML = '';
+  if (loaderInterval) {
+    clearInterval(loaderInterval);
+    loaderInterval = null;
   }
+  const loader = document.getElementById('matchingLoader');
+  if (loader) loader.style.display = 'none';
+}
+
+function gotoForm() {
+  // Always hide the results/loader first
+  const loader = document.getElementById('matchingLoader');
+  const resultsSection = document.getElementById('recommendationsSection');
+  if (loader) loader.style.display = 'none';
+  if (resultsSection) resultsSection.style.display = 'none';
+
+  // Navigate to the Home section and scroll to the profile form card there
+  navigateToSection('home');
+  setTimeout(() => {
+    const homeProfileCard = document.querySelector('#home .profile-form-card');
+    if (homeProfileCard) {
+      homeProfileCard.style.display = 'block';
+      homeProfileCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 100);
 }
 
 function displayRecommendationsResults(recommendations) {
-  let container = document.getElementById('recommendationResults');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'recommendationResults';
-    container.style.cssText = 'max-width: 1200px; margin: 40px auto; padding: 20px; font-family: "Segoe UI", sans-serif;';
-    document.body.appendChild(container);
+  // Hide loader first
+  hideRecommendationsLoading();
+
+  const resultsSection = document.getElementById('recommendationsSection');
+  const cardsContainer = document.getElementById('recommendationCards');
+
+  if (!resultsSection || !cardsContainer) {
+    console.error('❌ Results section not found in DOM');
+    return;
   }
 
-  container.innerHTML = '';
+  // Show section
+  resultsSection.style.display = 'block';
+  cardsContainer.innerHTML = '';
 
   if (!recommendations || recommendations.length === 0) {
     console.warn('⚠️ No recommendations returned');
-    container.innerHTML = `
-      <div style="text-align: center; padding: 60px; color: #666;">
+    cardsContainer.innerHTML = `
+      <div style="text-align: center; padding: 60px; color: #666; grid-column: 1 / -1;">
         <div style="font-size: 48px; margin-bottom: 20px;">😔</div>
         <h3>No matches found</h3>
         <p>Try adjusting your preferences to get better recommendations.</p>
-        <button id="no-results-back-btn" style="margin-top: 20px; padding: 10px 24px; background: #333; color: white; border: none; border-radius: 6px; cursor: pointer;">Go Back to Form</button>
+        <button id="no-results-back-btn" class="btn btn-primary" style="margin-top: 20px;">Go Back to Form</button>
       </div>
     `;
-    const backBtn = container.querySelector('#no-results-back-btn');
+    const backBtn = cardsContainer.querySelector('#no-results-back-btn');
     if (backBtn) {
       backBtn.onclick = () => {
-        container.innerHTML = '';
-        if (typeof backToForm === 'function') backToForm();
-        else window.location.reload();
+        gotoForm();
       };
     }
     return;
   }
 
-  // Section Title
-  const title = document.createElement('h2');
-  title.innerHTML = '✨ Recommended for You';
-  title.style.cssText = 'text-align: center; margin-bottom: 40px; font-size: 2.2rem; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;';
-  container.appendChild(title);
-
-  // Grid Container
-  const grid = document.createElement('div');
-  grid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; margin-bottom: 50px;';
-
   console.log(`✅ Displaying ${recommendations.length} recommendations`);
+
+  // Update greeting and message if possible
+  const greetingText = document.getElementById('greetingText');
+  const message = document.getElementById('recommendationsMessage');
+  if (greetingText) greetingText.textContent = '✨ Top Matches for You';
+  if (message) message.textContent = `We found ${recommendations.length} internships that closely match your profile and skills.`;
 
   recommendations.forEach((rec, index) => {
     const card = document.createElement('div');
@@ -3421,61 +3197,27 @@ function displayRecommendationsResults(recommendations) {
       aiBtn.style.boxShadow = '0 4px 12px rgba(79, 70, 229, 0.3)';
     };
 
-    actionContainer.appendChild(viewBtn);
-    actionContainer.appendChild(aiBtn);
-    grid.appendChild(card);
+    cardsContainer.appendChild(card);
   });
 
-  container.appendChild(grid);
-
-  // --- GO BACK BUTTON (PREMIUM DESIGN) ---
-  const footerContainer = document.createElement('div');
-  footerContainer.style.cssText = 'display: flex; justify-content: center; padding: 20px 0 60px 0;';
-
-  const backBtn = document.createElement('button');
-  backBtn.innerHTML = '← Start New Search';
-  backBtn.style.cssText = `
-    padding: 14px 32px;
-    background: white;
-    color: #475569;
-    border: 2px solid #cbd5e1;
-    border-radius: 50px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  `;
-
-  backBtn.onmouseenter = () => {
-    backBtn.style.borderColor = '#334155';
-    backBtn.style.color = '#1e293b';
-    backBtn.style.transform = 'translateY(-2px)';
-  };
-  backBtn.onmouseleave = () => {
-    backBtn.style.borderColor = '#cbd5e1';
-    backBtn.style.color = '#475569';
-    backBtn.style.transform = 'translateY(0)';
-  };
-
-  backBtn.onclick = function () {
-    container.innerHTML = '';
-    if (typeof backToForm === 'function') {
-      backToForm();
-    } else {
-      console.log("backToForm triggered fallback");
-      window.location.reload();
-    }
-  };
-
-  footerContainer.appendChild(backBtn);
-  container.appendChild(footerContainer);
+  // Ensure pagination container is hidden for AI results
+  const paginationContainer = document.getElementById('paginationContainer');
+  if (paginationContainer) paginationContainer.style.display = 'none';
 
   console.log('✅ Recommendations displayed successfully');
-  container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Add the "Back to Profile" button at the very end
+  const footerContainer = document.createElement('div');
+  footerContainer.style.cssText = 'grid-column: 1 / -1; display: flex; justify-content: center; padding: 40px 0;';
+
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn btn-outline btn-large';
+  backBtn.textContent = '← Start New Matching';
+  backBtn.onclick = gotoForm;
+
+  footerContainer.appendChild(backBtn);
+  cardsContainer.appendChild(footerContainer);
 }
 
 // 🤖 AI Explanation Function
@@ -3647,16 +3389,19 @@ function displayRecommendations(recommendations) {
 }
 
 function backToForm() {
-  const recSection = document.getElementById('recommendationResults');
-  const formSection = document.getElementById('profileFormSection');
+  // Hide recommendations section
+  const recSection = document.getElementById('recommendationsSection');
+  if (recSection) recSection.style.display = 'none';
 
-  if (recSection) recSection.innerHTML = '';
-  if (formSection) {
-    formSection.style.display = 'block';
-    formSection.scrollIntoView({ behavior: 'smooth' });
-  } else {
-    window.location.reload();
-  }
+  // Always navigate back to the home section and scroll to the profile form
+  navigateToSection('home');
+  setTimeout(() => {
+    const homeProfileCard = document.querySelector('#home .profile-form-card');
+    if (homeProfileCard) {
+      homeProfileCard.style.display = 'block';
+      homeProfileCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 100);
 }
 
 // Save and Load Profile (using JavaScript variables)
@@ -4142,22 +3887,18 @@ box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-// ===== PAGE INITIALIZATION =====
-// Load internships when the page loads
+// Consolidated initialization
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 Page loaded, initializing internships...');
+  console.log('🚀 Final DOM Initialization...');
 
-  // Check if we're on a page with the browse internships list
-  const browseContainer = document.getElementById('browseInternshipsList');
-  if (browseContainer) {
-    console.log('📋 Browse All page detected, loading internships...');
-    loadIntershipDataFromBackend();
-  }
+  // Ensure we check for elements after a brief delay to avoid race conditions with other scripts
+  setTimeout(() => {
+    const browseContainer = document.getElementById('browseInternshipsList');
+    const recContainer = document.getElementById('recommendationCards');
 
-  // Also check for recommendation cards container
-  const recContainer = document.getElementById('recommendationCards');
-  if (recContainer && !browseContainer) {
-    console.log('🎯 Recommendations page detected, loading internships...');
-    loadIntershipDataFromBackend();
-  }
+    if (browseContainer || recContainer) {
+      console.log('📋 Initializing data from backend...');
+      if (typeof loadIntershipDataFromBackend === 'function') loadIntershipDataFromBackend();
+    }
+  }, 100);
 });
