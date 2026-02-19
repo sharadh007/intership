@@ -1,0 +1,2642 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Internship Recommendation Platform</title>
+  <link rel="stylesheet" href="style.css?v=20260219-2120">
+  <link rel="stylesheet" href="badges.css?v=20260219-2120">
+  <link rel="stylesheet" href="notifications.css?v=20260219-2120">
+  <!-- PROFILE CSS -->
+  <style>
+    /* Profile Button */
+    .profile-btn {
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* PROFILE MODAL */
+    .profile-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .profile-modal-overlay {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .profile-modal-card {
+      background: white;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      z-index: 10001;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .profile-header {
+      display: flex;
+      justify-content: space-between;
+      padding: 24px 32px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .profile-header h2 {
+      margin: 0;
+      color: #333;
+      font-size: 24px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 32px;
+      color: #999;
+      cursor: pointer;
+    }
+
+    .profile-content {
+      padding: 32px;
+    }
+
+    .profile-name {
+      font-size: 28px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 24px;
+    }
+
+    .profile-info {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    .profile-actions {
+      padding: 0 32px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .form-group input {
+      padding: 12px;
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .btn-primary {
+      background: #4CAF50;
+      color: white;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #333;
+      padding: 14px;
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .btn-danger {
+      background: #ff6b6b;
+      color: white;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- AUTH LANDING VIEW (First thing user sees) -->
+  <div id="auth-landing-view"
+    style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); font-family: var(--font-family-base);">
+
+    <!-- Background Decor -->
+    <div style="position: absolute; width: 100%; height: 100%; overflow: hidden; z-index: 0;">
+      <div
+        style="position: absolute; top: -10%; left: -10%; width: 40%; height: 40%; background: rgba(50, 184, 198, 0.1); border-radius: 50%; filter: blur(80px);">
+      </div>
+      <div
+        style="position: absolute; bottom: -10%; right: -10%; width: 40%; height: 40%; background: rgba(147, 51, 234, 0.1); border-radius: 50%; filter: blur(80px);">
+      </div>
+    </div>
+
+    <div class="glass-panel"
+      style="position: relative; z-index: 10; padding: 3rem; border-radius: 20px; width: 100%; max-width: 900px; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+
+      <!-- Left Side: Welcome Info -->
+      <div style="display: flex; flex-direction: column; justify-content: center;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+          <span style="font-size: 2.5rem;">🇮🇳</span>
+          <h1 style="font-size: 1.8rem; font-weight: 800; color: #1a202c; line-height: 1.2;">
+            Internship<br>Recommendation Platform</h1>
+        </div>
+        <p style="color: #4a5568; margin-bottom: 30px; font-size: 1.1rem; line-height: 1.6;">
+          Unlock your potential with over <strong>1 Crore internships</strong> across India's top companies. Bridging
+          the gap between education and employment.
+        </p>
+
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 40px;">
+          <span
+            style="background: rgba(50, 184, 198, 0.1); color: #0d9488; padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">🚀
+            24 Sectors</span>
+          <span
+            style="background: rgba(147, 51, 234, 0.1); color: #7e22ce; padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">💰
+            Stipend Support</span>
+          <span
+            style="background: rgba(234, 179, 8, 0.1); color: #ca8a04; padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">🎓
+            Certificate</span>
+        </div>
+
+        <a href="admin.html"
+          style="text-decoration: none; color: #64748b; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; transition: color 0.2s;">
+          <span>🛡️</span> Admin Portal Access
+        </a>
+      </div>
+
+      <!-- Right Side: Auth Forms -->
+      <div
+        style="background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+
+        <!-- Toggle Tabs -->
+        <div style="display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 2rem;">
+          <button id="tab-login" onclick="showAuthTab('login')"
+            style="flex: 1; padding: 10px; background: none; border: none; font-weight: 600; color: #0d9488; border-bottom: 2px solid #0d9488; cursor: pointer;">Login</button>
+          <button id="tab-register" onclick="showAuthTab('register')"
+            style="flex: 1; padding: 10px; background: none; border: none; font-weight: 600; color: #94a3b8; cursor: pointer;">Register</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="landingLoginForm" onsubmit="handleLandingLogin(event)">
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 500; color: #334155;">Email
+              Address</label>
+            <input type="email" id="landingLoginEmail" name="email" required autocomplete="email"
+              style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem;">
+          </div>
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 500; color: #334155;">Password</label>
+            <div style="position: relative;">
+              <input type="password" id="landingLoginPassword" name="password" required autocomplete="current-password"
+                style="width: 100%; padding: 10px; padding-right: 40px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem;">
+              <button type="button" onclick="togglePasswordVisibility('landingLoginPassword')"
+                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94a3b8; padding: 0; display: flex; align-items: center; justify-content: center;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="feather feather-eye-off">
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                  </path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+            <label
+              style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #64748b; cursor: pointer;">
+              <input type="checkbox" id="rememberMe"> Remember me
+            </label>
+            <a href="#" onclick="alert('Please contact support to reset password.')"
+              style="color: #0d9488; font-size: 0.9rem; text-decoration: none;">Forgot Password?</a>
+          </div>
+
+          <button type="submit" class="btn-primary"
+            style="width: 100%; padding: 12px; font-size: 1rem; margin-bottom: 1rem;">Sign
+            In</button>
+
+          <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+            <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+            <span style="padding: 0 10px; color: #94a3b8; font-size: 0.9rem;">OR</span>
+            <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+          </div>
+
+          <button type="button" onclick="toggleGoogleLogin()"
+            style="width: 100%; padding: 12px; font-size: 1rem; background: white; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20"
+              alt="Google">
+            Continue with Google
+          </button>
+
+          <!-- Demo/Guest Mode -->
+          <button type="button" onclick="enterDemoMode()"
+            style="width: 100%; padding: 12px; font-size: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; margin-top: 10px;">
+            🚀 Try Demo (No Login Required)
+          </button>
+        </form>
+
+        <!-- Register Form (Initially Hidden) -->
+        <form id="landingRegisterForm" onsubmit="handleLandingRegister(event)" style="display: none;">
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 500; color: #334155;">Full
+              Name</label>
+            <input type="text" id="landingRegName" name="name" required autocomplete="name"
+              style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem;">
+          </div>
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 500; color: #334155;">Email
+              Address</label>
+            <input type="email" id="landingRegEmail" name="email" required autocomplete="email"
+              style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem;">
+          </div>
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 500; color: #334155;">Password</label>
+            <div style="position: relative;">
+              <input type="password" id="landingRegPassword" name="new-password" required autocomplete="new-password"
+                style="width: 100%; padding: 10px; padding-right: 40px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem;">
+              <button type="button" onclick="togglePasswordVisibility('landingRegPassword')"
+                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94a3b8; padding: 0; display: flex; align-items: center; justify-content: center;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="feather feather-eye-off">
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                  </path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary"
+            style="width: 100%; padding: 12px; font-size: 1rem; margin-bottom: 1rem;">Create
+            Account</button>
+
+          <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+            <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+            <span style="padding: 0 10px; color: #94a3b8; font-size: 0.9rem;">OR</span>
+            <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+          </div>
+
+          <button type="button" onclick="toggleGoogleLogin()"
+            style="width: 100%; padding: 12px; font-size: 1rem; background: white; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20"
+              alt="Google">
+            Continue with Google
+          </button>
+
+          <!-- Demo/Guest Mode -->
+          <button type="button" onclick="enterDemoMode()"
+            style="width: 100%; padding: 12px; font-size: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; margin-top: 10px;">
+            🚀 Try Demo (No Login Required)
+          </button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP VIEW (Hidden until auth) -->
+  <div id="main-app-view" style="display: none;">
+
+    <!-- RESUME NUDGE BANNER -->
+    <div id="resumeNudgeBanner"
+      style="background: linear-gradient(90deg, #eff6ff 0%, #dbeafe 100%); border-bottom: 1px solid #bfdbfe; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 15px; position: relative;">
+      <span style="font-size: 1.2rem;">📄</span>
+      <p style="margin: 0; color: #1e40af; font-size: 0.95rem; font-weight: 500;">
+        <strong>Want better matches?</strong> Upload your resume to unlock neat fonts and personalized recommendations!
+      </p>
+      <button onclick="document.getElementById('resumeNudgeBanner').style.display='none'"
+        style="background: none; border: none; color: #60a5fa; cursor: pointer; font-size: 1.2rem; margin-left: auto; padding: 0 10px;">
+        &times;
+      </button>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="nav-logo">
+          <span class="flag-icon">🇮🇳</span>
+          <span class="nav-title" data-translate="nav-title">Internship Recommendation Platform</span>
+        </div>
+
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+          <span></span><span></span><span></span>
+        </button>
+
+        <div class="nav-menu" id="navMenu">
+          <a href="#home" class="nav-link active" data-translate="nav-home">Home</a>
+          <a href="#about" class="nav-link" data-translate="nav-about">About</a>
+          <a href="#browse-all" class="nav-link" data-translate="nav-browse">Browse All</a>
+          <a href="#contact" class="nav-link" data-translate="nav-contact">Contact</a>
+        </div>
+
+        <!-- ✅ CORRECT NAVBAR STRUCTURE -->
+        <div class="nav-actions">
+          <select id="languageSelector" class="lang-btn">
+            <option value="en" selected> EN</option>
+            <option value="hi">हिं</option>
+            <option value="ta">த</option>
+            <option value="ma">म</option>
+          </select>
+
+          <div class="notification-container">
+            <button class="icon-btn" id="notificationBtn" onclick="toggleNotifications()">
+              🔔
+              <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown">
+              <div class="notification-header">
+                <h3>Notifications</h3>
+                <button onclick="markAllRead()"
+                  style="font-size: 0.8em; background:none; border:none; color:var(--color-primary); cursor:pointer;">Mark
+                  all read</button>
+              </div>
+              <div id="notificationList" class="notification-list">
+                <p style="padding: 10px; color: #666;">No new notifications</p>
+              </div>
+            </div>
+          </div>
+
+          <button class="theme-toggle" id="themeToggle">
+            <span class="sun-icon">☀️</span>
+            <span class="moon-icon">🌙</span>
+          </button>
+
+          <!-- USER MENU DROPDOWN (SaaS Style) -->
+          <div id="userMenuContainer" class="user-menu-container">
+            <button id="profileBtn" class="profile-icon-btn" onclick="toggleUserMenu()">
+              <svg viewBox="0 0 24 24" fill="#9ca3af" width="24" height="24">
+                <path
+                  d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+              </svg>
+            </button>
+
+            <div id="userDropdown" class="profile-dropdown-menu">
+              <!-- My Profile -->
+              <a href="#" onclick="Profile.open(); toggleUserMenu(); return false;" class="dropdown-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                My Profile
+              </a>
+
+              <div class="dropdown-divider"></div>
+
+              <!-- Logout -->
+              <a href="#" onclick="safeLogout(); toggleUserMenu(); return false;" class="dropdown-item logout-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                Logout
+              </a>
+            </div>
+          </div>
+
+          <!-- LOGIN BUTTONS REMOVED (Handled by Landing Page) -->
+          <div id="authButtons" style="display:none;"></div>
+        </div>
+
+      </div>
+    </nav>
+
+    <!-- Old Profile Modal Removed -->
+
+
+
+
+    <!-- Home Page -->
+    <section id="home" class="page-section active">
+      <!-- Hero Section with Animated Blobs -->
+      <div class="hero-section">
+        <div class="animated-blob blob-1"></div>
+        <div class="animated-blob blob-2"></div>
+        <div class="animated-blob blob-3"></div>
+        <div class="container hero-content">
+          <h1 class="hero-title">Internship Recommendation Platform</h1>
+          <p class="hero-subtitle">Providing valuable opportunities for youth across India</p>
+          <p class="hero-description">Empowering India's youth with real-world experience and career opportunities
+            across
+            24 sectors</p>
+          <button class="btn btn-cta" onclick="scrollToProfile()">Get Started Now</button>
+        </div>
+      </div>
+
+      <!-- AI Smart Resume Analyzer Section -->
+
+
+      <!-- Quick Profile Form Section -->
+      <div class="profile-section">
+        <div class="container">
+          <!-- AI Resume Analyzer (Moved Here) -->
+          <div class="resume-analyzer-card"
+            style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); max-width: 800px; margin: 0 auto 40px; border: 1px solid #e2e8f0;">
+            <div class="section-header" style="text-align: center; margin-bottom: 20px;">
+              <span class="section-tag"
+                style="background: #e0f2fe; color: #0284c7; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 700; display: inline-block; margin-bottom: 8px;">AI
+                POWERED</span>
+              <h3 style="margin: 0; color: #1e293b; font-size: 1.5rem;">Smart Resume Analyzer</h3>
+              <p style="color: #64748b; font-size: 0.95rem; margin-top: 5px;">Paste your resume to get <strong>200%
+                  better recommendations</strong> and auto-fill your profile instantly.</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+              <textarea id="resumeTextData"
+                placeholder="Paste your resume content (e.g. Education, Skills, Experience)..."
+                style="width: 100%; height: 120px; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: inherit; resize: vertical; background: #f8fafc; font-size: 0.95rem;"></textarea>
+
+              <div style="display: flex; align-items: center; justify-content: center;">
+                <button type="button" id="btnAnalyzeResume" onclick="Profile.analyzeResume()" class="btn-primary"
+                  style="width: auto; padding: 12px 30px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); gap: 10px; font-weight: 600; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);">
+                  <span>✨ Analyze &amp; Auto-Fill Form</span>
+                </button>
+              </div>
+
+              <div id="resumeLoading"
+                style="display: none; background: #ecfdf5; color: #059669; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #a7f3d0; font-size: 0.9em;">
+                <i class="fas fa-spinner fa-spin"></i> Processing...
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-form-card">
+            <h2 class="profile-form-title">Create Your Profile for Personalized Matches</h2>
+            <p class="profile-form-subtitle">Tell us about yourself to get accurate internship recommendations</p>
+
+            <form id="quickProfileForm" onsubmit="handleQuickProfileSubmit(event)">
+              <div class="form-row">
+                <div class="form-field">
+                  <label>First Name <span class="required">*</span></label>
+                  <input type="text" name="firstName" placeholder="Your first name" required>
+                </div>
+                <div class="form-field">
+                  <label>Last Name <span class="required">*</span></label>
+                  <input type="text" name="lastName" placeholder="Your last name" required>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-field">
+                  <label>Email Address <span class="required">*</span></label>
+                  <input type="email" name="email" placeholder="your.email@example.com" required>
+                </div>
+                <div class="form-field">
+                  <label>Phone Number <span class="required">*</span></label>
+                  <input type="tel" name="phone" placeholder="10-digit phone number" pattern="[0-9]{10}" required>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-field">
+                  <label>Education Level <span class="required">*</span></label>
+                  <select name="education" required>
+                    <option value="">Select education level</option>
+                    <option value="12th Pass">12th Pass</option>
+                    <option value="Diploma">Diploma</option>
+                    <option value="Bachelor's Degree">Bachelor's Degree</option>
+                    <option value="Master's Degree">Master's Degree</option>
+                    <option value="ITI">ITI</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label>Field of Study <span class="required">*</span></label>
+                  <select name="field" required>
+                    <option value="">Select field of study</option>
+                    <option value="CSE">Computer Science &amp; Engineering</option>
+                    <option value="ECE">Electronics &amp; Communication</option>
+                    <option value="ME">Mechanical Engineering</option>
+                    <option value="CE">Civil Engineering</option>
+                    <option value="EE">Electrical Engineering</option>
+                    <option value="Commerce">Commerce</option>
+                    <option value="Science">Science</option>
+                    <option value="Arts">Arts</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row full-width">
+                <div class="form-field">
+                  <label>Current Skills <span class="required">*</span></label>
+                  <input type="text" name="skills" placeholder="e.g., Python, Data Analysis, Leadership" required>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-field">
+                  <label>Career Goal <span class="required">*</span></label>
+                  <select name="career" required>
+                    <option value="">Select career goal</option>
+                    <option value="Technical Track">Technical Track</option>
+                    <option value="Management Track">Management Track</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Operations">Operations</option>
+                    <option value="Sales">Sales &amp; Marketing</option>
+                    <option value="Undecided">Undecided</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label>Preferred Industry/Sector <span class="required">*</span></label>
+                  <select name="industry" required>
+                    <option value="">Select industry</option>
+                    <option value="IT">Information Technology</option>
+                    <option value="Finance">Finance &amp; Banking</option>
+                    <option value="Energy">Energy</option>
+                    <option value="Automotive">Automotive</option>
+                    <option value="Manufacturing">Manufacturing</option>
+                    <option value="FMCG">FMCG</option>
+                    <option value="Construction">Construction</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Consulting">Consulting</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-field">
+                  <label>Work Preference <span class="required">*</span></label>
+                  <select name="workPreference" id="workPreferenceInput" onchange="handleWorkPreferenceChange(this)"
+                    required>
+                    <option value="office">In-Office (Preferred Location)</option>
+                    <option value="both">Both (Office & Remote)</option>
+                    <option value="remote">Remote Only (Work From Home)</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label>Preferred Location <span class="required">*</span></label>
+                  <input type="text" name="location" id="locationInput" placeholder="Mumbai, Bangalore, Delhi" required>
+                </div>
+                <div class="form-field">
+                  <label>Work Experience (months) <span class="required">*</span></label>
+                  <input type="number" name="experience" placeholder="0" min="0" max="120" required>
+                </div>
+              </div>
+
+              <div class="form-row full-width">
+                <div class="form-field">
+                  <label>Your Strengths/Achievements</label>
+                  <textarea name="strengths" placeholder="Share your key strengths or notable achievements (optional)"
+                    rows="3"></textarea>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-field">
+                  <label>CGPA/Percentage <span class="required">*</span></label>
+                  <input type="number" name="cgpa" placeholder="7.5" step="0.01" min="0" max="10" required>
+                </div>
+                <div class="form-field">
+                  <label>Availability to Start <span class="required">*</span></label>
+                  <select name="availability" required>
+                    <option value="">Select availability</option>
+                    <option value="Immediate">Immediate</option>
+                    <option value="Soon">Within 1-2 months</option>
+                    <option value="Flexible">Flexible</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row full-width">
+                <div class="form-field checkbox-field">
+                  <input type="checkbox" id="agreeShare" name="agree" required>
+                  <label for="agreeShare">I agree to share my profile for internship matching <span
+                      class="required">*</span></label>
+                </div>
+              </div>
+
+              <div class="form-row full-width">
+                <button type="submit" class="btn btn-primary btn-large btn-full-width">Get Personalized
+                  Recommendations</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Features Section with Backlights -->
+      <div class="features-section">
+        <div class="container">
+          <h2 class="section-title">What We Offer</h2>
+          <div class="features-grid">
+            <div class="feature-card backlight-card">
+              <div class="card-backlight"></div>
+              <div class="feature-icon">💼</div>
+              <h3 class="feature-number">1 Crore Internships</h3>
+              <p class="feature-text">Over 5 years across India's top 500 companies</p>
+            </div>
+            <div class="feature-card backlight-card">
+              <div class="card-backlight"></div>
+              <div class="feature-icon">💰</div>
+              <h3 class="feature-number">₹5,000 Monthly Stipend</h3>
+              <p class="feature-text">Plus ₹6,000 one-time grant upon joining</p>
+            </div>
+            <div class="feature-card backlight-card">
+              <div class="card-backlight"></div>
+              <div class="feature-icon">🌐</div>
+              <h3 class="feature-number">24 Sectors</h3>
+              <p class="feature-text">Energy, IT, Banking, Automotive, Healthcare and more</p>
+            </div>
+            <div class="feature-card backlight-card">
+              <div class="card-backlight"></div>
+              <div class="feature-icon">⏱️</div>
+              <h3 class="feature-number">12-Month Duration</h3>
+              <p class="feature-text">Comprehensive hands-on experience and training</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics Section with Backlights -->
+      <div class="stats-section">
+        <div class="container">
+          <div class="stats-grid">
+            <div class="stat-card pulse-card">
+              <div class="stat-backlight"></div>
+              <h3 class="stat-number">549</h3>
+              <p class="stat-label">Top Companies</p>
+            </div>
+            <div class="stat-card pulse-card">
+              <div class="stat-backlight"></div>
+              <h3 class="stat-number">24</h3>
+              <p class="stat-label">Different Sectors</p>
+            </div>
+            <div class="stat-card pulse-card">
+              <div class="stat-backlight"></div>
+              <h3 class="stat-number">737</h3>
+              <p class="stat-label">Districts Covered</p>
+            </div>
+            <div class="stat-card pulse-card">
+              <div class="stat-backlight"></div>
+              <h3 class="stat-number">90K+</h3>
+              <p class="stat-label">Active Opportunities</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Why Choose Section with Backlights -->
+      <div class="why-choose-section">
+        <div class="container">
+          <h2 class="section-title">Why Choose Internship Recommendation Platform?</h2>
+          <div class="why-choose-grid">
+            <div class="why-card rotate-card">
+              <div class="rotate-backlight"></div>
+              <div class="why-icon">🎯</div>
+              <h3 class="why-title">AI-Powered Matching</h3>
+              <p class="why-text">Smart algorithm matches skills with perfect internships</p>
+            </div>
+            <div class="why-card rotate-card">
+              <div class="rotate-backlight"></div>
+              <div class="why-icon">🏆</div>
+              <h3 class="why-title">Industry Leaders</h3>
+              <p class="why-text">Work with prestigious companies across India</p>
+            </div>
+            <div class="why-card rotate-card">
+              <div class="rotate-backlight"></div>
+              <div class="why-icon">📈</div>
+              <h3 class="why-title">Career Growth</h3>
+              <p class="why-text">Build professional portfolio with real experience</p>
+            </div>
+            <div class="why-card rotate-card">
+              <div class="rotate-backlight"></div>
+              <div class="why-icon">🤝</div>
+              <h3 class="why-title">Mentorship</h3>
+              <p class="why-text">Guidance from experienced professionals</p>
+            </div>
+            <div class="why-card rotate-card">
+              <div class="rotate-backlight"></div>
+              <div class="why-icon">🌍</div>
+              <h3 class="why-title">Nationwide Access</h3>
+              <p class="why-text">Opportunities in all regions including rural areas</p>
+            </div>
+            <div class="why-card rotate-card">
+              <div class="rotate-backlight"></div>
+              <div class="why-icon">💼</div>
+              <h3 class="why-title">Placement Ready</h3>
+              <p class="why-text">Build skills employers are looking for</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA Section -->
+      <div class="cta-section">
+        <div class="container">
+          <h2 class="cta-title">Ready to Transform Your Career?</h2>
+          <p class="cta-text">Join thousands of young professionals. Start your internship journey today!</p>
+          <button class="btn btn-cta-white" onclick="navigateToSection('browse-all')">Explore Internships Now</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Page -->
+    <section id="about" class="page-section">
+      <div class="container">
+        <h1 class="page-title" data-translate="about-title">About Internship Recommendation Platform</h1>
+
+        <div class="about-content">
+          <div class="about-card">
+            <h2 data-translate="about-background-title">Background &amp; Objectives</h2>
+            <p data-translate="about-background-text">The Internship Recommendation Platform was launched to address the
+              employability gap among Indian youth. It aims to provide practical work experience, enhance skills, and
+              improve the career prospects of young graduates across the country, with special focus on rural, tribal,
+              and
+              underserved communities.</p>
+          </div>
+
+          <div class="about-card">
+            <h2 data-translate="about-eligibility-title">Eligibility Criteria</h2>
+            <ul class="about-list">
+              <li data-translate="about-eligibility-1">Age: 21-24 years</li>
+              <li data-translate="about-eligibility-2">Education: Bachelor's degree or Diploma in relevant field</li>
+              <li data-translate="about-eligibility-3">Family income: Up to ₹8 lakh per annum</li>
+              <li data-translate="about-eligibility-4">Indian citizen with valid Aadhaar card</li>
+              <li data-translate="about-eligibility-5">Not currently employed or enrolled in full-time education</li>
+            </ul>
+          </div>
+
+          <div class="about-card">
+            <h2 data-translate="about-benefits-title">Benefits</h2>
+            <ul class="about-list">
+              <li data-translate="about-benefits-1">Monthly stipend of ₹5,000</li>
+              <li data-translate="about-benefits-2">One-time assistance of ₹6,000</li>
+              <li data-translate="about-benefits-3">12 months of practical work experience</li>
+              <li data-translate="about-benefits-4">Industry exposure with leading companies</li>
+              <li data-translate="about-benefits-5">Certificate of completion</li>
+              <li data-translate="about-benefits-6">Skill development and training</li>
+            </ul>
+          </div>
+
+          <div class="about-card">
+            <h2 data-translate="about-sectors-title">Participating Sectors</h2>
+            <div class="sectors-grid">
+              <span class="sector-tag">Information Technology</span>
+              <span class="sector-tag">Banking &amp; Finance</span>
+              <span class="sector-tag">Energy &amp; Oil &amp; Gas</span>
+              <span class="sector-tag">Automotive</span>
+              <span class="sector-tag">Manufacturing</span>
+              <span class="sector-tag">FMCG</span>
+              <span class="sector-tag">Healthcare</span>
+              <span class="sector-tag">Engineering &amp; Construction</span>
+              <span class="sector-tag">Telecommunications</span>
+              <span class="sector-tag">Retail</span>
+              <span class="sector-tag">Agriculture</span>
+              <span class="sector-tag">Education</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Find Internships Page -->
+    <section id="find-internships" class="page-section">
+      <div class="container">
+        <h1 class="page-title" data-translate="find-title">Find Internships</h1>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs-navigation">
+          <button class="tab-btn active" data-tab="recommendations" onclick="switchTab('recommendations')">
+            Get Recommendations
+          </button>
+          <button class="tab-btn" data-tab="browse" onclick="switchTab('browse')">
+            Browse All
+          </button>
+        </div>
+
+        <!-- Tab 1: Get Recommendations -->
+        <div id="recommendations-tab" class="tab-content active">
+          <div class="recommendations-container">
+            <!-- Profile Form Section -->
+            <div id="profileFormSection" class="profile-form-section">
+              <div class="form-card">
+                <h2>Tell us about yourself</h2>
+                <p class="form-description">Fill out your profile to get personalized internship recommendations</p>
+
+                <form id="profileForm" onsubmit="handleProfileSubmit(event)">
+                  <div class="form-group">
+                    <label>Full Name <span class="required">*</span></label>
+                    <input type="text" id="fullName" class="form-control" placeholder="Enter your full name"
+                      value="Sharadh" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Email Address <span class="required">*</span></label>
+                    <input type="email" id="emailAddress" class="form-control" placeholder="Enter your email"
+                      value="sdy@gmail.com" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Education Level <span class="required">*</span></label>
+                    <select id="educationLevel" class="form-control" required>
+                      <option value="">Select your education level</option>
+                      <option value="12th Pass">12th Pass</option>
+                      <option value="Diploma">Diploma</option>
+                      <option value="Bachelor's Degree" selected>Bachelor's Degree</option>
+                      <option value="Master's Degree">Master's Degree</option>
+                      <option value="ITI">ITI</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Your Skills <span class="required">*</span></label>
+                    <div class="textarea-with-icon">
+                      <textarea id="skillsInput" class="form-control" rows="4"
+                        placeholder="Enter your skills (e.g., Python, Data Analysis, Digital Marketing)"
+                        required></textarea>
+                      <button type="button" class="mic-button" title="Voice input (decoration)">🎤</button>
+                    </div>
+                    <small class="helper-text">Enter skills separated by commas</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Interests <span class="required">*</span></label>
+                    <select id="interests" class="form-control" required>
+                      <option value="">Select your interest area</option>
+                      <option value="Information Technology">Information Technology</option>
+                      <option value="Banking & Finance">Banking &amp; Finance</option>
+                      <option value="Energy & Oil & Gas">Energy &amp; Oil &amp; Gas</option>
+                      <option value="Automotive">Automotive</option>
+                      <option value="Manufacturing">Manufacturing</option>
+                      <option value="FMCG">FMCG</option>
+                      <option value="Engineering & Construction">Engineering &amp; Construction</option>
+                      <option value="Healthcare">Healthcare</option>
+                      <option value="Agriculture & Rural Development" selected>Agriculture &amp; Rural Development
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Preferred Location</label>
+                    <input type="text" id="preferredLocation" class="form-control"
+                      placeholder="Enter your preferred location (optional)">
+                  </div>
+
+                  <div class="form-group">
+                    <label>Preferred Language <span class="required">*</span></label>
+                    <select id="preferredLanguage" class="form-control" required>
+                      <option value="English" selected>English</option>
+                      <option value="हिन्दी">हिन्दी</option>
+                      <option value="தமிழ்">தமிழ்</option>
+                      <option value="मराठी">मराठी</option>
+                    </select>
+                  </div>
+
+                  <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-large btn-full-width">Get Recommendations</button>
+                    <div class="secondary-actions">
+                      <button type="button" class="btn btn-outline" onclick="saveProfile()">Save My Profile</button>
+                      <button type="button" class="btn btn-outline" onclick="loadProfile()">Load Saved Profile</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Recommendations Display Section -->
+            <div id="recommendationsSection" class="recommendations-section" style="display: none;">
+              <div class="recommendations-header">
+                <h2 id="greetingText">Hello! 👋</h2>
+                <p id="recommendationsMessage">Based on your profile, we found internships that match your skills and
+                  interests.</p>
+              </div>
+
+              <div id="recommendationCards" class="recommendation-cards">
+                <!-- Recommendation cards will be inserted here -->
+              </div>
+
+              <!-- Pagination Controls -->
+              <div id="paginationContainer" class="pagination-container"
+                style="display: none; margin: 30px 0; text-align: center;">
+                <button id="prevPageBtn" class="btn btn-outline" onclick="previousPage()" style="margin-right: 10px;">←
+                  Previous</button>
+                <span id="pageInfo" class="page-info" style="margin: 0 20px; font-weight: 500;">Page 1</span>
+                <button id="nextPageBtn" class="btn btn-outline" onclick="nextPage()">Next →</button>
+
+                <div style="margin-top: 15px; color: #666; font-size: 0.9rem;">
+                  Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> internships (Page <span
+                    id="pageNum">1</span> of <span id="totalPages">1</span>)
+                </div>
+              </div>
+
+              <button class="btn btn-outline btn-large" onclick="backToForm()">← Back to Form</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Browse All -->
+        <div id="browse-tab" class="tab-content">
+          <div class="browse-container">
+            <div class="search-filter-section">
+              <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by company, role, or location..."
+                  data-translate-placeholder="search-placeholder">
+                <button class="btn btn-primary" onclick="searchInternships()"
+                  data-translate="btn-search">Search</button>
+              </div>
+
+              <!-- AI Feature -->
+              <div style="margin-top: 1rem; text-align: center;">
+                <button class="btn btn-accent" onclick="getAIRecommendations()"
+                  style="background: linear-gradient(45deg, #6a11cb, #2575fc); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(37, 117, 252, 0.3);">
+                  ✨ Get AI-Powered Recommendations
+                </button>
+                <div id="aiLoading" style="display: none; margin-top: 15px; color: #666;">
+                  Analyzing profile with AI... <i class="fas fa-spinner fa-spin"></i>
+                </div>
+              </div>
+
+              <!-- AI Results Section -->
+              <div id="aiResultsSection" class="internships-grid"
+                style="display: none; margin-top: 2rem; border-top: 2px dashed #ddd; padding-top: 2rem;">
+                <!-- AI Cards Injected Here -->
+              </div>
+            </div>
+
+            <div class="browse-layout">
+              <aside class="filters-sidebar">
+                <h3>Filters</h3>
+
+                <div class="filter-group">
+                  <label class="filter-label">Sector</label>
+                  <div class="checkbox-group" id="sectorCheckboxes">
+                    <!-- Checkboxes will be populated by JS -->
+                  </div>
+                </div>
+
+                <div class="filter-group">
+                  <label class="filter-label">Location</label>
+                  <div class="checkbox-group" id="locationCheckboxes">
+                    <!-- Checkboxes will be populated by JS -->
+                  </div>
+                </div>
+
+                <button class="btn btn-outline btn-full-width" onclick="resetBrowseFilters()">Reset Filters</button>
+              </aside>
+
+              <div class="internships-list">
+                <div id="browseInternshipsList" class="internships-grid">
+                  <!-- Internships will be loaded here by JavaScript -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Browse All Page -->
+    <section id="browse-all" class="page-section">
+      <div class="container-wide">
+        <div class="browse-all-header">
+          <h1 class="page-title" data-translate="browse-title">Browse All Internships</h1>
+          <p class="browse-subtitle">Explore all available internship opportunities from top companies across India</p>
+        </div>
+
+        <!-- Filter & Search Section -->
+        <div class="browse-all-controls">
+          <div class="search-bar-large">
+            <input type="text" id="browseSearchInput" placeholder="Search by company, role, or location..."
+              oninput="searchBrowseAll()">
+          </div>
+
+          <div class="filter-controls-row">
+            <div class="filter-control">
+              <label>Sort By:</label>
+              <select id="sortBySelect" onchange="sortBrowseAll()">
+                <option value="recent">Most Recent</option>
+                <option value="company">Company Name</option>
+                <option value="location">Location</option>
+              </select>
+            </div>
+
+            <div class="filter-control">
+              <label>Filter by Sector:</label>
+              <select id="sectorFilterSelect" onchange="filterBrowseAll()">
+                <option value="">All Sectors</option>
+              </select>
+            </div>
+
+            <div class="filter-control">
+              <label>Filter by Location:</label>
+              <select id="locationFilterSelect" onchange="filterBrowseAll()">
+                <option value="">All Locations</option>
+              </select>
+            </div>
+
+            <button class="btn btn-outline" onclick="clearAllBrowseFilters()">Clear All</button>
+          </div>
+        </div>
+
+        <!-- Results Counter -->
+        <div class="results-counter">
+          <p id="resultsCount">Showing 75 of 75 internships</p>
+        </div>
+
+        <!-- Internships Grid -->
+        <div id="browseAllGrid" class="browse-all-grid">
+          <!-- Internship cards will be loaded here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Page -->
+    <section id="contact" class="page-section">
+      <div class="container">
+        <h1 class="page-title" data-translate="contact-title">Contact Us</h1>
+
+        <div class="contact-content">
+          <div class="contact-info">
+            <div class="contact-card">
+              <h3 data-translate="contact-helpline">Helpline Number</h3>
+              <p class="contact-number">1800 116 090</p>
+              <p data-translate="contact-helpline-time">Available: Monday to Friday, 9 AM - 6 PM IST</p>
+            </div>
+
+            <div class="contact-card">
+              <h3 data-translate="contact-email-title">Email Support</h3>
+              <p>support@pminternship.gov.in</p>
+              <p>info@pminternship.gov.in</p>
+            </div>
+
+            <div class="contact-card">
+              <h3 data-translate="contact-faq-title">Frequently Asked Questions</h3>
+              <div class="faq-list">
+                <details>
+                  <summary data-translate="faq-q1">Who is eligible for the PM Internship Scheme?</summary>
+                  <p data-translate="faq-a1">Youth between 21-24 years with a Bachelor's degree or Diploma, and family
+                    income up to ₹8 lakh per annum.</p>
+                </details>
+                <details>
+                  <summary data-translate="faq-q2">What is the stipend amount?</summary>
+                  <p data-translate="faq-a2">₹5,000 per month plus a one-time assistance of ₹6,000.</p>
+                </details>
+                <details>
+                  <summary data-translate="faq-q3">How long is the internship duration?</summary>
+                  <p data-translate="faq-a3">The internship duration is 12 months (1 year).</p>
+                </details>
+              </div>
+            </div>
+          </div>
+
+          <div class="contact-form-container">
+            <h3 data-translate="contact-form-title">Send us a Message</h3>
+            <form id="contactForm" onsubmit="handleContactSubmit(event)">
+              <div class="form-group">
+                <label data-translate="form-name">Name:</label>
+                <input type="text" id="contactName" required>
+              </div>
+              <div class="form-group">
+                <label data-translate="form-email">Email:</label>
+                <input type="email" id="contactEmail" required>
+              </div>
+              <div class="form-group">
+                <label data-translate="form-message">Message:</label>
+                <textarea id="contactMessage" rows="5" required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" data-translate="btn-submit">Submit</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Internship Detail Modal -->
+    <div id="internshipModal" class="modal">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+        <div id="modalBody">
+          <!-- Modal content will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Interview Coach Modal -->
+    <div id="interviewModal" class="modal" style="z-index: 10002;">
+      <div class="modal-content"
+        style="max-width: 600px; height: 80vh; display: flex; flex-direction: column; padding: 0;">
+        <div class="modal-header"
+          style="padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+          <div>
+            <h3 style="margin:0; font-size: 1.2rem; color: #334155;">🎤 AI Interview Coach</h3>
+            <p id="interviewContext" style="margin:0; font-size: 0.85rem; color: #64748b;">Practice for Role @ Company
+            </p>
+          </div>
+          <button class="modal-close" onclick="closeInterviewModal()"
+            style="position: static; font-size: 1.5rem; color: #64748b;">&times;</button>
+        </div>
+
+        <div id="interviewChatArea"
+          style="flex: 1; overflow-y: auto; padding: 20px; background: #fff; display: flex; flex-direction: column; gap: 15px;">
+          <!-- Chat messages go here -->
+          <div class="chat-msg model"
+            style="background: #f1f5f9; padding: 10px 15px; border-radius: 12px 12px 12px 0; align-self: flex-start; max-width: 80%;">
+            Hello! I'm your AI Interviewer. Ready to practice?
+          </div>
+        </div>
+
+        <div class="modal-footer" style="padding: 15px; border-top: 1px solid #eee; background: #fff;">
+          <form onsubmit="handleInterviewSubmit(event)" style="display: flex; gap: 10px; width: 100%;">
+            <input type="text" id="interviewInput" placeholder="Type your answer..." autocomplete="off"
+              style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+            <button type="submit" class="btn btn-primary" style="width: auto; padding: 0 20px;">Send</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <!-- Professional Profile Modal (Refactored) -->
+    <div id="profileModal" class="profile-modal-overlay" style="display: none;"
+      onclick="if(event.target === this) Profile.close()">
+      <div class="profile-modal-card" onclick="event.stopPropagation()">
+
+        <!-- NEW HEADER -->
+        <div class="profile-header-new">
+          <div class="header-avatar" id="headerAvatar">U</div>
+          <div class="header-info">
+            <h2 id="headerName">User Name</h2>
+            <p id="headerEmail">email@example.com</p>
+          </div>
+          <button class="close-btn" style="margin-left: auto; font-size: 24px;"
+            onclick="Profile.close()">&times;</button>
+        </div>
+
+        <!-- NEW BODY WITH SCROLL -->
+        <div class="profile-body-scroll">
+
+          <!-- PERSONAL INFO CARD (Centered) -->
+          <div class="profile-section-card" style="text-align: center;">
+            <div class="section-title" style="justify-content: center;">
+              <span>👤</span> Account Details
+            </div>
+
+            <!-- Full Name (Read Only) -->
+            <div class="field-row" style="flex-direction: column; justify-content: center; gap: 8px; border: none;">
+              <div class="field-label" style="font-size: 0.85rem; color: #64748b;">Full Name</div>
+              <div class="field-value-container" id="container_name" style="width: 100%; justify-content: center;">
+                <input type="text" id="input_name_persistent" class="inline-input" placeholder="Full Name"
+                  style="text-align: center; font-size: 1.1rem; font-weight: 600; width: 80%;">
+                <button class="btn-save" onclick="Profile.saveNamePersistent()"
+                  style="margin-top: 5px; padding: 4px 12px; cursor: pointer;">Save</button>
+              </div>
+            </div>
+
+            <!-- Email (Read Only) -->
+            <div class="field-row"
+              style="flex-direction: column; justify-content: center; gap: 8px; border: none; margin-top: 10px;">
+              <div class="field-label" style="font-size: 0.85rem; color: #64748b;">Email Address</div>
+              <div class="field-value-container" style="width: 100%; justify-content: center; flex-wrap: wrap;">
+                <span class="field-value" id="val_email">email@example.com</span>
+                <span class="verified-badge" style="margin-left: 8px;">✓ Verified</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ACTIONS CARD -->
+          <div class="profile-section-card" style="border: none; background: transparent;">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <button class="btn btn-secondary" onclick="safeLogout()"
+                style="width: 100%; justify-content: center; padding: 12px;">
+                🚪 Logout
+              </button>
+
+              <button class="btn btn-danger" onclick="Profile.deleteAccount()"
+                style="width: 100%; justify-content: center; padding: 12px; border: 1px solid #fee2e2; color: #dc2626; background: #fef2f2;">
+                🗑️ Delete Account
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <!-- Add this inside your HTML body, before closing </body> -->
+
+    <!-- Professional Auth Modal -->
+    <div id="authModal" class="auth-modal" style="display: none;">
+      <div class="auth-container">
+        <!-- Close button -->
+        <button class="auth-close" onclick="closeAuthModal()">&times;</button>
+
+        <!-- Tab buttons -->
+        <div class="auth-tabs">
+          <button class="tab-btn active" onclick="switchToLogin()">Login</button>
+          <button class="tab-btn" onclick="switchToRegister()">Register</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
+          <h2>Welcome Back</h2>
+          <p class="auth-subtitle">Sign in to your PM Internship account</p>
+
+          <div class="form-group">
+            <label for="loginEmail">Email Address</label>
+            <input type="email" id="loginEmail" placeholder="Enter your email" required />
+          </div>
+
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" placeholder="Enter your password" required />
+            <small class="show-pass" onclick="togglePassword('loginPassword', this)">Show password</small>
+          </div>
+
+          <button type="submit" class="auth-btn">Sign In</button>
+
+          <!-- Google Login Button -->
+          <button type="button" class="auth-btn google-btn" onclick="googleLogin()">
+            <span style="margin-right: 8px;">👤</span>Continue with Google
+          </button>
+
+          <div id="loginMessage" class="auth-message"></div>
+
+        </form>
+
+        <!-- REGISTER FORM -->
+        <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
+          <h2>Create Account</h2>
+          <p class="auth-subtitle">Join PM Internship today</p>
+
+          <div class="form-group">
+            <label for="registerName">Full Name</label>
+            <input type="text" id="registerName" placeholder="Enter your full name" required />
+          </div>
+
+          <div class="form-group">
+            <label for="registerEmail">Email Address</label>
+            <input type="email" id="registerEmail" placeholder="Enter your email" required />
+          </div>
+
+          <div class="form-group">
+            <label for="registerPassword">Password</label>
+            <input type="password" id="registerPassword" placeholder="Create a password (6+ chars)" required />
+            <small class="show-pass" onclick="togglePassword('registerPassword', this)">Show password</small>
+          </div>
+
+
+
+
+
+          <button type="submit" class="auth-btn">Create Account</button>
+
+          <div id="registerMessage" class="auth-message"></div>
+        </form>
+      </div>
+    </div>
+
+
+
+    <style>
+      .lang-btn {
+        position: relative;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 6px 12px 6px 8px;
+        /* Space for icon */
+        font-size: 14px;
+        color: #333;
+        min-width: 70px;
+        height: 36px;
+        cursor: pointer;
+      }
+
+      .lang-btn option {
+        padding-left: 30px;
+        /* No icon in dropdown */
+        background: white;
+        color: #333;
+      }
+
+      .lang-btn:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+      }
+
+
+
+
+
+      /* =========================================
+         INLINE EDITABLE PROFILE CSS (SaaS Style)
+         ========================================= */
+      :root {
+        --profile-bg-soft: #f8fafc;
+        --profile-border: #e2e8f0;
+        --profile-text-main: #1e293b;
+        --profile-text-muted: #64748b;
+        --profile-primary: #0d9488;
+        --profile-primary-hover: #0f766e;
+      }
+
+      /* Profile Modal Card Override */
+      .profile-modal-card {
+        max-width: 650px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+
+      /* Header Section */
+      .profile-header-new {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 24px;
+        border-bottom: 1px solid var(--profile-border);
+        background: linear-gradient(to right, #f0f9ff, #fff);
+        border-radius: 12px 12px 0 0;
+      }
+
+      .header-avatar {
+        width: 64px;
+        height: 64px;
+        background: var(--profile-primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .header-info h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: var(--profile-text-main);
+      }
+
+      .header-info p {
+        margin: 4px 0 0 0;
+        color: var(--profile-text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* Content Scroll Area */
+      .profile-body-scroll {
+        padding: 24px;
+        overflow-y: auto;
+        max-height: 60vh;
+      }
+
+      /* Section Cards */
+      .profile-section-card {
+        border: 1px solid var(--profile-border);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 20px;
+        background: white;
+      }
+
+      .section-title {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--profile-text-muted);
+        font-weight: 700;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* Field Rows */
+      .field-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px dashed var(--profile-border);
+      }
+
+      .field-row:last-child {
+        border-bottom: none;
+      }
+
+      .field-label {
+        font-size: 0.9rem;
+        color: var(--profile-text-muted);
+        font-weight: 500;
+        flex: 1;
+      }
+
+      .field-value-container {
+        flex: 2;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        min-height: 32px;
+        /* Prevent layout shift */
+      }
+
+      .field-value {
+        font-size: 0.95rem;
+        color: var(--profile-text-main);
+        font-weight: 500;
+        text-align: right;
+      }
+
+      /* Edit Controls */
+      .edit-icon {
+        color: #94a3b8;
+        cursor: pointer;
+        opacity: 0.6;
+        transition: all 0.2s;
+        padding: 4px;
+        border-radius: 4px;
+      }
+
+      .edit-icon:hover {
+        opacity: 1;
+        background: #f1f5f9;
+        color: var(--profile-primary);
+      }
+
+      /* Input Mode */
+      .inline-input {
+        padding: 6px 10px;
+        border: 1px solid var(--profile-primary);
+        border-radius: 6px;
+        font-size: 0.9rem;
+        width: 100%;
+        max-width: 200px;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
+      }
+
+      .inline-input:focus {
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2);
+      }
+
+      .verified-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #ecfdf5;
+        color: #059669;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid #a7f3d0;
+      }
+
+      /* Action Buttons */
+      .inline-actions {
+        display: flex;
+        gap: 8px;
+        animation: fadeIn 0.2s;
+      }
+
+      .btn-icon {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .btn-save {
+        color: #16a34a;
+        background: #dcfce7;
+      }
+
+      .btn-save:hover {
+        background: #bbf7d0;
+      }
+
+      .btn-cancel {
+        color: #ef4444;
+        background: #fee2e2;
+      }
+
+      .btn-cancel:hover {
+        background: #fecaca;
+      }
+
+      /* Tags for Skills */
+      .skill-tag {
+        background: #f0f9ff;
+        color: #0369a1;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        display: inline-block;
+        margin: 2px;
+        border: 1px solid #bae6fd;
+      }
+
+      p.helper-text {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-top: 4px;
+        text-align: right;
+      }
+
+
+      .google-btn {
+        margin-top: 10px;
+        background: #ffffff;
+        color: #444;
+        border: 1px solid #ddd;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .google-btn:hover {
+        background: #f5f5f5;
+      }
+
+
+
+      .show-pass {
+        display: inline-block;
+        margin-top: 4px;
+        font-size: 12px;
+        color: #208084;
+        cursor: pointer;
+      }
+
+      .show-pass:hover {
+        text-decoration: underline;
+      }
+
+      /* Profile Button */
+      .profile-btn {
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* CENTERED MODAL */
+      .profile-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+      }
+
+      .profile-modal-content {
+        background: white;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease;
+      }
+
+      @keyframes modalSlideIn {
+        from {
+          transform: scale(0.8);
+          opacity: 0;
+        }
+
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      .profile-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 32px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .profile-modal-header h2 {
+        margin: 0;
+        color: #333;
+        font-size: 24px;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 28px;
+        cursor: pointer;
+        color: #999;
+      }
+
+      /* Profile Sections */
+      .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        margin: 0 auto 20px;
+      }
+
+      .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 16px;
+        margin: 24px 0;
+      }
+
+      .stat-card {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        padding: 20px;
+        border-radius: 16px;
+        text-align: center;
+        border: 2px solid transparent;
+      }
+
+      .stat-card.strong {
+        border-color: #4CAF50;
+      }
+
+      .stat-number {
+        font-size: 28px;
+        font-weight: bold;
+        color: #4CAF50;
+      }
+
+      .stat-label {
+        color: #666;
+        font-size: 14px;
+        margin-top: 4px;
+      }
+
+      .profile-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin: 32px 0;
+      }
+
+      .action-btn {
+        padding: 16px 24px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s;
+      }
+
+      .action-primary {
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        color: white;
+      }
+
+      .action-secondary {
+        background: #f8f9fa;
+        color: #333;
+        border: 2px solid #dee2e6;
+      }
+
+      .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .progress-bar {
+        background: #e9ecef;
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 8px 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4CAF50, #45a049);
+        transition: width 0.5s;
+        border-radius: 4px;
+      }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        /* Vertical center */
+        gap: 12px;
+        height: 100%;
+        /* Full navbar height */
+      }
+
+      .profile-icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #e5e5e5;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        cursor: pointer;
+        margin: 0;
+        padding: 0;
+        flex-shrink: 0;
+      }
+
+      .nav-actions {
+        display: flex !important;
+        align-items: center;
+        gap: 8px;
+        height: 44px;
+        /* Navbar height */
+      }
+
+      /* NEW PROFILE TRIGGER STYLE */
+      .profile-trigger-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 4px 12px 4px 4px;
+        border-radius: 30px;
+        transition: background 0.2s;
+      }
+
+      .profile-trigger-btn:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      .user-avatar-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: #64748b;
+      }
+
+      .user-name-text {
+        font-size: 15px;
+        font-weight: 500;
+        color: #333;
+        display: block;
+      }
+
+      /* Dark mode support */
+      body.dark-mode .user-name-text {
+        color: #eee;
+      }
+
+      body.dark-mode .profile-trigger-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .profile-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #ccc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+
+
+      .auth-form input,
+      .auth-form select {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+      }
+
+      .auth-form button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+      }
+
+      .auth-message {
+        margin-top: 8px;
+        font-size: 0.9rem;
+      }
+
+      .auth-message.error {
+        color: #d32f2f;
+      }
+
+      .auth-message.success {
+        color: #2e7d32;
+      }
+
+      .nav-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .user-greeting {
+        font-size: 0.9rem;
+        color: #ffffff;
+      }
+
+      .nav-logout {
+        padding: 6px 14px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      }
+
+      .nav-logout:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        opacity: 0.95;
+      }
+
+      /* ===== PROFESSIONAL AUTH MODAL ===== */
+
+      .auth-modal {
+        display: none !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .auth-modal[style*="display: flex"] {
+        display: flex !important;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      .auth-container {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 450px;
+        padding: 0;
+        position: relative;
+        animation: slideUp 0.3s ease;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      @keyframes slideUp {
+        from {
+          transform: translateY(30px);
+          opacity: 0;
+        }
+
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .auth-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: transparent;
+        border: none;
+        font-size: 32px;
+        cursor: pointer;
+        color: #999;
+        z-index: 10;
+        transition: color 0.2s;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .auth-close:hover {
+        color: #000;
+      }
+
+      .auth-tabs {
+        display: flex;
+        border-bottom: 1px solid #e0e0e0;
+        background: #f8f9fa;
+        border-radius: 12px 12px 0 0;
+      }
+
+      .tab-btn {
+        flex: 1;
+        padding: 16px 20px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        color: #666;
+        transition: all 0.3s ease;
+        border-bottom: 3px solid transparent;
+        position: relative;
+      }
+
+      .tab-btn.active {
+        color: #208084;
+        border-bottom-color: #208084;
+        background: #ffffff;
+      }
+
+      .tab-btn:hover {
+        color: #208084;
+      }
+
+      .auth-form {
+        display: none;
+        padding: 40px 32px 32px;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .auth-form.active {
+        display: block;
+      }
+
+      .auth-form h2 {
+        margin: 0 0 8px 0;
+        font-size: 26px;
+        color: #000;
+        font-weight: 600;
+      }
+
+      .auth-subtitle {
+        margin: 0 0 28px 0;
+        color: #666;
+        font-size: 15px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #208084;
+        box-shadow: 0 0 0 4px rgba(32, 128, 132, 0.1);
+      }
+
+      .auth-btn {
+        width: 100%;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #208084 0%, #1a6b6f 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 16px;
+      }
+
+      .auth-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(32, 128, 132, 0.35);
+      }
+
+      .auth-btn:active {
+        transform: translateY(0);
+      }
+
+      /* Button styling */
+      .login-btn {
+        padding: 10px 28px;
+        border: 1px solid #ddd;
+        background: #ffffff;
+        color: #333;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .login-btn:hover {
+        background: #f5f5f5;
+        border-color: #999;
+      }
+
+      .register-btn {
+        padding: 10px 28px;
+        border: none;
+        background: #208084;
+        color: white;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .register-btn:hover {
+        background: #1a6b6f;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(32, 128, 132, 0.3);
+      }
+
+      /* =========================================
+         SaaS PROFILE DROPDOWN STYLES (CRITICAL)
+         ========================================= */
+      :root {
+        --profile-bg: #ffffff;
+        --profile-border: #e2e8f0;
+        --profile-hover: #f1f5f9;
+        --profile-text: #334155;
+        --profile-teal: #0d9488;
+        --dropdown-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      /* Container positioning */
+      .user-menu-container {
+        position: relative !important;
+        margin-left: 12px;
+        display: inline-block;
+      }
+
+      /* Pill Button */
+      /* Simple Circular Icon Button */
+      .profile-icon-btn {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50%;
+        background: #f3f4f6;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        transition: background 0.2s;
+        box-shadow: none;
+      }
+
+      .profile-icon-btn:hover {
+        background: #e5e7eb;
+      }
+
+      .profile-icon-btn svg {
+        width: 24px;
+        height: 24px;
+        fill: #9ca3af;
+      }
+
+      .profile-pill-btn:hover {
+        background: var(--profile-hover);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Avatar Circle */
+      .user-avatar-circle {
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 50%;
+        background: var(--profile-teal);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        flex-shrink: 0;
+      }
+
+      /* Name Text */
+      .user-name-text {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--profile-text);
+        max-width: 120px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Chevron Icon */
+      .nav-chevron {
+        width: 16px !important;
+        height: 16px !important;
+        color: #94a3b8;
+        display: block;
+      }
+
+      /* Dropdown Menu */
+      .profile-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 200px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: var(--dropdown-shadow);
+        padding: 6px;
+        display: none;
+        z-index: 9999;
+        flex-direction: column;
+      }
+
+      .profile-dropdown-menu.active {
+        display: flex !important;
+        animation: fadeIn 0.15s ease-out;
+      }
+
+      /* Dropdown Items */
+      .dropdown-item {
+        display: flex !important;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        color: #475569;
+        text-decoration: none !important;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: background 0.15s;
+        margin: 1px 0;
+      }
+
+      .dropdown-item:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+
+      /* Reviewing the SCreenshot: SVG width was likely 100% */
+      .dropdown-item svg {
+        width: 18px !important;
+        height: 18px !important;
+        color: #94a3b8;
+        stroke-width: 2px;
+        display: block;
+      }
+
+      .dropdown-item:hover svg {
+        color: var(--profile-teal);
+      }
+
+      .dropdown-divider {
+        height: 1px;
+        background: #e2e8f0;
+        margin: 6px 0;
+        width: 100%;
+      }
+
+      /* Logout */
+      .dropdown-item.logout-item:hover {
+        background: #fef2f2;
+        color: #ef4444;
+      }
+
+      .dropdown-item.logout-item:hover svg {
+        color: #ef4444;
+      }
+
+      /* Dark Mode */
+      body.dark-mode .profile-pill-btn {
+        background: #1e293b;
+        border-color: #334155;
+      }
+
+      body.dark-mode .user-name-text {
+        color: #e2e8f0;
+      }
+
+      body.dark-mode .profile-dropdown-menu {
+        background: #1e293b;
+        border-color: #334155;
+      }
+
+      body.dark-mode .dropdown-item {
+        color: #cbd5e1;
+      }
+
+      body.dark-mode .dropdown-item:hover {
+        background: #334155;
+      }
+
+      /* =========================================
+         PROFESSIONAL MODAL STYLES (FIXED)
+         ========================================= */
+      .profile-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.65);
+        /* Darker backdrop */
+        backdrop-filter: blur(4px);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        /* Center vertical */
+        justify-content: center;
+        /* Center horizontal */
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+
+      /* FIXED: Robust selector to ensure modal is clickable when open */
+      .profile-modal-overlay[style*="flex"] {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .profile-modal-card {
+        background: #ffffff;
+        width: 100%;
+        max-width: 500px;
+        /* Optimal width */
+        max-height: 85vh;
+        /* Leave room top/bottom */
+        overflow-y: auto;
+        /* ENABLE SCROLLING */
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        padding: 0;
+        position: relative;
+        transform: translateY(20px);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        margin: 20px;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+        pointer-events: auto;
+        /* Ensure card content is always interactive */
+        z-index: 10005;
+      }
+
+      .profile-modal-overlay[style*="flex"] .profile-modal-card {
+        transform: translateY(0);
+      }
+
+      .profile-header {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+        padding: 20px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .profile-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #0f172a;
+        font-weight: 700;
+      }
+
+      .close-btn {
+        background: transparent;
+        border: none;
+        font-size: 24px;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        line-height: 1;
+      }
+
+      .close-btn:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+
+      /* Content Area */
+      .profile-content {
+        padding: 24px;
+      }
+
+      /* Form Elements */
+      .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        color: #334155;
+        font-weight: 500;
+        font-size: 0.9rem;
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        color: #1e293b;
+        transition: border-color 0.15s;
+        background: #f8fafc;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: #0d9488;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+      }
+
+      /* Dark Mode Overrides */
+      body.dark-mode .profile-modal-card {
+        background: #1e293b;
+      }
+
+      body.dark-mode .profile-header {
+        background: #1e293b;
+        border-color: #334155;
+      }
+
+      body.dark-mode .profile-header h2 {
+        color: #f8fafc;
+      }
+
+      body.dark-mode .form-group label {
+        color: #cbd5e1;
+      }
+
+      body.dark-mode .form-group input,
+      body.dark-mode .form-group select {
+        background: #0f172a;
+        border-color: #334155;
+        color: #f8fafc;
+      }
+    </style>
+    <!-- PROFILE MODAL (Added) -->
+    <div id="profileModal" class="profile-modal" style="display: none;">
+      <div class="profile-modal-overlay" onclick="Profile.close()"></div>
+      <div class="profile-modal-card">
+        <div class="profile-header">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div id="headerAvatar" class="profile-avatar" style="width:40px; height:40px; font-size:18px; margin:0;">
+              U</div>
+            <div>
+              <h2 id="headerName" style="font-size:1.1rem;">User Name</h2>
+              <span id="headerEmail" style="font-size:0.85rem; color:#64748b;">user@example.com</span>
+            </div>
+          </div>
+          <button class="close-btn" onclick="Profile.close()">×</button>
+        </div>
+
+        <div class="profile-content">
+          <!-- Name Field (Persistent Input) -->
+          <div class="form-group">
+            <label>Full Name</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="text" id="input_name_persistent" class="inline-input" placeholder="e.g. Rahul Kumar"
+                style="flex:1; border: 1px solid var(--color-border);" required>
+              <button class="btn btn-primary" onclick="Profile.saveNamePersistent()" title="Save Name"
+                style="padding: 8px 16px;">
+                Save
+              </button>
+            </div>
+            <p class="helper-text">This name will be used for your cover letters.</p>
+          </div>
+
+          <!-- Phone Field -->
+          <div class="form-group">
+            <label>Phone Number</label>
+            <div id="container_phone"
+              style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+              <span class="field-value" id="val_phone">--</span>
+              <span class="edit-icon" onclick="Profile.toggleEdit('phone')" style="cursor:pointer; font-size:1.1rem;"
+                title="Edit Phone">✏️</span>
+            </div>
+          </div>
+
+          <!-- Qualification -->
+          <div class="form-group">
+            <label>Qualification</label>
+            <div id="container_qualification"
+              style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+              <span class="field-value" id="val_qualification">--</span>
+              <span class="edit-icon" onclick="Profile.toggleEdit('qualification')"
+                style="cursor:pointer; font-size:1.1rem;" title="Edit Qualification">✏️</span>
+            </div>
+          </div>
+
+          <!-- Skills (Tags) -->
+          <div class="form-group">
+            <label>Skills & Competencies</label>
+            <div id="container_skills"
+              style="display:flex; justify-content:space-between; align-items:flex-start; padding:10px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0; min-height:48px;">
+              <div id="val_skills" style="display:flex; flex-wrap:wrap; gap:4px;">
+                <!-- Tags generated here -->
+              </div>
+              <span class="edit-icon" onclick="Profile.toggleEdit('skills')"
+                style="cursor:pointer; font-size:1.1rem; margin-left:8px;" title="Edit Skills">✏️</span>
+            </div>
+          </div>
+
+          <!-- Preferred Location -->
+          <div class="form-group">
+            <label>Preferred Location</label>
+            <div id="container_location"
+              style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+              <span class="field-value" id="val_location">--</span>
+              <span class="edit-icon" onclick="Profile.toggleEdit('location')" style="cursor:pointer; font-size:1.1rem;"
+                title="Edit Location">✏️</span>
+            </div>
+          </div>
+
+          <!-- Preferred Industry -->
+          <div class="form-group">
+            <label>Preferred Industry</label>
+            <div id="container_industry"
+              style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+              <span class="field-value" id="val_industry">--</span>
+              <span class="edit-icon" onclick="Profile.toggleEdit('industry')" style="cursor:pointer; font-size:1.1rem;"
+                title="Edit Industry">✏️</span>
+            </div>
+          </div>
+
+          <div style="margin-top:30px; padding-top:20px; border-top:1px solid #eee;">
+            <button onclick="Profile.deleteAccount()"
+              style="color:#ef4444; background:none; border:none; font-size:0.9rem; cursor:pointer; display:flex; align-items:center; gap:6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Delete Account
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <!-- Firebase v10-style compat CDN (works with firebase.initializeApp + firebase.auth()) -->
+    <!-- Firebase SDKs (BEFORE app.js) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+
+    <!-- Your app (AFTER Firebase) -->
+    <script src="firebase-config.js"></script>
+    <script src="app.js?v=20260219-2120"></script>
+    <script>
+      function handleWorkPreferenceChange(select) {
+        const locationInput = document.getElementById('locationInput');
+        if (!locationInput) return;
+
+        if (select.value === 'remote') {
+          locationInput.value = 'Remote';
+          locationInput.readOnly = true;
+          locationInput.style.backgroundColor = '#f3f4f6';
+        } else if (select.value === 'both') {
+          locationInput.readOnly = false;
+          locationInput.style.backgroundColor = '#fff';
+          if (locationInput.value === 'Remote') locationInput.value = '';
+          locationInput.placeholder = "Preferred City (Remote also considered)";
+        } else {
+          locationInput.readOnly = false;
+          locationInput.style.backgroundColor = '#fff';
+          if (locationInput.value === 'Remote') locationInput.value = '';
+          locationInput.placeholder = "Mumbai, Bangalore, Delhi";
+        }
+      }
+    </script>
+    <script src="notifications.js?v=20260219-2120"></script>
+</body>
+
+</html>

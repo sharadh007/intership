@@ -1,0 +1,108 @@
+/* Notifications */
+.notification-container {
+    position: relative;
+    display: inline-block;
+    margin-right: 15px;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    position: relative;
+    padding: 5px;
+}
+
+.notification-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #ff3b30;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.notification-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    width: 300px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.notification-dropdown.active {
+    display: block;
+}
+
+.notification-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notification-header h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.notification-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.notification-item:hover {
+    background-color: var(--color-secondary);
+}
+
+.notification-item.unread {
+    background-color: rgba(52, 115, 217, 0.05);
+    font-weight: 500;
+}
+
+.notification-time {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 4px;
+}
+
+/* Dark Mode */
+[data-color-scheme="dark"] .notification-dropdown {
+    background-color: #1f2937;
+    border-color: #374151;
+}
+
+[data-color-scheme="dark"] .notification-header {
+    border-color: #374151;
+}
+
+[data-color-scheme="dark"] .notification-header h3,
+[data-color-scheme="dark"] .notification-item {
+    color: #f9fafb;
+}
+
+[data-color-scheme="dark"] .notification-item {
+    border-color: #374151;
+}
+
+[data-color-scheme="dark"] .notification-item:hover {
+    background-color: #374151;
+}
+
+[data-color-scheme="dark"] .notification-item.unread {
+    background-color: rgba(59, 130, 246, 0.15);
+}

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Force Reload - Internship Platform</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #1e293b;
+            margin: 0 0 20px 0;
+            font-size: 2em;
+        }
+
+        .alert {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .alert h2 {
+            color: #991b1b;
+            margin: 0 0 12px 0;
+            font-size: 1.3em;
+        }
+
+        .alert p {
+            color: #7f1d1d;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .steps {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .steps h3 {
+            color: #1e40af;
+            margin: 0 0 16px 0;
+        }
+
+        .steps ol {
+            margin: 0;
+            padding-left: 20px;
+            color: #1e3a8a;
+        }
+
+        .steps li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .steps strong {
+            color: #1e40af;
+            font-weight: 700;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
+        .btn-primary {
+            background: #10b981;
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-primary:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.6);
+        }
+
+        .btn-secondary {
+            background: #f59e0b;
+            color: white;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-secondary:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.6);
+        }
+
+        .success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            color: #065f46;
+        }
+
+        .code {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 12px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🚨 Browser Cache is Blocking Updates</h1>
+
+        <div class="alert">
+            <h2>The Problem:</h2>
+            <p>Your browser has <strong>cached the old JavaScript file</strong> and refuses to download the new one.
+                Even though the code is fixed on the server, your browser is using the old broken version from its
+                cache.</p>
+        </div>
+
+        <div class="steps">
+            <h3>✅ Solution - Do This RIGHT NOW:</h3>
+            <ol>
+                <li><strong>Close this tab</strong></li>
+                <li><strong>Press Ctrl + Shift + Delete</strong> (or Cmd + Shift + Delete on Mac)</li>
+                <li><strong>Select ONLY "Cached images and files"</strong></li>
+                <li><strong>Time range: "All time"</strong> (NOT "Last hour")</li>
+                <li><strong>Click "Clear data"</strong></li>
+                <li><strong>Close your browser COMPLETELY</strong> (all windows)</li>
+                <li><strong>Reopen browser</strong></li>
+                <li><strong>Click the green button below</strong></li>
+            </ol>
+        </div>
+
+        <div class="success">
+            <strong>✅ After clearing cache, you'll see:</strong><br>
+            • Horizontal card layout with numbered circles on left<br>
+            • "View Details" button on the right<br>
+            • NO "Unexpected identifier" errors<br>
+            • Beautiful gradient colored badges<br>
+        </div>
+
+        <div class="btn-container">
+            <a href="javascript:void(0)" onclick="openIncognito()" class="btn btn-secondary">
+                🔒 Test in Incognito First
+            </a>
+            <a href="javascript:void(0)" onclick="openFresh()" class="btn btn-primary">
+                🚀 Open Fresh Version
+            </a>
+        </div>
+
+        <div class="code">
+            <strong>Quick Incognito Test:</strong><br>
+            1. Press Ctrl + Shift + N<br>
+            2. Go to: http://localhost:8080/index.html<br>
+            3. You'll see the NEW design immediately!
+        </div>
+    </div>
+
+    <script>
+        function openIncognito() {
+            alert('Press Ctrl + Shift + N (or Cmd + Shift + N on Mac) to open Incognito mode.\n\nThen go to: http://localhost:8080/index.html\n\nYou\'ll see the new horizontal card design immediately!');
+        }
+
+        function openFresh() {
+            // Clear all caches
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                    for (let registration of registrations) {
+                        registration.unregister();
+                    }
+                });
+            }
+
+            if ('caches' in window) {
+                caches.keys().then(function (names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+
+            // Add timestamp to force fresh load
+            const timestamp = new Date().getTime();
+            window.location.href = `index.html?t=${timestamp}`;
+        }
+
+        // Auto-detect Mac
+        window.onload = function () {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            if (isMac) {
+                document.body.innerHTML = document.body.innerHTML.replace(/Ctrl/g, 'Cmd');
+            }
+        };
+    </script>
+</body>
+
+</html>
