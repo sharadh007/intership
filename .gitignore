@@ -1,0 +1,23 @@
+node_modules/
+.env
+.DS_Store
+dist/
+coverage/
+
+# Backup and temporary files
+*_backup.*
+*_deduped.*
+*_final.*
+*.bak
+*.tmp
+
+# Environment files
+.env.local
+.env.*.local
+
+# Firebase config (use template instead)
+frontend/firebase-config.js
+
+# IDE
+.vscode/
+.idea/
