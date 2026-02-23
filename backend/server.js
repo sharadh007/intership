@@ -130,7 +130,6 @@ const initDB = async () => {
     console.error('❌ Database initialization failed:', err);
   }
 };
-initDB();
 
 pool.query('SELECT NOW()', (err, res) => {
   if (err) console.error('❌ DB Connection failed:', err);
@@ -183,7 +182,10 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", async () => {
   console.log(`Server running on port ${PORT}`);
 
-  // Run expiration check on startup
+  // 1. Initialize Database Schema FIRST
+  await initDB();
+
+  // 2. Run expiration check AFTER schema is ready
   await checkAndExpireInternships();
 
   // Optional: Run every hour
