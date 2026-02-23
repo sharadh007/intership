@@ -376,6 +376,7 @@
           <a href="#home" class="nav-link active" data-translate="nav-home">Home</a>
           <a href="#find-internships" class="nav-link" data-translate="nav-find">Recommendations</a>
           <a href="#browse-all" class="nav-link" onclick="navigateToBrowseAll()">Browse All</a>
+          <a href="#roadmap" class="nav-link" onclick="navigateToSection('roadmap')">Roadmap ✨</a>
           <a href="#about" class="nav-link" data-translate="nav-about">About</a>
           <a href="#contact" class="nav-link" data-translate="nav-contact">Contact</a>
         </div>
@@ -933,6 +934,96 @@
             <!-- Pagination will be inserted here -->
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Career Roadmap Page -->
+    <section id="roadmap" class="page-section">
+      <div class="container">
+        <h1 class="page-title">🎯 Dream Company Roadmap</h1>
+        <p class="section-subtitle" style="text-align:center;margin-bottom:36px;">
+          Upload your resume, choose your dream company — get a precision career roadmap powered by AI.
+        </p>
+
+        <!-- Input Card -->
+        <div class="roadmap-input-card">
+
+          <!-- Step 1: Resume Upload -->
+          <div class="roadmap-step">
+            <div class="step-badge">1</div>
+            <div class="step-body">
+              <h3 class="step-title">Upload Your Resume <span
+                  style="font-weight:400;font-size:0.85rem;color:#94a3b8;">(PDF)</span></h3>
+              <p class="step-desc">We'll read your skills, experience, and projects from your resume for a personalized
+                roadmap.</p>
+              <label for="roadmapResumeInput" class="resume-drop-zone" id="resumeDropZone">
+                <div class="drop-inner" id="dropInner">
+                  <span style="font-size:2.5rem;">📄</span>
+                  <span class="drop-text">Drag & drop PDF here or <u>click to browse</u></span>
+                  <span id="resumeFileName"
+                    style="font-size:0.8rem;color:#0d9488;display:none;margin-top:4px;font-weight:600;"></span>
+                </div>
+                <input type="file" id="roadmapResumeInput" accept=".pdf" style="display:none;"
+                  onchange="handleRoadmapResumeSelect(this)">
+              </label>
+              <div id="extractedSkillsRow" style="display:none;margin-top:12px;flex-wrap:wrap;gap:6px;"></div>
+            </div>
+          </div>
+
+          <div class="step-divider">→</div>
+
+          <!-- Step 2: Company Selection -->
+          <div class="roadmap-step">
+            <div class="step-badge">2</div>
+            <div class="step-body">
+              <h3 class="step-title">Your Dream Company</h3>
+              <p class="step-desc">Type any name or pick from 100+ top companies.</p>
+              <div class="company-combo-wrapper" id="companyComboWrapper">
+                <input type="text" id="dreamCompanyInput" class="company-combo-input"
+                  placeholder="e.g. Google, Zoho, Amazon, Swiggy..." autocomplete="off"
+                  oninput="filterCompanyDropdown(this.value)" onfocus="showCompanyDropdown()">
+                <div class="company-dropdown" id="companyDropdown"></div>
+              </div>
+              <!-- Popular Tags -->
+              <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+                <span
+                  style="font-size:0.75rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;">Popular:</span>
+                <button class="quick-tag" onclick="setRoadmapCompany('Google')">🔍 Google</button>
+                <button class="quick-tag" onclick="setRoadmapCompany('Amazon')">📦 Amazon</button>
+                <button class="quick-tag" onclick="setRoadmapCompany('Microsoft')">🪟 Microsoft</button>
+                <button class="quick-tag" onclick="setRoadmapCompany('Zoho')">🇮🇳 Zoho</button>
+                <button class="quick-tag" onclick="setRoadmapCompany('Flipkart')">🛒 Flipkart</button>
+                <button class="quick-tag" onclick="setRoadmapCompany('Infosys')">💼 Infosys</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-divider">→</div>
+
+          <!-- Step 3: Generate -->
+          <div class="roadmap-step roadmap-step-action">
+            <div class="step-badge">3</div>
+            <div class="step-body">
+              <h3 class="step-title">Generate Roadmap</h3>
+              <p class="step-desc">AI analyzes your resume against the company's real hiring bar.</p>
+              <button class="btn-generate-roadmap" id="generateRoadmapBtn" onclick="generateDreamRoadmap()">
+                <span>✨</span> Build My Roadmap
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loader -->
+        <div id="roadmapLoader"
+          style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:70px 0;text-align:center;">
+          <div class="ai-loader-ring" style="width:64px;height:64px;border-width:5px;"></div>
+          <h3 style="margin-top:28px;font-size:1.5rem;color:#1e293b;font-weight:800;">Analyzing Your Profile...</h3>
+          <p style="color:#64748b;max-width:420px;margin:10px auto;line-height:1.6;">Our AI is reading your resume,
+            researching the company, and building a precision roadmap just for you.</p>
+        </div>
+
+        <!-- Results Area -->
+        <div id="roadmapResults" style="display:none;"></div>
       </div>
     </section>
 
@@ -2441,9 +2532,13 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
 
+    <!-- Chart.js for Roadmap Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
     <!-- Your app (AFTER Firebase) -->
-    <script src="firebase-config.js"></script>
-    <script src="app.js?v=20260220-0045"></script>
+
+    <script src="firebase-config.js?v=0223"></script>
+    <script src="app.js?v=20260223-1030"></script>
     <script>
       function handleWorkPreferenceChange(select) {
         const locationInput = document.getElementById('locationInput');

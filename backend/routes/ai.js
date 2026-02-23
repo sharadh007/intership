@@ -18,6 +18,9 @@ router.post('/explain-match', aiController.handleMatchExplanation);
 // Generate Project Ideas (New)
 router.post('/generate-project-ideas', aiController.handleProjectIdeas);
 
+// Dream Company Roadmap (New)
+router.post('/generate-roadmap', aiController.handleDreamRoadmap);
+
 
 
 // Future endpoints (Cover Letter, Interview) will go here

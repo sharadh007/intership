@@ -52,6 +52,20 @@ const pythonClient = {
             console.error('Python Service Project Ideas Error:', error.message);
             throw error;
         }
+    },
+
+    async generateDreamRoadmap(student, company, resume_text) {
+        try {
+            const response = await axios.post(`${PYTHON_SERVICE_URL}/generate-dream-roadmap`, {
+                student: student || {},
+                company: company || '',
+                resume_text: resume_text || ''
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Python Service Dream Roadmap Error:', error.message);
+            throw error;
+        }
     }
 };
 

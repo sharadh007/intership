@@ -1,9 +1,17 @@
 // ===== API + FIREBASE SETUP =====
 // Dynamic API base — always points to current host (works for localhost, tunnels, LAN, production)
-// Dynamic API base — Detects if we're on localhost but wrong port, otherwise uses relative path
-const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000'
-  ? 'http://localhost:5000/api'
+// Dynamic API base — Detects if we're on the frontend port, and switches to the backend port
+const currentPort = window.location.port;
+const API_BASE = (currentPort === '5500' || currentPort === '3000' || currentPort === '5173')
+  ? `${window.location.protocol}//${window.location.hostname}:5000/api`
   : window.location.origin + '/api';
+
+console.log('🌐 API Config:', {
+  hostname: window.location.hostname,
+  port: currentPort,
+  protocol: window.location.protocol,
+  API_BASE: API_BASE
+});
 
 
 // The Firebase configuration is now loaded from firebase-config.js
@@ -794,6 +802,436 @@ const Profile = {
       });
   }
 };
+
+// ===== CAREER ROADMAP FUNCTIONS =====
+
+// 100+ Companies with categories and emojis
+const DREAM_COMPANIES = [
+  {
+    cat: '🌐 FAANG+', list: [
+      { n: 'Google', e: '🔍' }, { n: 'Amazon', e: '📦' }, { n: 'Meta', e: '📘' },
+      { n: 'Apple', e: '🍎' }, { n: 'Microsoft', e: '🪟' }, { n: 'Netflix', e: '🎬' },
+      { n: 'Tesla', e: '⚡' }, { n: 'Nvidia', e: '🖥️' }, { n: 'Salesforce', e: '☁️' },
+      { n: 'Adobe', e: '🎨' }, { n: 'Twitter/X', e: '🐦' }, { n: 'Uber', e: '🚗' },
+      { n: 'Airbnb', e: '🏠' }, { n: 'Spotify', e: '🎵' }, { n: 'LinkedIn', e: '💼' },
+      { n: 'Atlassian', e: '🔧' }, { n: 'Palantir', e: '🔮' }, { n: 'Snowflake', e: '❄️' },
+      { n: 'Databricks', e: '🧱' }, { n: 'Stripe', e: '💳' },
+    ]
+  },
+  {
+    cat: '🇮🇳 Indian IT Giants', list: [
+      { n: 'TCS', e: '💼' }, { n: 'Infosys', e: '🏢' }, { n: 'Wipro', e: '🌀' },
+      { n: 'HCL Technologies', e: '🔵' }, { n: 'Tech Mahindra', e: '🟠' },
+      { n: 'Cognizant', e: '🟣' }, { n: 'Accenture', e: '⚡' }, { n: 'Capgemini', e: '🔶' },
+      { n: 'Mphasis', e: '📊' }, { n: 'Hexaware', e: '🔷' }, { n: 'L&T Technology', e: '🏗️' },
+      { n: 'Persistent Systems', e: '💾' },
+    ]
+  },
+  {
+    cat: '🦄 Indian Unicorns & Startups', list: [
+      { n: 'Flipkart', e: '🛒' }, { n: 'Swiggy', e: '🍔' }, { n: 'Zomato', e: '🍕' },
+      { n: 'Razorpay', e: '💳' }, { n: 'CRED', e: '💎' }, { n: 'Paytm', e: '📱' },
+      { n: 'OYO', e: '🏨' }, { n: 'Meesho', e: '🛍️' }, { n: 'PhonePe', e: '📲' },
+      { n: 'Ola', e: '🚖' }, { n: 'Dream11', e: '🏏' }, { n: 'Zepto', e: '⚡' },
+      { n: 'Lenskart', e: '👓' }, { n: 'Nykaa', e: '💄' }, { n: 'Urban Company', e: '🔨' },
+      { n: 'Dunzo', e: '🏍️' }, { n: 'Groww', e: '📈' }, { n: 'Zerodha', e: '📉' },
+      { n: 'MakeMyTrip', e: '✈️' }, { n: 'PolicyBazaar', e: '🛡️' },
+    ]
+  },
+  {
+    cat: '🇮🇳 Indian Product Companies', list: [
+      { n: 'Zoho', e: '🟢' }, { n: 'Freshworks', e: '🟡' }, { n: 'Chargebee', e: '🔷' },
+      { n: 'Postman', e: '📮' }, { n: 'BrowserStack', e: '🌐' }, { n: 'Juspay', e: '💸' },
+      { n: 'Slice', e: '✂️' }, { n: 'Darwinbox', e: '📊' }, { n: 'Glance', e: '👀' },
+      { n: 'ShareChat', e: '💬' }, { n: 'Sprinklr', e: '💧' }, { n: 'Druva', e: '☁️' },
+    ]
+  },
+  {
+    cat: '🌍 Global Tech', list: [
+      { n: 'IBM', e: '🔵' }, { n: 'Oracle', e: '🔴' }, { n: 'SAP', e: '🟦' },
+      { n: 'Cisco', e: '🔗' }, { n: 'Intel', e: '💡' }, { n: 'Qualcomm', e: '📡' },
+      { n: 'VMware', e: '☁️' }, { n: 'Workday', e: '📅' }, { n: 'ServiceNow', e: '🎫' },
+      { n: 'Twilio', e: '📞' }, { n: 'MongoDB', e: '🍃' }, { n: 'Cloudflare', e: '🌩️' },
+      { n: 'Figma', e: '🎨' }, { n: 'Notion', e: '📝' }, { n: 'Canva', e: '🖌️' },
+      { n: 'Shopify', e: '🛒' }, { n: 'Zoom', e: '📹' }, { n: 'Slack', e: '💬' },
+    ]
+  },
+  {
+    cat: '🏦 Fintech & Banking', list: [
+      { n: 'Goldman Sachs', e: '🏦' }, { n: 'JP Morgan', e: '💰' }, { n: 'Morgan Stanley', e: '📊' },
+      { n: 'Deutsche Bank', e: '🏛️' }, { n: 'HDFC Bank', e: '🏦' }, { n: 'Bajaj Finserv', e: '💳' },
+      { n: 'Jio Financial', e: '📱' }, { n: 'Cashfree', e: '💵' },
+    ]
+  },
+];
+
+let roadmapResumeText = '';
+let roadmapChartInstance = null;
+
+// --- Autocomplete Combo ---
+window.showCompanyDropdown = function () {
+  filterCompanyDropdown(document.getElementById('dreamCompanyInput')?.value || '');
+};
+
+window.filterCompanyDropdown = function (query) {
+  const dd = document.getElementById('companyDropdown');
+  if (!dd) return;
+  const q = query.trim().toLowerCase();
+  let html = '';
+  DREAM_COMPANIES.forEach(group => {
+    const matches = q
+      ? group.list.filter(c => c.n.toLowerCase().includes(q))
+      : group.list;
+    if (matches.length) {
+      html += `<div class="co-category">${group.cat}</div>`;
+      matches.forEach(c => {
+        html += `<div class="co-opt" onclick="setRoadmapCompany('${c.n}')">${c.e} ${c.n}</div>`;
+      });
+    }
+  });
+  dd.innerHTML = html || '<div class="co-opt" style="color:#94a3b8;">No match — you can still type any company name</div>';
+  dd.classList.add('open');
+};
+
+window.setRoadmapCompany = function (name) {
+  const input = document.getElementById('dreamCompanyInput');
+  if (input) input.value = name;
+  const dd = document.getElementById('companyDropdown');
+  if (dd) dd.classList.remove('open');
+};
+
+// Close dropdown on outside click
+document.addEventListener('click', (e) => {
+  const wrapper = document.getElementById('companyComboWrapper');
+  if (wrapper && !wrapper.contains(e.target)) {
+    document.getElementById('companyDropdown')?.classList.remove('open');
+  }
+});
+
+// --- Resume Upload ---
+window.handleRoadmapResumeSelect = function (input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const nameEl = document.getElementById('resumeFileName');
+  const zone = document.getElementById('resumeDropZone');
+  const skillsRow = document.getElementById('extractedSkillsRow');
+
+  if (nameEl) { nameEl.textContent = '📄 ' + file.name; nameEl.style.display = 'block'; }
+  if (zone) zone.style.borderColor = '#0d9488';
+
+  // Upload to backend to extract text
+  const formData = new FormData();
+  formData.append('resume', file);
+  if (skillsRow) { skillsRow.style.display = 'flex'; skillsRow.innerHTML = '<span style="color:#94a3b8;font-size:0.8rem;">🔄 Extracting skills...</span>'; }
+
+  fetch(`${API_BASE}/ai/upload-resume`, { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(res => {
+      if (res.success && res.data) {
+        roadmapResumeText = res.data.raw_text || res.data.resumeText || '';
+        const skills = res.data.skills || res.data.extractedSkills || [];
+        if (skillsRow && skills.length) {
+          skillsRow.innerHTML = '<span style="font-size:0.75rem;color:#64748b;font-weight:700;">Extracted:</span> ' +
+            skills.slice(0, 12).map(s => `<span class="skill-tag-extracted">✅ ${s}</span>`).join('');
+        } else if (skillsRow) {
+          skillsRow.innerHTML = '<span style="color:#0d9488;font-size:0.8rem;">✅ Resume loaded! Skills will be AI-analyzed.</span>';
+        }
+      }
+    })
+    .catch(() => {
+      if (skillsRow) skillsRow.innerHTML = '<span style="color:#ef4444;font-size:0.8rem;">⚠️ Could not parse resume. AI will still generate a generic roadmap.</span>';
+    });
+};
+
+// Drag & Drop support
+document.addEventListener('DOMContentLoaded', () => {
+  const zone = document.getElementById('resumeDropZone');
+  if (zone) {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') {
+        const input = document.getElementById('roadmapResumeInput');
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        handleRoadmapResumeSelect(input);
+      }
+    });
+  }
+});
+
+// --- Generate ---
+window.generateDreamRoadmap = async function () {
+  const company = document.getElementById('dreamCompanyInput')?.value.trim();
+  if (!company) { alert('Please enter or select a dream company first.'); return; }
+
+  const btn = document.getElementById('generateRoadmapBtn');
+  const resultsDiv = document.getElementById('roadmapResults');
+  const loader = document.getElementById('roadmapLoader');
+
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Analyzing...'; }
+  if (resultsDiv) resultsDiv.style.display = 'none';
+  if (loader) loader.style.display = 'flex';
+
+  try {
+    const response = await fetch(`${API_BASE}/ai/generate-roadmap`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        student: currentProfile || {},
+        company,
+        resume_text: roadmapResumeText
+      })
+    });
+    const result = await response.json();
+    if (result.success && result.data) {
+      renderRoadmap(result.data);
+    } else {
+      alert('Failed to generate roadmap: ' + (result.error || 'Unknown error'));
+    }
+  } catch (err) {
+    console.error('Roadmap error:', err);
+    alert('Network error. Please try again.');
+  } finally {
+    if (loader) loader.style.display = 'none';
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span>✨</span> Build My Roadmap'; }
+  }
+};
+
+// --- Render Roadmap ---
+// --- Render Roadmap ---
+function renderRoadmap(data) {
+  try {
+    const div = document.getElementById('roadmapResults');
+    if (!div) return;
+
+    console.log('📊 Rendering roadmap data:', data);
+
+    const score = data.readiness || 0;
+    const scoreColor = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444';
+    const requiredSkills = data.required_skills || [];
+    const yourSkills = data.your_skills || [];
+    const missingSkills = data.missing_skills || [];
+
+    div.innerHTML = `
+      <!-- Header Banner -->
+      <div class="rm-header-banner" style="background:linear-gradient(135deg,#1e293b,#0f172a);color:white;padding:32px;border-radius:24px;margin-bottom:28px;display:flex;align-items:center;gap:32px;flex-wrap:wrap;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04);">
+        <div style="flex:1;min-width:280px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#94a3b8;margin:0;">Target Analysis</p>
+            ${data.track ? `<span style="background:rgba(255,255,255,0.1);color:#cbd5e1;padding:4px 10px;border-radius:6px;font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(255,255,255,0.15);">🚀 ${data.track} Track</span>` : ''}
+          </div>
+          <h2 style="font-size:2.8rem;font-weight:900;margin:0 0 16px;letter-spacing:-0.03em;background:linear-gradient(to right, #fff, #94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${data.company}</h2>
+          <p style="color:#cbd5e1;font-size:1.1rem;line-height:1.7;margin:0;font-weight:400;max-width:600px;">${data.summary}</p>
+        </div>
+        <div style="text-align:center;min-width:160px;background:rgba(255,255,255,0.05);padding:28px 24px;border-radius:24px;backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.1);box-shadow:inset 0 0 20px rgba(255,255,255,0.02);">
+          <div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;margin-bottom:10px;">Career Readiness</div>
+          <div style="font-size:4.8rem;font-weight:900;color:${scoreColor};line-height:1;margin-bottom:10px;filter:drop-shadow(0 0 10px ${scoreColor}40);">${score}<span style="font-size:2.2rem;opacity:0.6">%</span></div>
+          <div style="height:10px;background:rgba(255,255,255,0.1);border-radius:10px;margin-top:12px;overflow:hidden;width:120px;margin-left:auto;margin-right:auto;">
+            <div style="height:100%;width:${score}%;background:${scoreColor};border-radius:10px;box-shadow:0 0 15px ${scoreColor}80;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rm-results-grid">
+        <!-- Sidebar -->
+        <div class="rm-sidebar">
+          
+          <!-- Skill Match Chart -->
+          <div class="rm-card" style="overflow:hidden;">
+            <h4 style="margin:0 0 16px;font-size:1rem;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:8px;">
+              <span>📊</span> Skill Gap Analysis
+            </h4>
+            <div style="height:250px;position:relative;">
+              <canvas id="roadmapSkillChart"></canvas>
+            </div>
+            <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:0.85rem;font-weight:600;color:#64748b;">Matching Skills</span>
+                <span style="font-size:0.85rem;font-weight:700;color:#10b981;">${yourSkills.length}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:0.85rem;font-weight:600;color:#64748b;">Missing Gaps</span>
+                <span style="font-size:0.85rem;font-weight:700;color:#ef4444;">${missingSkills.length}</span>
+              </div>
+            </div>
+          </div>
+
+          ${data.hiring_insight ? `
+          <div class="insight-banner" style="background:#1e293b;border-left:4px solid #38bdf8;">
+            <span class="insight-icon" style="background:#38bdf8;">💡</span>
+            <div>
+              <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#7dd3fc;margin-bottom:6px;">Recruiter Insight</div>
+              <p style="margin:0;font-size:0.9rem;line-height:1.6;color:#e2e8f0;">${data.hiring_insight}</p>
+            </div>
+          </div>` : ''}
+
+        </div>
+
+        <!-- Main Content -->
+        <div>
+          <h3 style="font-size:1.25rem;font-weight:800;color:#1e293b;margin:0 0 24px;display:flex;align-items:center;gap:10px;">
+            <span style="background:#f1f5f9;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;">🗺️</span> 
+            Strategic Growth Timeline
+          </h3>
+          <div class="phase-timeline">
+            ${(data.phases || []).map((phase, i) => `
+              <div class="phase-block">
+                <div class="phase-line-col">
+                  <div class="phase-dot" style="background:${i === 0 ? '#10b981' : i === 1 ? '#3b82f6' : '#6366f1'}">${i + 1}</div>
+                  <div class="phase-connector"></div>
+                </div>
+                <div class="phase-content-box" style="transform:translateY(-4px);">
+                  <div class="phase-meta" style="margin-bottom:12px;">
+                    <span class="phase-num-label" style="color:${i === 0 ? '#10b981' : i === 1 ? '#3b82f6' : '#6366f1'}">Phase ${i + 1}</span>
+                    ${phase.duration ? `<span class="phase-duration-badge">⏱ ${phase.duration}</span>` : ''}
+                  </div>
+                  <h4 class="phase-h" style="font-size:1.15rem;margin-bottom:10px;">${phase.title}</h4>
+                  <div class="gap-pill" style="margin-bottom:12px;">🎯 Goal: ${phase.gap}</div>
+                  <p class="action-text" style="font-size:0.95rem;line-height:1.6;color:#334155;margin-bottom:12px;"><strong>Action:</strong> ${phase.action}</p>
+                  ${phase.outcome ? `<p class="outcome-text" style="font-size:0.85rem;color:#64748b;background:#f8fafc;padding:10px;border-radius:8px;border-left:3px solid #cbd5e1;">✨ <strong>Value Add:</strong> ${phase.outcome}</p>` : ''}
+                  ${phase.link ? `<a href="${phase.link}" target="_blank" class="phase-link-btn" style="margin-top:12px;">Open Resource Hub →</a>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Moonshot Project -->
+          <div class="moonshot-enhanced" style="margin-top:32px;background:linear-gradient(135deg,rgb(13, 148, 136),rgb(56, 189, 248));">
+            <div style="position:relative;z-index:1;">
+              <div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.7);margin-bottom:10px;">🚀 Recommendation: The Moonshot Project</div>
+              <p style="font-size:1.2rem;font-weight:500;line-height:1.7;margin:0;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.1);">${data.moonshot_project}</p>
+              <div style="display:flex;gap:12px;margin-top:20px;">
+                <a href="https://github.com/new" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:white;color:#0d9488;padding:10px 20px;border-radius:12px;font-size:0.9rem;font-weight:700;text-decoration:none;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                  <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.041-1.412-4.041-1.412-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                  Initialize Repo
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reset -->
+          <div style="margin-top:32px;text-align:center;">
+            <button onclick="document.getElementById('roadmapResults').style.display='none';window.scrollTo({top:0,behavior:'smooth'});" style="background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;padding:12px 28px;border-radius:14px;font-size:0.9rem;cursor:pointer;font-family:inherit;font-weight:700;transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+              🔄 Create Another Roadmap
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    div.style.display = 'block';
+    console.log('✅ UI HTML injected, calculating chart...');
+
+    // Initialize Chart.js
+    setTimeout(() => {
+      try {
+        const ctx = document.getElementById('roadmapSkillChart').getContext('2d');
+        if (roadmapChartInstance) roadmapChartInstance.destroy();
+
+        const labels = requiredSkills.slice(0, 8);
+        const dataValues = labels.map(sk => {
+          const has = yourSkills.map(s => s.toLowerCase()).some(s => sk.toLowerCase().includes(s) || s.includes(sk.toLowerCase()));
+          return has ? 100 : 30; // 100 if present, 30 if missing (shows gap)
+        });
+
+        roadmapChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Match Status (%)',
+              data: dataValues,
+              backgroundColor: dataValues.map(v => v === 100 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.2)'),
+              borderColor: dataValues.map(v => v === 100 ? '#10b981' : '#ef4444'),
+              borderWidth: 2,
+              borderRadius: 6,
+              barThickness: 15
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => ctx.raw === 100 ? '✅ Skill Found' : '❌ Skill Gap'
+                }
+              }
+            },
+            scales: {
+              x: { display: false, max: 100 },
+              y: {
+                grid: { display: false },
+                ticks: {
+                  font: { family: 'inherit', size: 11, weight: '700' },
+                  color: '#1e293b'
+                }
+              }
+            }
+          }
+        });
+        console.log('✅ Chart.js initialized successfully');
+      } catch (chartErr) {
+        console.error('❌ Chart.js Initialization failed:', chartErr);
+      }
+
+      div.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+
+  } catch (err) {
+    console.error('❌ CRITICAL Render Error:', err);
+    alert('An error occurred while rendering the roadmap. Check console for details.');
+  }
+}
+
+// Keep backward compat for old tag buttons
+window.setDreamCompany = window.setRoadmapCompany;
+
+
+function navigateToSection(sectionId) {
+  // Hide all sections
+  document.querySelectorAll('.page-section').forEach(section => {
+    section.style.display = 'none';
+  });
+
+  // Show target section
+  const target = document.getElementById(sectionId);
+  if (target) {
+    target.style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+
+  // Update nav active state
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === `#${sectionId}`) {
+      link.classList.add('active');
+    }
+  });
+
+  // Handle specific section initializations
+  if (sectionId === 'browse-all' && paginationState.allInternships.length === 0) {
+    fetchInternshipsWithFilters();
+  }
+}
+
+
+
+// Ensure the first load handles sections correctly
+document.addEventListener('DOMContentLoaded', () => {
+  const hash = window.location.hash.substring(1);
+  if (hash && hash !== 'home') {
+    navigateToSection(hash);
+  }
+});
+
 
 function switchRecTab(tab) {
   const manualBtn = document.getElementById('tabManual');

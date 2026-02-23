@@ -34,7 +34,11 @@ try:
         gemini_available = True
         # Shared small model for fast tasks
         g_model = genai.GenerativeModel('gemini-1.5-flash')
-except Exception:
+        print("✅ Gemini successfully initialized for Python Brain.")
+    else:
+        print("⚠️ GEMINI_API_KEY not found in .env — Python Brain will use fallbacks.")
+except Exception as e:
+    print(f"❌ Gemini initialization failed: {str(e)}")
     gemini_available = False
     g_model = None
 

@@ -207,6 +207,31 @@ const handleProjectIdeas = async (req, res) => {
     }
 };
 
-module.exports = { getAIRecommendations, handleResumeAnalysis, handleResumeUpload, handleCoverLetter, handleInterviewChat, handleMatchExplanation, handleProjectIdeas };
+const handleDreamRoadmap = async (req, res) => {
+    try {
+        const { student, company, resume_text } = req.body;
+        console.log(`🎯 [Dream Roadmap] Generating for ${company}... (Resume: ${resume_text ? 'Yes' : 'No'})`);
+
+        if (!company) return res.status(400).json({ success: false, error: "Company name is required" });
+
+        const result = await pythonClient.generateDreamRoadmap(student, company, resume_text);
+        console.log(`✅ [Dream Roadmap] Python result success: ${result.success}`);
+        res.json(result);
+    } catch (error) {
+        console.error("❌ [Dream Roadmap] Error:", error.message);
+        res.status(500).json({ success: false, error: "Failed to generate roadmap: " + error.message });
+    }
+};
+
+module.exports = {
+    getAIRecommendations,
+    handleResumeAnalysis,
+    handleResumeUpload,
+    handleCoverLetter,
+    handleInterviewChat,
+    handleMatchExplanation,
+    handleProjectIdeas,
+    handleDreamRoadmap
+};
 
 
