@@ -1,0 +1,68 @@
+services:
+  # 1. Python AI Brain Service
+  - type: web
+    name: internhub-python-brain
+    env: python
+    region: singapore # Using a close region for India
+    plan: free
+    rootDirectory: backend/engine
+    buildCommand: pip install -r requirements.txt && python -m spacy download en_core_web_sm
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: GEMINI_API_KEY
+        sync: false # User will need to provide this
+
+  # 2. Node.js Backend & Frontend Service
+  - type: web
+    name: internhub-main
+    env: node
+    region: singapore
+    plan: free
+    rootDirectory: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: PYTHON_SERVICE_URL
+        fromService:
+          type: web
+          name: internhub-python-brain
+          property: host
+      # Database Config (Will be linked to the Render PostgreSQL)
+      - key: DB_HOST
+        fromDatabase:
+          name: internhub-db
+          property: host
+      - key: DB_NAME
+        fromDatabase:
+          name: internhub-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: internhub-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: internhub-db
+          property: password
+      - key: DB_PORT
+        fromDatabase:
+          name: internhub-db
+          property: port
+      # Secrets (User to provide in Render Dashboard)
+      - key: JWT_SECRET
+        sync: false
+      - key: FIREBASE_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+databases:
+  - name: internhub-db
+    region: singapore
+    plan: free

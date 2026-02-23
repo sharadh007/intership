@@ -14,6 +14,7 @@ A comprehensive full-stack web application connecting students with internship o
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Running the Application](#running-the-application)
+- [Deployment (Render)](#deployment-render)
 - [Project Structure](#project-structure)
 - [API Documentation](#api-documentation)
 - [AI Features](#ai-features)
@@ -218,6 +219,38 @@ The frontend will be available at `http://localhost:8080`
 cd backend
 npm start
 ```
+
+## 🚀 Deployment (Render)
+
+This project is configured for easy deployment on [Render](https://render.com) using a Blueprints (`render.yaml`).
+
+### 1. Push to GitHub
+Ensure all your changes are committed and pushed to your GitHub repository.
+
+### 2. Connect to Render
+1. Log in to your Render Dashboard.
+2. Click **New** > **Blueprint**.
+3. Connect your GitHub repository.
+4. Render will automatically detect the `render.yaml` file and set up:
+   - **PostgreSQL Database**: For your data storage.
+   - **InternHub Python Brain**: The AI engine.
+   - **InternHub Main**: The Node.js backend which also serves the frontend.
+
+### 3. Configure Environment Variables
+After the blueprint is created, you will need to manually add the following secrets in the Render Dashboard for each service (as defined in `render.yaml`):
+
+**Backend (internhub-main):**
+- `JWT_SECRET`: Your long random string.
+- `FIREBASE_API_KEY`: From your Firebase config.
+- `GEMINI_API_KEY`: From Google AI Studio.
+
+**Python Brain (internhub-python-brain):**
+- `GEMINI_API_KEY`: From Google AI Studio.
+
+### 4. Wait for Build
+Render will build both services. The frontend will be available at the URL provided for the `internhub-main` service.
+
+---
 
 ## 📁 Project Structure
 

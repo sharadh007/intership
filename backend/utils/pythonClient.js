@@ -1,6 +1,9 @@
 const axios = require('axios');
 
-const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
+let PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
+if (!PYTHON_SERVICE_URL.startsWith('http')) {
+    PYTHON_SERVICE_URL = `http://${PYTHON_SERVICE_URL}`;
+}
 
 const pythonClient = {
     async match(student, internships, workPreference) {
