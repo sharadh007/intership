@@ -39,7 +39,22 @@ const pythonClient = {
             console.error('Python Service Clean Data Error:', error.message);
             throw error;
         }
+    },
+
+    async generateProjectIdeas(skill, company) {
+        try {
+            const response = await axios.post(`${PYTHON_SERVICE_URL}/generate-project-ideas`, {
+                skill,
+                company
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Python Service Project Ideas Error:', error.message);
+            throw error;
+        }
     }
 };
+
+
 
 module.exports = pythonClient;

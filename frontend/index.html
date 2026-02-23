@@ -713,9 +713,33 @@
                   <option value="Others">Others</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label for="stateRecommendation">Preferred Location</label>
-                <input type="text" id="stateRecommendation" placeholder="e.g. Maharashtra, Mumbai, Remote" required>
+
+              <!-- Combined Work Mode & Location -->
+              <div class="form-group"
+                style="grid-column: span 2; margin-top: 10px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <label
+                  style="margin-bottom: 12px; display: block; font-weight: 700; color: #1e293b; font-size: 0.95rem;">Internship
+                  Preference & Location</label>
+                <div class="work-mode-selector" style="margin-bottom: 20px;">
+                  <button type="button" class="mode-btn active" onclick="setWorkMode('On-site', this)">
+                    📍 Preferred Location
+                  </button>
+                  <button type="button" class="mode-btn" onclick="setWorkMode('Remote', this)">
+                    🏠 Work From Home Only
+                  </button>
+                  <button type="button" class="mode-btn" onclick="setWorkMode('Any', this)">
+                    🔄 Both (On-site & Remote)
+                  </button>
+                </div>
+
+                <div id="locationInputContainer">
+                  <label for="stateRecommendation" id="locationLabel"
+                    style="font-size: 0.8rem; color: #64748b; margin-bottom: 6px; display: block; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">City
+                    or State Preferred</label>
+                  <input type="text" id="stateRecommendation" placeholder="e.g. Maharashtra, Mumbai" required
+                    style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem;">
+                </div>
+                <input type="hidden" id="workModeRecommendation" value="On-site">
               </div>
               <div class="form-group">
                 <label for="qualificationRecommendation">Highest Qualification</label>
@@ -738,14 +762,6 @@
                   <option value="3">3 Years</option>
                   <option value="4">4 Years</option>
                   <option value="5">5+ Years</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="workModeRecommendation">Preferred Work Mode</label>
-                <select id="workModeRecommendation">
-                  <option value="Any">Any</option>
-                  <option value="Remote">Remote Only</option>
-                  <option value="On-site">On-site / Office</option>
                 </select>
               </div>
               <div class="form-group">

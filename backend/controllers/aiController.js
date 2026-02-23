@@ -194,4 +194,19 @@ const handleMatchExplanation = async (req, res) => {
     }
 };
 
-module.exports = { getAIRecommendations, handleResumeAnalysis, handleResumeUpload, handleCoverLetter, handleInterviewChat, handleMatchExplanation };
+const handleProjectIdeas = async (req, res) => {
+    try {
+        const { skill, company } = req.body;
+        if (!skill) return res.status(400).json({ success: false, error: "Skill is required" });
+
+        const result = await pythonClient.generateProjectIdeas(skill, company);
+        res.json(result);
+    } catch (error) {
+        console.error("Project Ideas Error:", error);
+        res.status(500).json({ success: false, error: "Failed to generate ideas" });
+    }
+};
+
+module.exports = { getAIRecommendations, handleResumeAnalysis, handleResumeUpload, handleCoverLetter, handleInterviewChat, handleMatchExplanation, handleProjectIdeas };
+
+

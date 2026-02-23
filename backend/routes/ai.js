@@ -15,6 +15,11 @@ router.post('/interview-chat', aiController.handleInterviewChat);
 // Explain Match (New)
 router.post('/explain-match', aiController.handleMatchExplanation);
 
+// Generate Project Ideas (New)
+router.post('/generate-project-ideas', aiController.handleProjectIdeas);
+
+
+
 // Future endpoints (Cover Letter, Interview) will go here
 // router.post('/generate-cover-letter', aiController.generateCoverLetter);
 // router.post('/interview-chat', aiController.interviewChat);

@@ -88,6 +88,84 @@ async def analyze_resume(request: ResumeAnalysisRequest):
         logger.error(f"Resume Analysis Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/generate-project-ideas")
+async def generate_project_ideas(request: Dict[str, Any]):
+    """Generates 3 unique project ideas for a missing skill with real-world 2024-25 context."""
+    try:
+        from matcher import g_model, gemini_available
+        
+        skill = request.get('skill', 'Development')
+        company = request.get('company', 'this industry')
+        
+        # Ensure we don't use 'Internship' or 'Development' as the core skill if possible
+        clean_skill = skill.replace('Development', '').replace('Internship', '').strip()
+        if not clean_skill: clean_skill = "Technical Implementation"
+
+        if not gemini_available or g_model is None:
+            return {
+                "success": True, 
+                "data": {
+                    "ideas": [
+                        f"Smart {clean_skill} Optimizer: Solving high-load processing issues for 2024 tech stacks.",
+                        f"AI-Driven {clean_skill} Auditor: An automated compliance and efficiency tool for {company}.",
+                        f"Green-{clean_skill} Platform: A sustainability-focused tracker tailored for {company}'s market."
+                    ]
+                }
+            }
+
+        prompt = f"""You are a creative technical mentor. 
+        A student needs to master '{clean_skill}' to impress recruiters at '{company}'.
+        
+        TASK: Suggest exactly 3 UNIQUE, PROBLEM-SOLVING project ideas for late 2024-2025.
+        
+        Rules:
+        1. Every idea MUST revolve around '{clean_skill}'.
+        2. Solve a REAL-WORLD 2024 problem (e.g. AI-agent efficiency, energy tracking, remote security, fintech fraud).
+        3. Tailor the project to '{company}''s industry.
+        4. Be specific: Don't just say 'Build a bot'. Say what the bot solves.
+        
+        FORMAT (JSON ONLY):
+        {{
+          "ideas": [
+            "Project Title: Problem it solves + 1-sentence tech implementation using {clean_skill}.",
+            "Project Title: Problem it solves + 1-sentence tech implementation using {clean_skill}.",
+            "Project Title: Problem it solves + 1-sentence tech implementation using {clean_skill}."
+          ]
+        }}
+        
+        Only output raw JSON."""
+        
+        response = g_model.generate_content(
+            prompt,
+            generation_config={"temperature": 0.98, "top_p": 1.0} 
+        )
+        content = response.text.strip()
+        
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "{" in content and "}" in content:
+            start = content.find("{")
+            end = content.rfind("}") + 1
+            content = content[start:end]
+            
+        return {"success": True, "data": json.loads(content)}
+    except Exception as e:
+        logger.error(f"Project Ideas Error: {str(e)}")
+        return {
+            "success": True,
+            "data": {
+                "ideas": [
+                    f"2024 {clean_skill} Edge Solution: Low-latency implementation for {company}.",
+                    f"Privacy-First {clean_skill} Interface: Secure data portal for {company} users.",
+                    f"Next-Gen {clean_skill} Bot: Automated problem-solver for the current market."
+                ]
+            }
+        }
+
+
+
+
+
 @app.post("/clean-data")
 async def clean_data(request: CleaningRequest, background_tasks: BackgroundTasks):
     """Automated Data Cleaning Endpoint (Supports Background Processing)."""

@@ -1361,6 +1361,43 @@ function updateAuthUI(userName) {
 }
 
 
+// Set Work Mode and Update Location Visibility
+function setWorkMode(mode, btn) {
+  // Update hidden input
+  const workModeInput = document.getElementById('workModeRecommendation');
+  const locationInput = document.getElementById('stateRecommendation');
+  const locationLabel = document.getElementById('locationLabel');
+
+  if (workModeInput) workModeInput.value = mode;
+
+  // Toggle button active states
+  const btns = document.querySelectorAll('.mode-btn');
+  btns.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // Smart Location Logic
+  if (mode === 'Remote') {
+    if (locationInput) {
+      locationInput.value = 'Remote';
+      locationInput.readOnly = true;
+      locationInput.style.background = '#f1f5f9';
+      locationInput.style.color = '#94a3b8';
+    }
+    if (locationLabel) locationLabel.textContent = 'Auto-assigned for WFH';
+  } else {
+    if (locationInput) {
+      if (locationInput.value === 'Remote') locationInput.value = '';
+      locationInput.readOnly = false;
+      locationInput.style.background = '#ffffff';
+      locationInput.style.color = '#1e293b';
+      locationInput.placeholder = mode === 'Any' ? 'e.g. Mumbai (Enter primary preference)' : 'e.g. Maharashtra, Mumbai';
+    }
+    if (locationLabel) {
+      locationLabel.textContent = mode === 'Any' ? 'Primary Location Preference' : 'City or State Preferred';
+    }
+  }
+}
+
 // AI RECOMMENDATION LOGIC
 async function getAIRecommendations(event) {
   if (event) event.preventDefault();
@@ -1544,6 +1581,39 @@ async function getAIRecommendations(event) {
                   </p>
                 </div>
 
+                <!-- Road to 100% Roadmap -->
+                ${rec.roadmap ? `
+                <div style="margin-top: 12px; padding: 12px; background: rgba(33,128,141,0.03); border-radius: 10px; border: 1px solid rgba(33,128,141,0.1);">
+                  <p style="font-size: 0.65rem; color: #1a6874; font-weight: 800; text-transform: uppercase; margin: 0 0 8px; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between;">
+                    <span>🗺️ BRIDGE THE GAP</span>
+                    <span style="background: #21808d; color: white; padding: 1px 6px; border-radius: 4px; font-size: 0.55rem; font-weight: 700;">AI MENTOR</span>
+                  </p>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    ${rec.roadmap.days.map(day => `
+                      <div style="background: white; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(33,128,141,0.08); display: flex; align-items: flex-start; gap: 10px;">
+                        <div style="width: 28px; height: 28px; background: rgba(33,128,141,0.08); color: #1a6874; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; flex-shrink: 0; margin-top: 2px;">${day.day}</div>
+                        <div style="flex: 1; min-width: 0;">
+                          <div style="display: flex; justify-content: space-between; align-items: center; gap: 5px; margin-bottom: 2px;">
+                            <p style="font-size: 0.72rem; font-weight: 700; color: #13343b; margin: 0;">${day.topic}</p>
+                            ${day.link ? `<a href="${day.link}" target="_blank" style="font-size: 0.65rem; color: #21808d; font-weight: 700; text-decoration: none; white-space: nowrap; display: flex; align-items: center; gap: 2px; background: #e6f4f6; padding: 2px 8px; border-radius: 4px;">Learn ↗</a>` : ''}
+                          </div>
+                          <p style="font-size: 0.68rem; color: #475569; margin: 0; line-height: 1.4; font-weight: 500;">${day.action}</p>
+                          ${day.day === 2 ? `
+                            <button onclick="event.stopPropagation(); generateProjectIdeas('${(rec.missing_skills && rec.missing_skills.length > 0) ? rec.missing_skills[0] : (rec.missingSkills && rec.missingSkills.length > 0) ? rec.missingSkills[0] : (rec.role || 'Practical')}', '${rec.company || 'this role'}', this)" style="margin-top: 8px; width: 100%; background: #21808d; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.2s;">
+                              💡 EXPLORE 2024-25 PROJECT IDEAS
+                            </button>
+                          ` : ''}
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+                ` : ''}
+
+                <div id="project-ideas-container-${rec.index || rec.id || idx}" style="display:none; margin-top:12px; padding:12px; background:#f0f9ff; border-radius:10px; border:1px solid #bae6fd; animation: slideIn 0.3s ease;"></div>
+
+
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
                   <div>
                     <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: #94a3b8; margin-bottom: 3px;"><span>Skills Match</span><span style="font-weight:700;color:#21808d;">${skillsPct}%</span></div>
@@ -1600,7 +1670,57 @@ async function getAIRecommendations(event) {
   }
 }
 
+async function generateProjectIdeas(skill, company, btn) {
+  const isModal = btn.closest('.modal-content') !== null;
+  const containerId = isModal ? 'modal-project-ideas-container' : btn.closest('.ai-rec-card').querySelector('[id^="project-ideas-container"]').id;
+  const container = document.getElementById(containerId);
+
+  if (!container) return;
+
+  const originalHtml = btn.innerHTML;
+  btn.innerHTML = '⏳ Thinking...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${API_BASE}/ai/generate-project-ideas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skill, company })
+    });
+
+    const data = await res.json();
+    if (data.success && data.data) {
+      const ideas = data.data.ideas || [];
+      container.innerHTML = `
+        <h4 style="margin: 0 0 10px 0; color: #0369a1; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.1rem;">💡</span> Unique Project Ideas
+        </h4>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          ${ideas.map((idea, i) => `
+            <div style="background: white; padding: 10px; border-radius: 8px; border-left: 4px solid #0ea5e9; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+              <p style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 2px;">Idea #${i + 1}</p>
+              <p style="font-size: 0.8rem; color: #1e293b; line-height: 1.4; margin: 0; font-weight: 500;">${idea}</p>
+            </div>
+          `).join('')}
+        </div>
+        <p style="font-size: 0.65rem; color: #64748b; margin-top: 10px; font-style: italic;">Pick one that excites you and start building!</p>
+      `;
+      container.style.display = 'block';
+      container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      btn.innerHTML = '✨ Ideas Generated';
+    } else {
+      throw new Error("Failed to generate ideas");
+    }
+  } catch (error) {
+    console.error('Project Ideas Error:', error);
+    btn.innerHTML = '❌ Try Again';
+    btn.disabled = false;
+    alert('AI is busy. Please try generating ideas again in a moment.');
+  }
+}
+
 function clearRecForm() {
+
   if (!confirm("Are you sure you want to clear all fields?")) return;
   const ids = [
     'name', 'emailRecommendation', 'phoneRecommendation', 'skillsInput',
@@ -2228,6 +2348,40 @@ function openModal(internship) {
     </div>
     ` : ''}
 
+    ${internship.roadmap ? `
+    <div class="modal-section" style="margin-bottom: 24px; padding: 20px; background: rgba(33,128,141,0.03); border-radius: 12px; border: 1px solid rgba(33,128,141,0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+       <h3 style="margin: 0 0 10px 0; font-size: 0.95rem; font-weight: 800; color: #1a6874; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between;">
+        <span>🗺️ Bridge the Gap</span>
+        <span style="background: #21808d; color: white; padding: 3px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: 700;">AI MENTOR</span>
+      </h3>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        ${internship.roadmap.days.map(day => `
+          <div style="background: white; padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(33,128,141,0.08); display: flex; gap: 15px; align-items: flex-start;">
+            <div style="width: 32px; height: 32px; background: rgba(33,128,141,0.08); color: #21808d; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; font-size: 0.8rem;">${day.day}</div>
+            <div style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 10px;">
+                <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #13343b;">${day.topic}</h4>
+                ${day.link ? `<a href="${day.link}" target="_blank" style="font-size: 0.72rem; color: #21808d; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 3px; white-space: nowrap;">Learn ↗</a>` : ''}
+              </div>
+              <p style="margin: 0; font-size: 0.82rem; color: #475569; line-height: 1.5; font-weight: 500;">${day.action}</p>
+              ${day.day === 2 ? `
+                <button onclick="event.stopPropagation(); generateProjectIdeas('${(internship.missing_skills && internship.missing_skills.length > 0) ? internship.missing_skills[0] : (internship.missingSkills && internship.missingSkills.length > 0) ? internship.missingSkills[0] : (internship.role || 'Practical')}', '${internship.company || 'this role'}', this)" style="margin-top: 12px; width: 100%; max-width: 280px; background: #21808d; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 10px rgba(33,128,141,0.15);">
+                  🚀 EXPLORE 2024-25 PROJECT IDEAS
+                </button>
+
+              ` : ''}
+            </div>
+          </div>
+        `).join('')}
+
+      </div>
+      <div id="modal-project-ideas-container" style="display:none; margin-top:20px; padding:18px; background:white; border-radius:12px; border:1px solid #bae6fd; box-shadow: 0 4px 15px rgba(0,0,0,0.05); animation: slideIn 0.3s ease;"></div>
+    </div>
+    ` : ''}
+
+
+
+
     ${skills && skills !== 'Not specified' ? `
     <div class="modal-section" style="margin-bottom: 18px; padding: 16px; background: rgba(33,128,141,0.04); border-radius: 10px; border-left: 4px solid #21808d;">
       <h3 style="margin: 0 0 10px 0; font-size: 1rem; font-weight: 700; color: #13343b; display: flex; align-items: center; gap: 8px;">
@@ -2290,6 +2444,9 @@ function openModal(internship) {
 
   <div class="modal-footer" style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; padding-top: 24px; border-top: 1px solid #f1f5f9;">
     <button class="btn btn-outline" onclick="closeModal()" style="min-width: 100px;">Close</button>
+    <button class="btn btn-outline" onclick="generateProjectIdeas('${(internship.missing_skills && internship.missing_skills.length > 0) ? internship.missing_skills[0] : (internship.missingSkills && internship.missingSkills.length > 0) ? internship.missingSkills[0] : (internship.skills || 'Practical')}','${internship.company}', this)" style="color: #21808d; border-color: #21808d; background: #f0fdfa;">
+      🛠 Project Ideas
+    </button>
     <button class="btn btn-outline" onclick="generateCoverLetterForModal(this)" style="color: #21808d; border-color: #21808d; background: #f0fdfa;">
       ✨ AI Cover Letter
     </button>

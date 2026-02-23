@@ -3088,3 +3088,48 @@ body {
     margin-bottom: 0 !important;
   }
 }
+
+/* WORK MODE SELECTOR STYLES */
+.work-mode-selector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mode-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: white;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mode-btn:hover {
+  border-color: #21808d;
+  color: #21808d;
+  background: rgba(33, 128, 141, 0.02);
+}
+
+.mode-btn.active {
+  border-color: #21808d;
+  background: #21808d;
+  color: white;
+  box-shadow: 0 4px 12px rgba(33, 128, 141, 0.2);
+}
+
+@media (max-width: 600px) {
+  .mode-btn {
+    width: 100%;
+    flex: none;
+  }
+}
