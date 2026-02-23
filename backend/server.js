@@ -34,7 +34,51 @@ const pool = require('./config/database');
 // Initialize database tables
 const initDB = async () => {
   try {
+    // Create base tables
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS admins (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255),
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(50) DEFAULT 'admin',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS students (
+        id SERIAL PRIMARY KEY,
+        uid VARCHAR(255) UNIQUE NOT NULL,
+        name VARCHAR(255),
+        email VARCHAR(255) UNIQUE,
+        phone VARCHAR(20),
+        age INT,
+        qualification VARCHAR(255),
+        branch VARCHAR(255),
+        current_year INT,
+        skills TEXT[],
+        preferred_sector VARCHAR(255),
+        preferred_state VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS internships (
+        id SERIAL PRIMARY KEY,
+        company VARCHAR(255) NOT NULL,
+        role VARCHAR(255) NOT NULL,
+        location TEXT,
+        sector VARCHAR(255),
+        duration VARCHAR(50),
+        stipend TEXT,
+        requirements TEXT,
+        skills TEXT,
+        description TEXT,
+        deadline TIMESTAMP,
+        verification_status VARCHAR(50) DEFAULT 'verified',
+        source_type VARCHAR(50) DEFAULT 'manual_entry',
+        external_link TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE TABLE IF NOT EXISTS ai_interview_chats (
         id SERIAL PRIMARY KEY,
         user_id TEXT NOT NULL,
@@ -45,10 +89,45 @@ const initDB = async () => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, role, company)
       );
+
+      CREATE TABLE IF NOT EXISTS applications (
+        id SERIAL PRIMARY KEY,
+        student_id INT REFERENCES students(id),
+        internship_id INT REFERENCES internships(id),
+        status VARCHAR(50) DEFAULT 'applied',
+        cover_letter TEXT,
+        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS match_history (
+        id SERIAL PRIMARY KEY,
+        student_id INT REFERENCES students(id),
+        internship_id INT REFERENCES internships(id),
+        fit_score INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS quiz_results (
+        id SERIAL PRIMARY KEY,
+        student_id INT REFERENCES students(id),
+        skill_name VARCHAR(100),
+        score INT,
+        verified BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        student_id INT REFERENCES students(id),
+        message TEXT,
+        type VARCHAR(50),
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-    console.log('✅ AI Interview table ready');
+    console.log('✅ Database schema initialized');
   } catch (err) {
-    console.error('❌ AI Interview table failed:', err);
+    console.error('❌ Database initialization failed:', err);
   }
 };
 initDB();
