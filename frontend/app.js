@@ -3143,7 +3143,119 @@ function copyCoverLetter() {
   }
 }
 
+// --- AI Interview Coach Voice Systems ---
 let interviewHistory = [];
+let voiceModeActive = false;
+let recognition = null;
+let synthesis = window.speechSynthesis;
+let userIsSpeaking = false;
+
+// Initialize Speech Recognition
+function initSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    console.error("Browser does not support Speech Recognition.");
+    return null;
+  }
+
+  const rec = new SpeechRecognition();
+  rec.lang = 'en-IN';
+  rec.interimResults = false;
+  rec.continuous = false;
+
+  rec.onstart = () => {
+    document.getElementById('voiceIndicator').style.display = 'flex';
+    document.getElementById('voiceBtnIcon').innerHTML = '❌';
+    document.getElementById('voiceToggleBtn').style.background = '#fee2e2';
+  };
+
+  rec.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    document.getElementById('interviewInput').value = transcript;
+    handleInterviewSubmit(new Event('submit'));
+  };
+
+  rec.onend = () => {
+    if (voiceModeActive) {
+      // Small delay to prevent infinite loop errors
+      setTimeout(() => { if (voiceModeActive) rec.start(); }, 500);
+    } else {
+      document.getElementById('voiceIndicator').style.display = 'none';
+      document.getElementById('voiceBtnIcon').innerHTML = '🎙️';
+      document.getElementById('voiceToggleBtn').style.background = '#f1f5f9';
+    }
+  };
+
+  rec.onerror = (e) => {
+    console.warn("Speech recognition error:", e.error);
+    if (e.error === 'no-speech' && voiceModeActive) {
+      // Keep listening if no speech detected
+    } else {
+      stopVoiceMode();
+    }
+  };
+
+  return rec;
+}
+
+function toggleVoiceMode() {
+  if (!recognition) recognition = initSpeechRecognition();
+  if (!recognition) {
+    alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
+    return;
+  }
+
+  if (voiceModeActive) {
+    stopVoiceMode();
+  } else {
+    startVoiceMode();
+  }
+}
+
+function startVoiceMode() {
+  voiceModeActive = true;
+  synthesis.cancel(); // Stop any pending AI speech
+  recognition.start();
+}
+
+function stopVoiceMode() {
+  voiceModeActive = false;
+  if (recognition) recognition.stop();
+  synthesis.cancel();
+  document.getElementById('voiceIndicator').style.display = 'none';
+  document.getElementById('voiceBtnIcon').innerHTML = '🎙️';
+  document.getElementById('voiceToggleBtn').style.background = '#f1f5f9';
+}
+
+function speakText(text) {
+  if (!synthesis) return;
+
+  // Clean text for speech (remove emojis, weird chars)
+  const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = 'en-IN';
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+
+  // Find a good natural voice if available
+  const voices = synthesis.getVoices();
+  const preferredVoice = voices.find(v => v.name.includes("Google") && v.lang.includes("en")) || voices.find(v => v.lang.includes("en"));
+  if (preferredVoice) utterance.voice = preferredVoice;
+
+  utterance.onstart = () => {
+    if (voiceModeActive && recognition) recognition.stop(); // Stop listening while AI speaks
+  };
+
+  utterance.onend = () => {
+    if (voiceModeActive && recognition) recognition.start(); // Resume listening after AI finishes
+  };
+
+  synthesis.speak(utterance);
+}
+
+
+
 function openInterviewModal() {
   if (!auth.currentUser) {
     alert("Please login to use AI Interview Coach.");
@@ -3158,24 +3270,28 @@ function openInterviewModal() {
   }
   interviewHistory = [];
   if (chatArea) {
+    const greeting = "Hi! I'm your AI Interviewer. Tell me about yourself.";
     chatArea.innerHTML = `
       <div class="chat-msg model" style="background: #f1f5f9; padding: 10px 15px; border-radius: 12px 12px 12px 0; align-self: flex-start; max-width: 80%; line-height: 1.5; color: #334155;">
-        👋 Hi! I'm your AI Interviewer. Tell me about yourself.
+        👋 ${greeting}
       </div>
     `;
+    speakText(greeting);
   }
   modal?.classList.add('active');
 }
 
 function closeInterviewModal() {
   document.getElementById('interviewModal')?.classList.remove('active');
+  stopVoiceMode();
 }
 
 async function handleInterviewSubmit(e) {
-  e.preventDefault();
+  if (e) e.preventDefault();
   const input = document.getElementById('interviewInput');
   const text = input?.value.trim();
   if (!text) return;
+
   appendChatMessage(text, 'user');
   input.value = '';
 
@@ -3186,22 +3302,43 @@ async function handleInterviewSubmit(e) {
 
   try {
     interviewHistory.push({ sender: 'user', text: text });
+
+    // Include the Firebase token for the backend to save this to the user account
+    let headers = { 'Content-Type': 'application/json' };
+    if (auth.currentUser) {
+      const token = await auth.currentUser.getIdToken();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${API_BASE}/ai/interview-chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ history: interviewHistory, role: currentInternship?.role || 'Intern', company: currentInternship?.company || 'Company' })
+      headers: headers,
+      body: JSON.stringify({
+        history: interviewHistory,
+        role: currentInternship?.role || 'Intern',
+        company: currentInternship?.company || 'Company'
+      })
     });
+
     const data = await res.json();
-    document.getElementById(typingId)?.remove();
+    const typingNode = document.getElementById(typingId);
+    if (typingNode) typingNode.remove();
+
     if (data.success) {
-      appendChatMessage(data.data.reply, 'model');
-      interviewHistory.push({ sender: 'model', text: data.data.reply });
+      const reply = data.data.reply;
+      appendChatMessage(reply, 'model');
+      interviewHistory.push({ sender: 'model', text: reply });
+
+      // AI Speaks the reply
+      speakText(reply);
     } else {
       appendChatMessage("❌ Error connecting to AI Coach.", 'model');
     }
   } catch (err) {
-    document.getElementById(typingId)?.remove();
+    const typingNode = document.getElementById(typingId);
+    if (typingNode) typingNode.remove();
     appendChatMessage("❌ Network error.", 'model');
+    console.error(err);
   }
 }
 

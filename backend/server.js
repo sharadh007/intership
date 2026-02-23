@@ -31,6 +31,28 @@ app.use((req, res, next) => {
 
 const pool = require('./config/database');
 
+// Initialize database tables
+const initDB = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS ai_interview_chats (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        role TEXT,
+        company TEXT,
+        chat_history JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, role, company)
+      );
+    `);
+    console.log('✅ AI Interview table ready');
+  } catch (err) {
+    console.error('❌ AI Interview table failed:', err);
+  }
+};
+initDB();
+
 pool.query('SELECT NOW()', (err, res) => {
   if (err) console.error('❌ DB Connection failed:', err);
   else console.log('✅ PostgreSQL connected:', res.rows[0]);

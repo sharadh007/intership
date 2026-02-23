@@ -12,6 +12,29 @@ const handleInterviewChat = async (req, res) => {
     try {
         const { history, role, company } = req.body;
         const responseText = await generateInterviewResponse(history || [], role, company);
+
+        // Try to save to DB if user is authenticated (sent from frontend as Bearer token)
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            try {
+                const admin = require('../config/firebase');
+                const decodedToken = await admin.auth().verifyIdToken(token);
+                const userId = decodedToken.uid;
+
+                const chatJson = JSON.stringify([...history, { sender: 'model', text: responseText }]);
+                await pool.query(
+                    `INSERT INTO ai_interview_chats (user_id, role, company, chat_history)
+                     VALUES ($1, $2, $3, $4)
+                     ON CONFLICT (user_id, role, company)
+                     DO UPDATE SET chat_history = $4, updated_at = CURRENT_TIMESTAMP`,
+                    [userId, role, company, chatJson]
+                );
+            } catch (authErr) {
+                console.warn('⚠️ Interview persistence failed (auth):', authErr.message);
+            }
+        }
+
         res.json({ success: true, data: { reply: responseText } });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
