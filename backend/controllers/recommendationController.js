@@ -33,6 +33,7 @@ const getRecommendations = async (req, res) => {
       resumeData: req.body.resumeData || null,
       preferredSector: preferredSector || 'Technology',
       preferred_state: preferredState,
+      preferredState: preferredState, // Added for redundancy/compatibility
       college: college || 'Not specified',
       career_goal: req.body.career_goal || 'Not specified',
       strengths: req.body.strengths || '',
@@ -88,9 +89,9 @@ const getRecommendations = async (req, res) => {
     }
 
     // ── LIGHTWEIGHT PRE-RANKING (Cheap filter to reduce Python burden) ──────────
-    // This maintains accuracy by keeping the best candidates but speeds up AI analysis
     if (candidateInternships.length > 100) {
       const userSkillSet = studentProfile.skills.map(s => s.toLowerCase());
+      const targetSector = (studentProfile.preferredSector || 'Technology').toLowerCase();
 
       const scoredCandidates = candidateInternships.map(job => {
         let kScore = 0;
@@ -100,15 +101,28 @@ const getRecommendations = async (req, res) => {
           (job.skills_required || job.skills || '')
         ).toLowerCase();
 
-        // Count keyword hits
+        // Count keyword hits using word boundaries for short skills
         userSkillSet.forEach(skill => {
-          if (jobText.includes(skill)) kScore += 1;
+          if (skill.length <= 3) {
+            const regex = new RegExp(`\\b${skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+            if (regex.test(jobText)) kScore += 2; // Weight exact matches higher
+          } else {
+            if (jobText.includes(skill)) kScore += 1;
+          }
         });
+
+        // Sector alignment bonus
+        const jobSector = (job.sector || '').toLowerCase();
+        if ((targetSector === 'technology' || targetSector === 'technical') && (jobSector.includes('tech') || jobSector.includes('software') || jobSector.includes('it'))) {
+          kScore += 5;
+        } else if (targetSector !== 'any' && jobSector.includes(targetSector)) {
+          kScore += 5;
+        }
 
         return { ...job, kScore };
       });
 
-      // Sort by keyword relevance and take top 100 for deep semantic analysis
+      // Sort by keyword relevance + sector and take top 100
       candidateInternships = scoredCandidates
         .sort((a, b) => b.kScore - a.kScore)
         .slice(0, 100);

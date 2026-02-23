@@ -332,7 +332,7 @@ const FIELD_CONFIG = {
   qualification: { label: 'Qualification', type: 'select', options: ['B.Tech', 'B.E', 'MBA', 'BBA', 'B.Com', 'B.Sc', 'Diploma', 'Other'] },
   skills: { label: 'Skills', type: 'tags' }, // Special handling
   location: { label: 'Preferred Location', type: 'select', options: ['Remote', 'Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Chennai', 'Pune', 'Noida'] },
-  industry: { label: 'Preferred Industry', type: 'select', options: ['IT / Software', 'Finance', 'Marketing', 'Manufacturing', 'Construction', 'Healthcare', 'Education'] }
+  industry: { label: 'Preferred Industry', type: 'select', options: ['Technical', 'IT / Software', 'Finance', 'Marketing', 'Manufacturing', 'Construction', 'Healthcare', 'Education'] }
 };
 
 const Profile = {
@@ -1471,6 +1471,37 @@ async function getAIRecommendations(event) {
         const card = document.createElement('div');
         card.className = 'ai-rec-card';
 
+        // Robustly handle AI explanation (ensure it's a readable string, not JSON)
+        let aiReasoning = rec.aiExplanation || 'Analyzing match potential...';
+
+        if (typeof aiReasoning === 'string' && aiReasoning.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(aiReasoning);
+            if (parsed.summary && parsed.reasons) {
+              aiReasoning = `<strong style="display:block;margin-bottom:4px;color:#13343b;">${parsed.summary}</strong>` +
+                `<ul style="margin:0;padding-left:15px;list-style:disc;">` +
+                parsed.reasons.map(r => `<li style="margin-bottom:2px;">${r}</li>`).join('') +
+                `</ul>`;
+            } else if (parsed.explanation) {
+              aiReasoning = parsed.explanation;
+            }
+          } catch (e) {
+            console.warn('Failed to parse AI JSON reasoning', e);
+          }
+        } else if (typeof aiReasoning === 'object' && aiReasoning !== null) {
+          if (aiReasoning.summary && aiReasoning.reasons) {
+            aiReasoning = `<strong>${aiReasoning.summary}</strong><br>` + aiReasoning.reasons.join('<br>');
+          } else {
+            aiReasoning = aiReasoning.explanation || aiReasoning.text || JSON.stringify(aiReasoning);
+          }
+        }
+
+        // Clean up location (strip Python tuple format if present)
+        let loc = rec.location || 'N/A';
+        if (loc.startsWith("('") || loc.startsWith('("')) {
+          loc = loc.replace(/^[\('"]|[\)'"]]$/g, '');
+        }
+
         card.innerHTML = `
           <div class="ai-rec-card-inner">
             <!-- LEFT: Match Score Panel -->
@@ -1481,8 +1512,9 @@ async function getAIRecommendations(event) {
                   <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="3.5"/>
                   <circle cx="18" cy="18" r="14" fill="none" stroke="${scoreColor}" stroke-width="3.5" stroke-dasharray="${score} ${100 - score}" stroke-dashoffset="0" stroke-linecap="round"/>
                 </svg>
-                <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
-                  <span style="font-size: 1rem; font-weight: 800; color: white; line-height: 1;">${score}%</span>
+                <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                  <span style="font-size: 0.9rem; font-weight: 800; color: white; line-height: 1;">${score}%</span>
+                  <span style="font-size: 0.45rem; color: rgba(255,255,255,0.8); font-weight: 600; text-transform: uppercase; margin-top: 1px;">Accuracy</span>
                 </div>
               </div>
               <div style="background: ${scoreBg}; color: ${scoreColor}; font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 20px; text-align: center; max-width: 94px; line-height: 1.4;">${label}</div>
@@ -1496,13 +1528,23 @@ async function getAIRecommendations(event) {
                     <h3 style="font-size: 1rem; font-weight: 700; color: var(--color-text, #13343b); margin: 0 0 3px; line-height: 1.3;">${rec.role || rec.title || 'Internship'}</h3>
                     <p style="color: var(--color-text-secondary, #626c71); font-size: 0.84rem; margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                       <span>🏢 ${rec.company || 'Company'}</span>
-                      ${rec.location ? `<span style="color:#cbd5e1;">|</span><span>📍 ${rec.location}</span>` : ''}
+                      ${loc ? `<span style="color:#cbd5e1;">|</span><span>📍 ${loc}</span>` : ''}
                     </p>
                   </div>
                   ${rec.sector ? `<span style="background:rgba(33,128,141,0.1);color:#1a6874;border:1px solid rgba(33,128,141,0.2);border-radius:6px;padding:3px 10px;font-size:0.72rem;font-weight:600;white-space:nowrap;flex-shrink:0;">${rec.sector}</span>` : ''}
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
+                <!-- Match Intelligence Section -->
+                <div style="margin-top: 12px; padding: 10px; background: #f8fafc; border-radius: 8px; border-left: 3px solid ${scoreColor};">
+                  <p style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin: 0 0 4px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 0.8rem;">✨</span> MATCH INTELLIGENCE
+                  </p>
+                  <p style="font-size: 0.78rem; color: #475569; margin: 0; line-height: 1.5; font-weight: 500;">
+                    ${aiReasoning}
+                  </p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
                   <div>
                     <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: #94a3b8; margin-bottom: 3px;"><span>Skills Match</span><span style="font-weight:700;color:#21808d;">${skillsPct}%</span></div>
                     <div style="height: 5px; background: rgba(94,82,64,0.1); border-radius: 3px; overflow: hidden;"><div style="height:100%;width:${skillsPct}%;background:#21808d;border-radius:3px;"></div></div>
@@ -2123,6 +2165,33 @@ function openModal(internship) {
   const perks = parseList(internship.perks);
   const internType = parseList(internship.intern_type || internship.internType);
 
+  // 1A. Formatted AI Explanation
+  let aiReasoning = internship.aiExplanation || '';
+  if (aiReasoning) {
+    if (typeof aiReasoning === 'string' && aiReasoning.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(aiReasoning);
+        if (parsed.summary && parsed.reasons) {
+          aiReasoning = `<strong style="display:block;margin-bottom:4px;color:#13343b;">${parsed.summary}</strong>` +
+            `<ul style="margin:0;padding-left:15px;list-style:disc;">` +
+            parsed.reasons.map(r => `<li style="margin-bottom:2px;">${r}</li>`).join('') +
+            `</ul>`;
+        } else if (parsed.explanation) {
+          aiReasoning = parsed.explanation;
+        }
+      } catch (e) { }
+    } else if (typeof aiReasoning === 'object' && aiReasoning !== null) {
+      if (aiReasoning.summary && aiReasoning.reasons) {
+        aiReasoning = `<strong style="display:block;margin-bottom:4px;">${aiReasoning.summary}</strong>` +
+          `<ul style="margin:0;padding-left:15px;list-style:disc;">` +
+          aiReasoning.reasons.map(r => `<li>${r}</li>`).join('') +
+          `</ul>`;
+      } else {
+        aiReasoning = aiReasoning.explanation || aiReasoning.text || JSON.stringify(aiReasoning);
+      }
+    }
+  }
+
   modalBody.innerHTML = `
     <div class="modal-header" style="background: linear-gradient(135deg, #13343b 0%, #21808d 100%); color: white; padding: 28px 24px; border-radius: 12px 12px 0 0; margin: -20px -20px 24px -20px; box-shadow: 0 4px 12px rgba(19,52,59,0.1);">
       <h2 style="margin: 0 0 6px 0; font-size: 1.6em; font-weight: 800; letter-spacing: -0.5px;">${internship.company || 'Company Name'}</h2>
@@ -2147,6 +2216,17 @@ function openModal(internship) {
         <span style="display: block; font-weight: 600; color: #1e293b; font-size: 0.95rem;">${internType && internType !== 'Not specified' ? internType : 'Internship'}</span>
       </div>
     </div>
+
+    ${aiReasoning ? `
+    <div class="modal-section" style="margin-bottom: 24px; padding: 20px; background: #f0fdfa; border-radius: 12px; border: 1px solid #ccfbf1; box-shadow: 0 2px 8px rgba(33,128,141,0.05);">
+       <h3 style="margin: 0 0 10px 0; font-size: 0.95rem; font-weight: 800; color: #13343b; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.2rem;">✨</span> AI Match Insights
+      </h3>
+      <div style="margin: 0; color: #1e293b; line-height: 1.6; font-size: 0.95rem; font-weight: 500;">
+        ${aiReasoning}
+      </div>
+    </div>
+    ` : ''}
 
     ${skills && skills !== 'Not specified' ? `
     <div class="modal-section" style="margin-bottom: 18px; padding: 16px; background: rgba(33,128,141,0.04); border-radius: 10px; border-left: 4px solid #21808d;">

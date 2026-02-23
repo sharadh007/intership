@@ -77,19 +77,12 @@ async def match_internships(request: RecommendationRequest):
 async def analyze_resume(request: ResumeAnalysisRequest):
     """Resume Parsing & Extraction Endpoint."""
     try:
-        # Extract skills using NLP-based processor
-        extracted_skills = DataProcessor.extract_skills_nlp(request.resumeText, KNOWN_SKILLS)
-        # Parse structure
-        structure = DataProcessor.parse_resume_advanced(request.resumeText)
+        # Extract full profile using the deep AI engine
+        profile_data = analyze_resume_deep(request.resumeText)
         
         return {
             "success": True,
-            "data": {
-                "skills": extracted_skills,
-                "summary": structure["summary"],
-                "education_hint": structure["raw_sections"]["education"][:100],
-                "experience_years": 0  # Placeholder for expanded logic
-            }
+            "data": profile_data
         }
     except Exception as e:
         logger.error(f"Resume Analysis Error: {str(e)}")

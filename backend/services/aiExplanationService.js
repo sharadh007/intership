@@ -6,17 +6,28 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy");
 // Helper for Smart Fallback (Structure matching output constraints)
 const generateSmartFallback = (student, internship) => {
     // Basic logic to generate a structured backup explanation
-    const matchedSkills = student.skills.filter(s =>
-        (internship.skills || "").toLowerCase().includes(s.toLowerCase()) ||
-        (internship.requirements || "").toLowerCase().includes(s.toLowerCase())
-    );
+    const matchedSkills = student.skills.filter(s => {
+        const escapedSkill = s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`\\b${escapedSkill}\\b`, 'i');
+        return regex.test(internship.skills || "") || regex.test(internship.requirements || "");
+    });
 
     // Default fallback structure
+    const prefLoc = (student.preferred_state || student.preferredState || "").toLowerCase();
+    const jobLoc = (internship.location || "").toLowerCase();
+
+    let locationFeedback = `Located in ${internship.location}, a key tech hub.`;
+    if (prefLoc && jobLoc.includes(prefLoc)) {
+        locationFeedback = "The location matches your direct preference.";
+    } else if (prefLoc.includes('tamil nadu') && (jobLoc.includes('chennai') || jobLoc.includes('coimbatore') || jobLoc.includes('salem'))) {
+        locationFeedback = "This is a key regional opportunity within Tamil Nadu.";
+    }
+
     return {
         summary: "This internship is a strong match for your skills and career interests.",
         reasons: [
             matchedSkills.length > 0 ? `Your skills in ${matchedSkills.join(', ')} align with the job requirements.` : "Your educational background is a good fit.",
-            internship.location.includes(student.preferred_state) ? "The location matches your preference." : `Located in ${internship.location}, a key tech hub.`,
+            locationFeedback,
             "The duration fits the standard internship timeline."
         ],
         limitations: matchedSkills.length < 3 ? "Expanding your technical portfolio could improve your score." : "No significant limitations found.",
@@ -40,6 +51,7 @@ const callGemini = async (model, student, internships) => {
     - You do NOT introduce new criteria.
     - You ONLY explain recommendations produced by a deterministic backend matching engine.
     - Your explanations must be factual, simple, and traceable to provided data.
+    - CRITICAL: A skill like "C" or "OS" only matches if it appears as a stand-alone word. "C" does NOT match "Canva" or "Communication". "OS" does NOT match "Photoshop".
     - If information is missing, say so clearly.
 
     Your role is to explain WHY an internship was recommended and HOW the student can improve their fit score.
