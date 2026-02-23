@@ -49,7 +49,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'Backend Server Running',
     timestamp: new Date(),
-    message: 'PM Internship Portal Backend is Active'
+    message: 'InternHub India Backend is Active'
   });
 });
 

@@ -8,6 +8,7 @@ const { validateRecommendationRequest } = require('../middleware/validation');
 router.post('/', validateRecommendationRequest, recommendationController.getRecommendations);
 router.post('/get-recommendations', validateRecommendationRequest, recommendationController.getRecommendations);
 
+router.post('/ai-match', validateRecommendationRequest, aiController.getAIRecommendations);
 router.post('/ai-recommendations', validateRecommendationRequest, aiController.getAIRecommendations);
 
 module.exports = router;

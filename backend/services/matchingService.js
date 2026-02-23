@@ -15,29 +15,31 @@ const getDeterministicMatches = async (student, allInternships) => {
 
     console.log(`Matching Service: ${eligible.length} eligible out of ${allInternships.length}`);
 
-    // 2. Score using the Unified Matching Engine
-    const scored = eligible.map(i => {
-        const result = matchingAlgorithm.getMatchScore(student, i);
-        return {
-            ...i,
-            matchScore: result.finalScore,
-            scoreBreakdown: result.breakdown,
-            matchPercentage: result.matchPercentage,
-            matchLabel: result.matchLabel,
-            missingSkills: result.missingSkills,
-            improvementTips: result.improvementTips
-        };
-    });
+    // 2. Use hierarchical ranked algorithm (location-priority + skill-based)
+    const ranked = matchingAlgorithm.getRankedRecommendations(student, eligible, 10);
 
-    // 3. Sort (Rank by highest match score)
-    const sorted = scored.sort((a, b) => b.matchScore - a.matchScore);
+    // 3. Map to include all match fields used by frontend
+    const results = ranked.map(i => ({
+        ...i,
+        matchScore: i.finalScore,
+        matchPercentage: i.finalScore + '%',
+        matchLabel: i.matchLabel,
+        scoreBreakdown: {
+            resumeSkillScore: i.resumeSkillScore,
+            profileSkillScore: i.profileSkillScore,
+            educationScore: i.educationScore,
+            locationScore: i.locationScore,
+            locationTier: i.locationTier
+        },
+        missingSkills: i.missingSkills || [],
+        improvementTips: i.improvementTips || []
+    }));
 
-    if (sorted.length > 0) {
-        console.log(`Top Score: ${sorted[0].matchScore}, Location Tier: ${sorted[0].scoreBreakdown.locationTier}`);
+    if (results.length > 0) {
+        console.log(`Top Match: ${results[0].finalScore}% - ${results[0].locationLabel}`);
     }
 
-    // 4. Return Top 5
-    return sorted.slice(0, 5);
+    return results;
 };
 
 module.exports = { getDeterministicMatches };

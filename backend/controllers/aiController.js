@@ -4,6 +4,9 @@ const { generateExplanations } = require('../services/aiExplanationService');
 const { analyzeResume } = require('../services/resumeService');
 const { generateCoverLetter } = require('../services/writerService');
 const { generateInterviewResponse } = require('../services/interviewService');
+const pythonClient = require('../utils/pythonClient');
+const pdf = require('pdf-parse');
+
 
 const handleInterviewChat = async (req, res) => {
     try {
@@ -25,88 +28,146 @@ const handleCoverLetter = async (req, res) => {
     }
 };
 
+const handleResumeUpload = async (req, res) => {
+    try {
+        if (!req.file) {
+            console.error("❌ [AI Controller] No file in request");
+            return res.status(400).json({ success: false, error: "No file uploaded" });
+        }
+
+        console.log(`📥 [AI Controller] PDF Upload: ${req.file.originalname} (${req.file.size} bytes)`);
+
+        let resumeText;
+        try {
+            console.log("📄 [AI Controller] Parsing PDF buffer...");
+            const pdfData = await pdf(req.file.buffer);
+            resumeText = pdfData.text;
+            console.log(`✅ [AI Controller] PDF Parse Success (${resumeText.length} chars)`);
+        } catch (pdfError) {
+            console.error("❌ [AI Controller] PDF Parsing Error:", pdfError.message);
+            return res.status(500).json({ success: false, error: "PDF Parsing Failed: " + pdfError.message });
+        }
+
+        if (!resumeText || resumeText.length < 50) {
+            return res.status(400).json({ success: false, error: "Could not extract sufficient text from PDF" });
+        }
+
+        console.log("📡 [AI Controller] Extracting data from PDF text...");
+        let result;
+        try {
+            const pyResult = await pythonClient.analyzeResume(resumeText);
+            result = pyResult.data;
+        } catch (pyError) {
+            console.warn("⚠️ [AI Controller] Python service failed, falling back to basic Node.js analysis...");
+            try {
+                result = await analyzeResume(resumeText);
+            } catch (fallbackError) {
+                console.error("❌ [AI Controller] Fallback Analysis Error:", fallbackError.message);
+                throw fallbackError;
+            }
+        }
+
+        res.json({ success: true, data: result });
+
+    } catch (error) {
+        console.error("❌ [AI Controller] Fatal Upload Error:", error);
+        res.status(500).json({ success: false, error: error.message || "Internal Server Error" });
+    }
+};
+
 const handleResumeAnalysis = async (req, res) => {
     try {
         const { resumeText } = req.body;
 
         console.log("📥 [AI Controller] Received Analysis Request");
 
+
         if (!resumeText) {
             return res.status(400).json({ success: false, error: "No resume text provided" });
         }
 
-        const result = await analyzeResume(resumeText);
-
-        // 📝 FUTURE: Save 'result' to User Profile in DB
-        // For now, we simulate this by returning it to frontend to store in local/session state
-        // if (req.user) { await updateUserProfile(req.user.id, result); }
+        let result;
+        try {
+            console.log("📡 Calling Python service for advanced NLP parsing...");
+            const pyResult = await pythonClient.analyzeResume(resumeText);
+            result = pyResult.data;
+        } catch (pyError) {
+            console.warn("⚠️ Python service failed, falling back to basic Node.js analysis...");
+            result = await analyzeResume(resumeText);
+        }
 
         console.log("✅ [AI Controller] Resume Analysis Complete");
-
         res.json({ success: true, data: result });
 
     } catch (error) {
         console.error("❌ [AI Controller] Error:", error.message);
-        const statusCode = error.statusCode || 500;
-        res.status(statusCode).json({
-            success: false,
-            error: error.message,
-            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
 const getAIRecommendations = async (req, res) => {
     try {
-        const { uid, name, skills, preferredState, qualification, cgpa } = req.body;
+        const {
+            uid, name, skills, preferredState, qualification, cgpa,
+            experience, workMode, stipend, duration, interests,
+            college, gradYear, availability
+        } = req.body;
 
-        // 1. Fetch Student Profile (if not fully provided in body, fetch from DB)
-        // For now, trust the frontend body or merge. 
-        // Ensure skills is array
         const student = {
             uid,
             name,
-            skills: Array.isArray(skills) ? skills : (skills || '').split(','),
+            skills: Array.isArray(skills) ? skills : (skills || '').split(',').map(s => s.trim()),
             preferred_state: preferredState,
-            preferredState: preferredState, // Added for compatibility with matchingAlgorithm
+            preferredState: preferredState,
             qualification,
-            cgpa: cgpa || 7.5 // Default if missing
+            cgpa: cgpa || 7.5,
+            experience: experience || 0,
+            work_mode: workMode || 'Any',
+            stipend_pref: stipend || 0,
+            duration_pref: duration || 'Any',
+            interests: interests || '',
+            college: college || '',
+            grad_year: gradYear || '',
+            availability: availability || 'Full-time',
+            resume_text: req.body.resumeText || ''
         };
 
-        // 2. Fetch All Internships from DB
         const result = await pool.query('SELECT * FROM internships');
         const allInternships = result.rows;
-
-        console.log(`🔍 [AI Controller] User: ${name}, State: ${preferredState}, Skills: ${student.skills.length}`);
-        console.log(`🔍 [AI Controller] Total Internships in DB: ${allInternships.length}`);
 
         if (allInternships.length === 0) {
             return res.json({ success: true, recommendations: [] });
         }
 
-        // 3. Run Deterministic Matching Engine
-        // (Filter -> Score -> Sort -> Top 5)
+        try {
+            console.log("📡 Calling Python service for advanced matching...");
+            const pyMatch = await pythonClient.match(student, allInternships, 'both');
+            if (pyMatch.success) {
+                const topTen = (pyMatch.data || []).slice(0, 10);
+                return res.json({
+                    success: true,
+                    recommendations: topTen
+                });
+            }
+        } catch (pyError) {
+            console.warn("⚠️ Python service matching failed, falling back to legacy engine...");
+        }
+
+        // Fallback - already returns top 10 via getDeterministicMatches
         const topMatches = await getDeterministicMatches(student, allInternships);
-
-        console.log(`🔍 [AI Controller] Top Matches Found: ${topMatches.length}`);
-
-        // 4. Generate AI Explanations for these Top 5
         const finalResults = await generateExplanations(student, topMatches);
 
         res.json({
             success: true,
-            recommendations: finalResults
+            recommendations: finalResults.slice(0, 10)
         });
 
     } catch (error) {
         console.error("Matching Error:", error);
-        res.status(500).json({
-            success: false,
-            error: "Recommendation Engine Failed",
-            message: error.message
-        });
+        res.status(500).json({ success: false, error: "Recommendation Engine Failed", message: error.message });
     }
 };
+
 
 const handleMatchExplanation = async (req, res) => {
     try {
@@ -133,4 +194,4 @@ const handleMatchExplanation = async (req, res) => {
     }
 };
 
-module.exports = { getAIRecommendations, handleResumeAnalysis, handleCoverLetter, handleInterviewChat, handleMatchExplanation };
+module.exports = { getAIRecommendations, handleResumeAnalysis, handleResumeUpload, handleCoverLetter, handleInterviewChat, handleMatchExplanation };

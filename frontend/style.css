@@ -3022,3 +3022,69 @@ body {
     transform: rotate(0deg);
   }
 }
+
+/* AI Recommendation Card Styles */
+.ai-rec-card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-card-border, rgba(94, 82, 64, 0.12));
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(19, 52, 59, 0.07);
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-rec-card:hover {
+  box-shadow: 0 6px 24px rgba(19, 52, 59, 0.14);
+  transform: translateY(-2px);
+}
+
+.ai-rec-card-inner {
+  display: flex;
+  align-items: stretch;
+  min-height: 130px;
+}
+
+.ai-rec-score-panel {
+  background: linear-gradient(160deg, #13343b 0%, #21808d 100%);
+  min-width: 110px;
+  width: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 8px;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ai-rec-content-panel {
+  flex: 1;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .ai-rec-card-inner {
+    flex-direction: column;
+  }
+
+  .ai-rec-score-panel {
+    width: 100% !important;
+    min-width: 100% !important;
+    flex-direction: row !important;
+    padding: 12px 18px !important;
+    justify-content: space-between !important;
+    min-height: auto !important;
+    gap: 10px !important;
+  }
+
+  .ai-rec-score-panel .score-rank-badge {
+    margin-bottom: 0 !important;
+  }
+}

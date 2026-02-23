@@ -55,10 +55,9 @@ const analyzeResume = async (resumeText) => {
         // --- ATTEMPT 1: GEMINI ---
         console.log("🚀 [Resume Service] Attempting with Gemini...");
 
-        // USING gemini-pro (Gemini 1.0 Pro) as it is widely supported and stable.
-        // gemini-1.5-flash was reporting decommissioned/error errors in this environment.
+        // Using gemini-1.5-flash as it is faster and supports JSON mode reliably.
         const model = genAI.getGenerativeModel({
-            model: "gemini-pro",
+            model: "gemini-1.5-flash",
             generationConfig: { responseMimeType: "application/json" }
         });
 

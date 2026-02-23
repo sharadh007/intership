@@ -101,16 +101,16 @@ const validateRecommendationRequest = (req, res, next) => {
     const { name, age, qualification, skills, preferredState } = req.body;
 
     // Check required fields
-    if (!name || !age || !qualification || !skills || !preferredState) {
+    if (!name || !qualification || !skills || !preferredState) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields',
-        required: ['name', 'age', 'qualification', 'skills', 'preferredState']
+        required: ['name', 'qualification', 'skills', 'preferredState']
       });
     }
 
-    // Validate age
-    if (!validateAge(age)) {
+    // Validate age if provided
+    if (age && !validateAge(age)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid age',

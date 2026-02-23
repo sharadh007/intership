@@ -124,13 +124,20 @@ const parseLocationFromString = (locationStr) => {
 };
 
 /**
- * Filter internships by location and skills
+ * Filter internships by location, skills, and company name
  */
-const filterInternships = (allInternships, userLocation, userSkills) => {
+const filterInternships = (allInternships, userLocation, userSkills, companyQuery) => {
   if (!allInternships || allInternships.length === 0) return [];
 
   let filtered = allInternships.filter(internship => {
-    // Filter by location
+    // 1. Filter by Company Name (if provided)
+    if (companyQuery && companyQuery.trim() !== '') {
+      const cQuery = companyQuery.toLowerCase().trim();
+      const companyName = String(internship.company).toLowerCase();
+      if (!companyName.includes(cQuery)) return false;
+    }
+
+    // 2. Filter by location
     if (!userLocation || userLocation === 'All' || userLocation === '--') {
       return true;
     }
@@ -156,6 +163,7 @@ const filterInternships = (allInternships, userLocation, userSkills) => {
 
   return filtered;
 };
+
 
 /**
  * Get unique locations from dataset

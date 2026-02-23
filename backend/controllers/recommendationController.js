@@ -119,7 +119,38 @@ const getRecommendations = async (req, res) => {
 
     console.log(`🚀 ACCELERATED MATCHING: Processing ${candidateInternships.length} candidates for ${name}...`);
 
-    // 2. Spawn Python Process
+    const pythonClient = require('../utils/pythonClient');
+
+    try {
+      // 1. Try calling the Python FastAPI service (Higher Reliability & Speed)
+      console.log('📡 Calling Python FastAPI service...');
+      const result = await pythonClient.match(studentProfile, candidateInternships, workPreference);
+
+      if (result.success) {
+        console.log(`✅ Success (API): Generated ${result.data.length} semantic matches.`);
+
+        const formattedRecommendations = result.data.map((rec, index) => ({
+          ...rec,
+          id: rec.id,
+          rank: index + 1,
+          finalScore: (rec.match_score * 100).toFixed(0),
+          matchPercentage: (rec.match_score * 100).toFixed(0) + '%',
+          matchLabel: rec.match_score > 0.8 ? 'Excellent Match' : (rec.match_score > 0.6 ? 'Good Match' : 'Fair Match'),
+          aiExplanation: rec.aiExplanation
+        }));
+
+        return res.json({
+          success: true,
+          studentName: name,
+          recommendationCount: formattedRecommendations.length,
+          recommendations: formattedRecommendations
+        });
+      }
+    } catch (apiError) {
+      console.warn('⚠️ Python FastAPI service unavailable, falling back to spawn process...');
+    }
+
+    // 2. Fallback to Spawn Python Process (Original Method)
     const pythonScript = path.join(__dirname, '../engine/matcher.py');
     const pythonProcess = spawn('python', [pythonScript]);
 
@@ -179,7 +210,7 @@ const getRecommendations = async (req, res) => {
         const result = JSON.parse(jsonString);
 
         if (result.success) {
-          console.log(`✅ Success: Generated ${result.data.length} semantic matches.`);
+          console.log(`✅ Success (Spawn): Generated ${result.data.length} semantic matches.`);
 
           const formattedRecommendations = result.data.map((rec, index) => ({
             ...rec,
@@ -204,12 +235,12 @@ const getRecommendations = async (req, res) => {
         }
       } catch (e) {
         console.error('Failed to parse Python output:', e);
-        console.error('Raw Output was:', dataString);
         if (!res.headersSent) {
           res.status(500).json({ success: false, error: 'AI Engine Error: ' + e.message });
         }
       }
     });
+
 
   } catch (error) {
     console.error('Controller Error:', error);

@@ -60,9 +60,14 @@ A comprehensive full-stack web application connecting students with internship o
 - **JWT**: Token-based authorization
 
 ### AI/ML Services
-- **Google Gemini AI**: Resume analysis and content generation
-- **Groq API**: Fast LLM inference with LLaMA models
-- **Custom Matching Algorithm**: Location and skill-based recommendation engine
+- **Python Brain Engine (FastAPI)**: Centralized backend for heavy intelligence tasks
+  - **Sentence Transformers**: SOTA semantic matching using `all-MiniLM-L6-v2`
+  - **spaCy NLP**: Robust resume parsing and entity extraction
+  - **BeautifulSoup4**: Automated data scraping and cleaning
+  - **Gemini LLM**: Advanced re-ranking and match explainability
+- **Google Gemini AI**: Content generation and deep analysis
+- **Groq API**: High-speed LLaMA 3 inference
+
 
 ## 📦 Prerequisites
 
@@ -83,11 +88,18 @@ cd intership
 ```
 
 ### 2. Install Backend Dependencies
-
 ```bash
 cd backend
 npm install
 ```
+
+### 3. Install Python Brain Dependencies
+```bash
+cd backend/engine
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+```
+
 
 ### 3. Set Up PostgreSQL Database
 

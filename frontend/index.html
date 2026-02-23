@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Internship Recommendation Platform</title>
+  <title>InternHub India | National Internship Portal</title>
   <link rel="stylesheet" href="style.css?v=20260220-0100">
   <link rel="stylesheet" href="badges.css?v=20260219-2120">
   <link rel="stylesheet" href="notifications.css?v=20260220-0015">
@@ -195,7 +195,7 @@
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
           <span style="font-size: 2.5rem;">🇮🇳</span>
           <h1 style="font-size: 1.8rem; font-weight: 800; color: #1a202c; line-height: 1.2;">
-            Internship<br>Recommendation Platform</h1>
+            InternHub India<br>Recommendation Platform</h1>
         </div>
         <p style="color: #4a5568; margin-bottom: 30px; font-size: 1.1rem; line-height: 1.6;">
           Unlock your potential with over <strong>1 Crore internships</strong> across India's top companies. Bridging
@@ -360,25 +360,12 @@
   <!-- MAIN APP VIEW (Hidden until auth) -->
   <div id="main-app-view" style="display: none;">
 
-    <!-- RESUME NUDGE BANNER -->
-    <div id="resumeNudgeBanner"
-      style="background: linear-gradient(90deg, #eff6ff 0%, #dbeafe 100%); border-bottom: 1px solid #bfdbfe; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 15px; position: relative;">
-      <span style="font-size: 1.2rem;">📄</span>
-      <p style="margin: 0; color: #1e40af; font-size: 0.95rem; font-weight: 500;">
-        <strong>Want better matches?</strong> Upload your resume to unlock neat fonts and personalized recommendations!
-      </p>
-      <button onclick="document.getElementById('resumeNudgeBanner').style.display='none'"
-        style="background: none; border: none; color: #60a5fa; cursor: pointer; font-size: 1.2rem; margin-left: auto; padding: 0 10px;">
-        &times;
-      </button>
-    </div>
-
     <!-- Navigation Bar -->
     <nav class="navbar">
       <div class="nav-container">
         <div class="nav-logo">
           <span class="flag-icon">🇮🇳</span>
-          <span class="nav-title" data-translate="nav-title">Internship Recommendation Platform</span>
+          <span class="nav-title" data-translate="nav-title">InternHub India</span>
         </div>
 
         <button class="mobile-menu-toggle" id="mobileMenuToggle">
@@ -387,6 +374,8 @@
 
         <div class="nav-menu" id="navMenu">
           <a href="#home" class="nav-link active" data-translate="nav-home">Home</a>
+          <a href="#find-internships" class="nav-link" data-translate="nav-find">Recommendations</a>
+          <a href="#browse-all" class="nav-link" onclick="navigateToBrowseAll()">Browse All</a>
           <a href="#about" class="nav-link" data-translate="nav-about">About</a>
           <a href="#contact" class="nav-link" data-translate="nav-contact">Contact</a>
         </div>
@@ -478,204 +467,16 @@
         <div class="animated-blob blob-2"></div>
         <div class="animated-blob blob-3"></div>
         <div class="container hero-content">
-          <h1 class="hero-title">Internship Recommendation Platform</h1>
+          <h1 class="hero-title">InternHub India</h1>
           <p class="hero-subtitle">Providing valuable opportunities for youth across India</p>
           <p class="hero-description">Empowering India's youth with real-world experience and career opportunities
             across
             24 sectors</p>
-          <button class="btn btn-cta" onclick="scrollToProfile()">Get Started Now</button>
-        </div>
-      </div>
-
-      <!-- AI Smart Resume Analyzer Section -->
-
-
-      <!-- Quick Profile Form Section -->
-      <div class="profile-section">
-        <div class="container">
-          <!-- AI Resume Analyzer (Moved Here) -->
-          <div class="resume-analyzer-card"
-            style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); max-width: 800px; margin: 0 auto 40px; border: 1px solid #e2e8f0;">
-            <div class="section-header" style="text-align: center; margin-bottom: 20px;">
-              <span class="section-tag"
-                style="background: #e0f2fe; color: #0284c7; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 700; display: inline-block; margin-bottom: 8px;">AI
-                POWERED</span>
-              <h3 style="margin: 0; color: #1e293b; font-size: 1.5rem;">Smart Resume Analyzer</h3>
-              <p style="color: #64748b; font-size: 0.95rem; margin-top: 5px;">Paste your resume to get <strong>200%
-                  better recommendations</strong> and auto-fill your profile instantly.</p>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 15px;">
-              <textarea id="resumeTextData"
-                placeholder="Paste your resume content (e.g. Education, Skills, Experience)..."
-                style="width: 100%; height: 120px; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: inherit; resize: vertical; background: #f8fafc; font-size: 0.95rem;"></textarea>
-
-              <div style="display: flex; align-items: center; justify-content: center;">
-                <button type="button" id="btnAnalyzeResume" onclick="Profile.analyzeResume()" class="btn-primary"
-                  style="width: auto; padding: 12px 30px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); gap: 10px; font-weight: 600; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);">
-                  <span>✨ Analyze &amp; Auto-Fill Form</span>
-                </button>
-              </div>
-
-              <div id="resumeLoading"
-                style="display: none; background: #ecfdf5; color: #059669; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #a7f3d0; font-size: 0.9em;">
-                <i class="fas fa-spinner fa-spin"></i> Processing...
-              </div>
-            </div>
-          </div>
-
-          <div class="profile-form-card">
-            <h2 class="profile-form-title">Create Your Profile for Personalized Matches</h2>
-            <p class="profile-form-subtitle">Tell us about yourself to get accurate internship recommendations</p>
-
-            <form id="quickProfileForm" onsubmit="handleQuickProfileSubmit(event)">
-              <div class="form-row">
-                <div class="form-field">
-                  <label>First Name <span class="required">*</span></label>
-                  <input type="text" name="firstName" placeholder="Your first name" required>
-                </div>
-                <div class="form-field">
-                  <label>Last Name <span class="required">*</span></label>
-                  <input type="text" name="lastName" placeholder="Your last name" required>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-field">
-                  <label>Email Address <span class="required">*</span></label>
-                  <input type="email" name="email" placeholder="your.email@example.com" required>
-                </div>
-                <div class="form-field">
-                  <label>Phone Number <span class="required">*</span></label>
-                  <input type="tel" name="phone" placeholder="10-digit phone number" pattern="[0-9]{10}" required>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-field">
-                  <label>Education Level <span class="required">*</span></label>
-                  <select name="education" class="form-control" required>
-                    <option value="">Select education level</option>
-                    <option value="12th Pass">12th Pass</option>
-                    <option value="Diploma">Diploma</option>
-                    <option value="Bachelor's Degree">Bachelor's Degree</option>
-                    <option value="Master's Degree">Master's Degree</option>
-                    <option value="ITI">ITI</option>
-                  </select>
-                </div>
-                <div class="form-field">
-                  <label>Field of Study <span class="required">*</span></label>
-                  <select name="field" class="form-control" required>
-                    <option value="">Select field of study</option>
-                    <option value="CSE">Computer Science &amp; Engineering</option>
-                    <option value="ECE">Electronics &amp; Communication</option>
-                    <option value="ME">Mechanical Engineering</option>
-                    <option value="CE">Civil Engineering</option>
-                    <option value="EE">Electrical Engineering</option>
-                    <option value="Commerce">Commerce</option>
-                    <option value="Science">Science</option>
-                    <option value="Arts">Arts</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-row full-width">
-                <div class="form-field">
-                  <label>Current Skills <span class="required">*</span></label>
-                  <input type="text" name="skills" placeholder="e.g., Python, Data Analysis, Leadership" required>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-field">
-                  <label>Career Goal <span class="required">*</span></label>
-                  <select name="career" class="form-control" required>
-                    <option value="">Select career goal</option>
-                    <option value="Technical Track">Technical Track</option>
-                    <option value="Management Track">Management Track</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Operations">Operations</option>
-                    <option value="Sales">Sales &amp; Marketing</option>
-                    <option value="Undecided">Undecided</option>
-                  </select>
-                </div>
-                <div class="form-field">
-                  <label>Preferred Industry/Sector <span class="required">*</span></label>
-                  <select name="industry" class="form-control" required>
-                    <option value="">Select industry</option>
-                    <option value="IT">Information Technology</option>
-                    <option value="Finance">Finance &amp; Banking</option>
-                    <option value="Energy">Energy</option>
-                    <option value="Automotive">Automotive</option>
-                    <option value="Manufacturing">Manufacturing</option>
-                    <option value="FMCG">FMCG</option>
-                    <option value="Construction">Construction</option>
-                    <option value="Healthcare">Healthcare</option>
-                    <option value="Consulting">Consulting</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-field">
-                  <label>Work Preference <span class="required">*</span></label>
-                  <select name="workPreference" id="workPreferenceInput" class="form-control"
-                    onchange="handleWorkPreferenceChange(this)" required>
-                    <option value="office">In-Office (Preferred Location)</option>
-                    <option value="both">Both (Office & Remote)</option>
-                    <option value="remote">Remote Only (Work From Home)</option>
-                  </select>
-                </div>
-                <div class="form-field">
-                  <label>Preferred Location (State/City) <span class="required">*</span></label>
-                  <input type="text" name="preferredState" id="locationInput" placeholder="Mumbai, Bangalore, Delhi"
-                    required>
-                </div>
-                <div class="form-field">
-                  <label>Work Experience (months) <span class="required">*</span></label>
-                  <input type="number" name="experience" placeholder="0" min="0" max="120" required>
-                </div>
-              </div>
-
-              <div class="form-row full-width">
-                <div class="form-field">
-                  <label>Your Strengths/Achievements</label>
-                  <textarea name="strengths" placeholder="Share your key strengths or notable achievements (optional)"
-                    rows="3"></textarea>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-field">
-                  <label>CGPA/Percentage <span class="required">*</span></label>
-                  <input type="number" name="cgpa" placeholder="7.5" step="0.01" min="0" max="10" required>
-                </div>
-                <div class="form-field">
-                  <label>Availability to Start <span class="required">*</span></label>
-                  <select name="availability" class="form-control" required>
-                    <option value="">Select availability</option>
-                    <option value="Immediate">Immediate</option>
-                    <option value="Soon">Within 1-2 months</option>
-                    <option value="Flexible">Flexible</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-row full-width">
-                <div class="form-field checkbox-field">
-                  <input type="checkbox" id="agreeShare" name="agree" required>
-                  <label for="agreeShare">I agree to share my profile for internship matching <span
-                      class="required">*</span></label>
-                </div>
-              </div>
-
-              <div class="form-row full-width">
-                <button type="submit" class="btn btn-primary btn-large btn-full-width">Get Personalized
-                  Recommendations</button>
-              </div>
-            </form>
+          <div style="display: flex; gap: 20px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
+            <button class="btn btn-cta" onclick="scrollToBrowse()">Explore All Internships</button>
+            <button class="btn btn-outline" onclick="navigateToSection('find-internships')"
+              style="border: 2px solid white; color: white; padding: 12px 30px; border-radius: 30px; backdrop-filter: blur(5px);">Get
+              AI Matches ✨</button>
           </div>
         </div>
       </div>
@@ -791,7 +592,7 @@
         <div class="container">
           <h2 class="cta-title">Ready to Transform Your Career?</h2>
           <p class="cta-text">Join thousands of young professionals. Start your internship journey today!</p>
-          <button class="btn btn-cta-white" onclick="navigateToSection('browse-all')">Explore Internships Now</button>
+          <button class="btn btn-cta-white" onclick="scrollToBrowse()">Explore Internships Now</button>
         </div>
       </div>
     </section>
@@ -799,12 +600,12 @@
     <!-- About Page -->
     <section id="about" class="page-section">
       <div class="container">
-        <h1 class="page-title" data-translate="about-title">About Internship Recommendation Platform</h1>
+        <h1 class="page-title" data-translate="about-title">About PM Internship Portal</h1>
 
         <div class="about-content">
           <div class="about-card">
             <h2 data-translate="about-background-title">Background &amp; Objectives</h2>
-            <p data-translate="about-background-text">The Internship Recommendation Platform was launched to address the
+            <p data-translate="about-background-text">The PM Internship Portal was launched to address the
               employability gap among Indian youth. It aims to provide practical work experience, enhance skills, and
               improve the career prospects of young graduates across the country, with special focus on rural, tribal,
               and
@@ -855,156 +656,268 @@
       </div>
     </section>
 
-    <!-- Find Internships Page -->
+    <!-- Recommendations Page (Formerly Find Internships) -->
     <section id="find-internships" class="page-section">
       <div class="container">
-        <h1 class="page-title" data-translate="find-title">Find Internships</h1>
+        <h1 class="page-title">Personalized Recommendations</h1>
+        <p class="section-subtitle" style="text-align: center; margin-bottom: 30px;">
+          Tell us about yourself to discover the best internships matching your profile.
+        </p>
 
-        <!-- Tabs Navigation -->
-        <div class="tabs-navigation" style="display: none;">
-          <button class="tab-btn active" data-tab="recommendations">
-            Get Recommendations
-          </button>
+        <div class="recommendation-tabs"
+          style="display: flex; gap: 10px; justify-content: center; margin-bottom: 30px;">
+          <button class="btn btn-outline active" id="tabManual" onclick="switchRecTab('manual')"
+            style="padding: 10px 20px; border-radius: 20px;">Manual Profile</button>
+          <button class="btn btn-outline" id="tabResume" onclick="switchRecTab('resume')"
+            style="padding: 10px 20px; border-radius: 20px;">AI Resume Scrape ✨</button>
         </div>
 
-        <!-- Tab 1: Get Recommendations -->
-        <div id="recommendations-tab" class="tab-content active">
-          <div class="recommendations-container">
-            <!-- Profile Form Section -->
-            <div id="profileFormSection" class="profile-form-section">
-              <div class="form-card">
-                <h2>Tell us about yourself</h2>
-                <p class="form-description">Fill out your profile to get personalized internship recommendations</p>
-
-                <form id="profileForm" onsubmit="handleProfileSubmit(event)">
-                  <div class="form-group">
-                    <label>Full Name <span class="required">*</span></label>
-                    <input type="text" id="fullName" class="form-control" placeholder="Enter your full name"
-                      value="Sharadh" required>
-                  </div>
-
-                  <div class="form-group">
-                    <label>Email Address <span class="required">*</span></label>
-                    <input type="email" id="emailAddress" class="form-control" placeholder="Enter your email"
-                      value="sdy@gmail.com" required>
-                  </div>
-
-                  <div class="form-group">
-                    <label>Education Level <span class="required">*</span></label>
-                    <select id="educationLevel" class="form-control" required>
-                      <option value="">Select your education level</option>
-                      <option value="12th Pass">12th Pass</option>
-                      <option value="Diploma">Diploma</option>
-                      <option value="Bachelor's Degree" selected>Bachelor's Degree</option>
-                      <option value="Master's Degree">Master's Degree</option>
-                      <option value="ITI">ITI</option>
-                    </select>
-                  </div>
-
-                  <div class="form-group">
-                    <label>Your Skills <span class="required">*</span></label>
-                    <div class="textarea-with-icon">
-                      <textarea id="skillsInput" class="form-control" rows="4"
-                        placeholder="Enter your skills (e.g., Python, Data Analysis, Digital Marketing)"
-                        required></textarea>
-                      <button type="button" class="mic-button" title="Voice input (decoration)">🎤</button>
-                    </div>
-                    <small class="helper-text">Enter skills separated by commas</small>
-                  </div>
-
-                  <div class="form-group">
-                    <label>Interests <span class="required">*</span></label>
-                    <select id="interests" class="form-control" required>
-                      <option value="">Select your interest area</option>
-                      <option value="Information Technology">Information Technology</option>
-                      <option value="Banking & Finance">Banking &amp; Finance</option>
-                      <option value="Energy & Oil & Gas">Energy &amp; Oil &amp; Gas</option>
-                      <option value="Automotive">Automotive</option>
-                      <option value="Manufacturing">Manufacturing</option>
-                      <option value="FMCG">FMCG</option>
-                      <option value="Engineering & Construction">Engineering &amp; Construction</option>
-                      <option value="Healthcare">Healthcare</option>
-                      <option value="Agriculture & Rural Development" selected>Agriculture &amp; Rural Development
-                      </option>
-                    </select>
-                  </div>
-
-                  <div class="form-group">
-                    <label>Preferred Location</label>
-                    <input type="text" id="preferredLocation" class="form-control"
-                      placeholder="Enter your preferred location (optional)">
-                  </div>
-
-                  <div class="form-group">
-                    <label>Preferred Language <span class="required">*</span></label>
-                    <select id="preferredLanguage" class="form-control" required>
-                      <option value="English" selected>English</option>
-                      <option value="हिन्दी">हिन्दी</option>
-                      <option value="தமிழ்">தமிழ்</option>
-                      <option value="मराठी">मराठी</option>
-                    </select>
-                  </div>
-
-                  <div class="form-actions">
-                    <button type="submit" class="btn btn-primary btn-large btn-full-width">Get Recommendations</button>
-                    <div class="secondary-actions">
-                      <button type="button" class="btn btn-outline" onclick="saveProfile()">Save My Profile</button>
-                      <button type="button" class="btn btn-outline" onclick="loadProfile()">Load Saved Profile</button>
-                    </div>
-                  </div>
-                </form>
+        <div class="profile-form-card" id="profileFormSection"
+          style="max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+          <form id="recommendationForm" onsubmit="getAIRecommendations(event)">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" placeholder="Enter your full name" required>
+              </div>
+              <div class="form-group">
+                <label for="emailRecommendation">Email Address</label>
+                <input type="email" id="emailRecommendation" placeholder="e.g. alex@example.com">
+              </div>
+              <div class="form-group">
+                <label for="phoneRecommendation">Contact Number</label>
+                <input type="tel" id="phoneRecommendation" placeholder="e.g. +91 98765 43210">
+              </div>
+              <div class="form-group">
+                <label for="skillsInput">Key Skills</label>
+                <input type="text" id="skillsInput" placeholder="e.g. Python, SQL, Photoshop, Marketing" required>
+              </div>
+              <div class="form-group">
+                <label for="interests">Interests/Sectors</label>
+                <select id="interests">
+                  <option value="">Select Sector</option>
+                  <option value="IT & Software">IT & Software</option>
+                  <option value="Computer Science">Computer Science</option>
+                  <option value="Data Science">Data Science</option>
+                  <option value="Digital Marketing">Digital Marketing</option>
+                  <option value="Finance & Accounts">Finance & Accounts</option>
+                  <option value="Business Development">Business Development</option>
+                  <option value="Mechanical Engineering">Mechanical Engineering</option>
+                  <option value="Civil Engineering">Civil Engineering</option>
+                  <option value="Electrical Engineering">Electrical Engineering</option>
+                  <option value="Design & Creative">Design & Creative</option>
+                  <option value="Human Resources">Human Resources / HR</option>
+                  <option value="Sales & Marketing">Sales & Marketing</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Others">Others</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="stateRecommendation">Preferred Location</label>
+                <input type="text" id="stateRecommendation" placeholder="e.g. Maharashtra, Mumbai, Remote" required>
+              </div>
+              <div class="form-group">
+                <label for="qualificationRecommendation">Highest Qualification</label>
+                <select id="qualificationRecommendation" required>
+                  <option value="">Select Qualification</option>
+                  <option value="B.Tech">B.Tech / B.E</option>
+                  <option value="MBA">MBA / PGDM</option>
+                  <option value="BBA">BBA / B.Com</option>
+                  <option value="B.Sc">B.Sc / BCA</option>
+                  <option value="Diploma">Diploma</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="experienceRecommendation">Total Experience</label>
+                <select id="experienceRecommendation">
+                  <option value="0">Fresher (0 Years)</option>
+                  <option value="1">1 Year</option>
+                  <option value="2">2 Years</option>
+                  <option value="3">3 Years</option>
+                  <option value="4">4 Years</option>
+                  <option value="5">5+ Years</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="workModeRecommendation">Preferred Work Mode</label>
+                <select id="workModeRecommendation">
+                  <option value="Any">Any</option>
+                  <option value="Remote">Remote Only</option>
+                  <option value="On-site">On-site / Office</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="stipendRecommendation">Min. Expected Stipend</label>
+                <select id="stipendRecommendation">
+                  <option value="0">Any / Unpaid</option>
+                  <option value="2000">₹2,000+</option>
+                  <option value="5000">₹5,000+</option>
+                  <option value="10000">₹10,000+</option>
+                  <option value="15000">₹15,000+</option>
+                  <option value="20000">₹20,000+</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="durationRecommendation">Preferred Duration (Months)</label>
+                <select id="durationRecommendation">
+                  <option value="Any">Any</option>
+                  <option value="1-3">1-3 Months</option>
+                  <option value="3-6">3-6 Months</option>
+                  <option value="6-12">6-12 Months</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="collegeRecommendation">College / University</label>
+                <input type="text" id="collegeRecommendation" placeholder="e.g. IIT Bombay, Mumbai University">
+              </div>
+              <div class="form-group">
+                <label for="gradYearRecommendation">Graduation Year</label>
+                <select id="gradYearRecommendation">
+                  <option value="">Select Year</option>
+                  <option value="2020">2020</option>
+                  <option value="2021">2021</option>
+                  <option value="2022">2022</option>
+                  <option value="2023">2023</option>
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                  <option value="2026">2026</option>
+                  <option value="2027">2027</option>
+                  <option value="2028">2028</option>
+                  <option value="2029">2029</option>
+                  <option value="2030">2030</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="linkedinRecommendation">LinkedIn / Portfolio URL</label>
+                <input type="url" id="linkedinRecommendation" placeholder="https://linkedin.com/in/username">
+              </div>
+              <div class="form-group">
+                <label for="availabilityRecommendation">Availability</label>
+                <select id="availabilityRecommendation">
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="startDateRecommendation">Preferred Start Date</label>
+                <input type="date" id="startDateRecommendation">
               </div>
             </div>
-
-            <!-- Premium Matching Loader -->
-            <div id="matchingLoader" class="matching-loader-container" style="display: none;">
-              <div class="loader-visual">
-                <div class="loader-ring"></div>
-                <div class="loader-ring-inner"></div>
-                <div class="loader-core">✨</div>
-              </div>
-              <h3 class="loader-status-text" id="loaderStatus">Analyzing Your Profile...</h3>
-              <p class="loader-subtext" id="loaderSubtext">Our AI is scanning 10,000+ data points to find your perfect
-                internship DNA. This usually takes about 15-20 seconds.</p>
-              <div class="loader-progress-info" id="loaderProgress">Initializing semantic engine...</div>
+            <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center;">
+              <button type="submit" class="btn btn-primary" style="padding: 12px 30px; font-weight: 700;">
+                Get Recommendations →
+              </button>
+              <button type="button" onclick="clearRecForm()" class="btn btn-outline" style="padding: 12px 30px;">
+                Clear Form
+              </button>
             </div>
+          </form>
+        </div>
 
-            <!-- Recommendations Display Section -->
-            <div id="recommendationsSection" class="recommendations-section" style="display: none;">
-              <div class="recommendations-header">
-                <h2 id="greetingText">Hello! 👋</h2>
-                <p id="recommendationsMessage">Based on your profile, we found internships that match your skills and
-                  interests.</p>
-              </div>
+        <!-- Resume Analyzer Section (Hidden by default) -->
+        <div id="resumeAnalyzerSection"
+          style="display: none; max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+          <div style="text-align: center; margin-bottom: 25px;">
+            <p style="color: #64748b;">Upload your PDF resume or Paste the text below. Our AI will automatically fill
+              the form and find the best matches.</p>
+          </div>
 
-              <div id="recommendationCards" class="recommendation-cards">
-                <!-- Recommendation cards will be inserted here -->
-              </div>
+          <!-- PDF Upload Box -->
+          <div class="pdf-upload-container"
+            style="margin-bottom: 30px; padding: 30px; border: 2px dashed #6366f1; border-radius: 16px; background: #f5f3ff; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 10px;">📄</div>
+            <h3 style="margin-bottom: 5px; color: #1e293b;">Upload PDF Resume</h3>
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">Faster & more accurate auto-filling</p>
+            <input type="file" id="resumeFile" accept=".pdf" style="display: none;" onchange="handleFileSelect(this)">
+            <button class="btn btn-outline" onclick="document.getElementById('resumeFile').click()"
+              style="background: white; border-color: #6366f1; color: #6366f1;">
+              Browse PDF File
+            </button>
+            <p id="fileNameDisplay" style="margin-top: 10px; font-weight: 600; color: #6366f1; display: none;"></p>
+          </div>
 
-              <!-- Pagination Controls -->
-              <div id="paginationContainer" class="pagination-container"
-                style="display: none; margin: 30px 0; text-align: center;">
-                <button id="prevPageBtn" class="btn btn-outline" onclick="previousPage()" style="margin-right: 10px;">←
-                  Previous</button>
-                <span id="pageInfo" class="page-info" style="margin: 0 20px; font-weight: 500;">Page 1</span>
-                <button id="nextPageBtn" class="btn btn-outline" onclick="nextPage()">Next →</button>
-
-                <div style="margin-top: 15px; color: #666; font-size: 0.9rem;">
-                  Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> internships (Page <span
-                    id="pageNum">1</span> of <span id="totalPages">1</span>)
-                </div>
-              </div>
-
-              <button class="btn btn-outline btn-large" onclick="backToForm()">← Back to Form</button>
-            </div>
+          <div style="display: flex; align-items: center; margin: 25px 0;">
+            <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+            <div style="padding: 0 15px; color: #94a3b8; font-weight: 500; font-size: 0.8rem;">OR PASTE TEXT</div>
+            <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+          </div>
+          <div class="form-group">
+            <textarea id="resumeTextData" rows="12"
+              style="width: 100%; padding: 15px; border: 1px solid #e2e8f0; border-radius: 12px; font-family: inherit; resize: vertical;"
+              placeholder="Paste Resume here..."></textarea>
+          </div>
+          <div id="resumeLoading" style="display: none; text-align: center; margin: 20px 0;">
+            <div class="ai-loader-ring" style="width: 40px; height: 40px; border-width: 3px;"></div>
+            <p style="margin-top: 10px; color: #6366f1; font-weight: 500;">Analyzing Resume...</p>
+          </div>
+          <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center;">
+            <button id="btnAnalyzeResume" onclick="Profile.analyzeResume()" class="btn btn-primary"
+              style="padding: 12px 30px; font-weight: 700;">
+              Analyze & Find Matches ✨
+            </button>
           </div>
         </div>
 
-        <!-- Browse Tab Removed -->
+        <!-- Matching Loader -->
+        <div id="matchingLoader"
+          style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 60px 0; text-align: center;">
+          <div class="ai-loader-ring"></div>
+          <h3 id="loaderStatus" style="margin-top: 30px; font-size: 1.5rem; color: #1e293b;">Analyzing Your Profile...
+          </h3>
+          <p id="loaderSubtext" style="color: #64748b; max-width: 500px; margin: 10px auto;">Our AI is scanning 10,000+
+            data points to find your perfect internship DNA.</p>
+          <div id="loaderProgress" style="font-family: monospace; color: #6366f1; margin-top: 20px; font-weight: bold;">
+            Initializing semantic engine...</div>
+        </div>
+
+        <!-- Recommendations Results -->
+        <div id="recommendationsSection" style="display: none; margin-top: 50px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 id="greetingText" style="margin: 0; font-size: 1.8rem; color: #1e293b;">Top Matches for You</h2>
+            <button onclick="gotoForm()" class="btn btn-outline" style="padding: 8px 16px;">Edit Profile</button>
+          </div>
+          <p id="recommendationsMessage" style="color: #64748b; margin-bottom: 30px;"></p>
+          <div id="recommendationCards" class="internship-grid">
+            <!-- Recommendation cards will be injected here -->
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- Browse All Section Removed -->
+    <!-- Browse All Page -->
+    <section id="browse-all" class="page-section">
+      <div class="container">
+        <h1 class="page-title">Browse All Opportunities</h1>
+        <div class="browse-all-container">
+          <div class="filters-bar"
+            style="margin-bottom: 25px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
+            <div style="flex: 1; min-width: 250px;">
+              <label
+                style="display: block; font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 6px;">Search
+                by Company Name</label>
+              <input type="text" id="browseCompanySearch" placeholder="Enter company name..."
+                onkeyup="if(event.key === 'Enter') applyBrowseFilters()"
+                style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+            </div>
+            <button onclick="applyBrowseFilters()" class="btn btn-primary"
+              style="padding: 10px 24px; height: 42px;">Search 🔍</button>
+            <button onclick="clearBrowseFilters()" class="btn btn-outline"
+              style="padding: 10px 24px; height: 42px;">Reset</button>
+          </div>
+
+
+          <div id="browseInternshipsList" class="internship-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;">
+            <!-- Cards will be inserted here -->
+          </div>
+
+          <div id="browsePagination" class="pagination-container" style="margin-top: 40px; text-align: center;">
+            <!-- Pagination will be inserted here -->
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Contact Page -->
     <section id="contact" class="page-section">
@@ -1021,15 +934,15 @@
 
             <div class="contact-card">
               <h3 data-translate="contact-email-title">Email Support</h3>
-              <p>support@pminternship.gov.in</p>
-              <p>info@pminternship.gov.in</p>
+              <p>support@internhubindia.in</p>
+              <p>info@internhubindia.in</p>
             </div>
 
             <div class="contact-card">
               <h3 data-translate="contact-faq-title">Frequently Asked Questions</h3>
               <div class="faq-list">
                 <details>
-                  <summary data-translate="faq-q1">Who is eligible for the PM Internship Scheme?</summary>
+                  <summary data-translate="faq-q1">Who is eligible for the National Internship Program?</summary>
                   <p data-translate="faq-a1">Youth between 21-24 years with a Bachelor's degree or Diploma, and family
                     income up to ₹8 lakh per annum.</p>
                 </details>
@@ -1192,7 +1105,7 @@
         <!-- LOGIN FORM -->
         <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
           <h2>Welcome Back</h2>
-          <p class="auth-subtitle">Sign in to your PM Internship account</p>
+          <p class="auth-subtitle">Sign in to your InternHub India account</p>
 
           <div class="form-group">
             <label for="loginEmail">Email Address</label>
@@ -1219,7 +1132,7 @@
         <!-- REGISTER FORM -->
         <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
           <h2>Create Account</h2>
-          <p class="auth-subtitle">Join PM Internship today</p>
+          <p class="auth-subtitle">Join InternHub India today</p>
 
           <div class="form-group">
             <label for="registerName">Full Name</label>

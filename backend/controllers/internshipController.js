@@ -197,7 +197,7 @@ const setVerificationStatus = async (req, res) => {
 // Filter internships by location and skills with pagination (from CSV data)
 const filterByLocationAndSkills = async (req, res) => {
   try {
-    const { location, skills, page = 1, limit = 15 } = req.query;
+    const { location, skills, company, page = 1, limit = 15 } = req.query;
 
     // Get all internships from CSV
     const allInternships = getInternships();
@@ -211,7 +211,8 @@ const filterByLocationAndSkills = async (req, res) => {
     }
 
     // Filter internships
-    let filtered = filterInternships(allInternships, location, skillsArray);
+    let filtered = filterInternships(allInternships, location, skillsArray, company);
+
 
     // Get total count
     const total = filtered.length;
