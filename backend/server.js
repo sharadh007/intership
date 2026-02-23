@@ -101,8 +101,8 @@ app.get('*', (req, res) => {
 const { checkAndExpireInternships } = require('./services/expirationService');
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, async () => {
-  console.log(`✅ Backend Server running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", async () => {
+  console.log(`Server running on port ${PORT}`);
 
   // Run expiration check on startup
   await checkAndExpireInternships();
