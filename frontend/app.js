@@ -13,19 +13,22 @@ console.log('🌐 API Config:', {
   API_BASE: API_BASE
 });
 
+// Initialize Firebase variables globally
+let auth = null;
+let db = null;
 
-// The Firebase configuration is now loaded from firebase-config.js
-// If firebaseConfig is not defined (meaning the file is missing or not configured),
-// we use a placeholder or handle it gracefully to avoid hardcoded keys in the repository.
-
-if (typeof firebaseConfig !== 'undefined') {
-  firebase.initializeApp(firebaseConfig);
-} else {
-  console.warn("⚠️ Firebase configuration not found. Please follow the instructions in FIREBASE_SETUP.md to configure your project.");
+try {
+  if (typeof firebaseConfig !== 'undefined') {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.database();
+    console.log("✅ Firebase initialized successfully");
+  } else {
+    console.warn("⚠️ Firebase configuration not found. Please follow the instructions in FIREBASE_SETUP.md.");
+  }
+} catch (error) {
+  console.error("❌ Firebase initialization failed:", error);
 }
-
-const auth = firebase.auth();
-const db = firebase.database();
 
 let currentProfile = {};
 let isProfileModalOpen = false;

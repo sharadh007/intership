@@ -153,6 +153,22 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Dynamic Firebase Config for Frontend
+// This allows the app to work on Render without committing the firebase-config.js file
+app.get('/firebase-config.js', (req, res) => {
+  const config = {
+    apiKey: process.env.FIREBASE_API_KEY || "AIzaSyCFTIqMvtSM1WhEjhe7pb7Tkix9ggDuS_s",
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || "pm-intrenship.firebaseapp.com",
+    databaseURL: process.env.FIREBASE_DATABASE_URL || "https://pm-intrenship-default-rtdb.firebaseio.com",
+    projectId: process.env.FIREBASE_PROJECT_ID || "pm-intrenship",
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "pm-intrenship.firebasestorage.app",
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "682720260870",
+    appId: process.env.FIREBASE_APP_ID || "1:682720260870:web:84af139577b2bc51e46487"
+  };
+  res.type('application/javascript');
+  res.send(`const firebaseConfig = ${JSON.stringify(config)};`);
+});
+
 // Serve static files from frontend
 const path = require('path');
 app.use(express.static(path.join(__dirname, '../frontend')));
