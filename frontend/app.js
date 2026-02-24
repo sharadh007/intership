@@ -1934,10 +1934,10 @@ async function getAIRecommendations(event) {
 
       data.recommendations.forEach((rec, idx) => {
         recCache[idx] = rec;
-        const score = rec.matchScore || rec.finalScore || 0;
-        const scoreBreakdown = rec.scoreBreakdown || {};
-        const label = rec.matchLabel || (score >= 85 ? 'Excellent Match' : score >= 70 ? 'Good Match' : score >= 55 ? 'Fair Match' : 'Average Match');
-        const missing = (rec.missingSkills || []).slice(0, 3);
+        const score = rec.match_score || rec.matchScore || rec.finalScore || 0;
+        const scoreBreakdown = rec.score_breakdown || rec.scoreBreakdown || {};
+        const label = rec.match_label || rec.matchLabel || (score >= 85 ? 'Excellent Match' : score >= 70 ? 'Good Match' : score >= 55 ? 'Fair Match' : 'Average Match');
+        const missing = (rec.missing_skills || rec.missingSkills || []).slice(0, 3);
         const tips = (rec.improvementTips || []).slice(0, 1);
         const locationLabel = rec.locationLabel || '';
 
