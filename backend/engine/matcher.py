@@ -17,9 +17,10 @@ import json
 import os
 import re
 import numpy as np
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 from dotenv import load_dotenv
+
+# Load Environment early
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 # ─── Lazy Model Loading ────────────────────────────────────────────────────────
 _transformer_model = None
@@ -31,6 +32,7 @@ def get_transformer_model():
     global _transformer_model
     if _transformer_model is None:
         print("📥 Loading Sentence Transformer (MiniLM)...")
+        from sentence_transformers import SentenceTransformer
         _transformer_model = SentenceTransformer('all-MiniLM-L6-v2')
     return _transformer_model
 
@@ -247,6 +249,7 @@ def build_job_text(job: dict) -> str:
 # ─── STEP 4: SIMILARITY ENGINE ───────────────────────────────────────────────
 def compute_similarities(student_text: str, job_texts: list) -> list:
     """Batch-encode all texts and compute cosine similarities at once (fast)."""
+    from sklearn.metrics.pairwise import cosine_similarity
     all_texts = [student_text] + job_texts
     model = get_transformer_model()
     embeddings = model.encode(all_texts, show_progress_bar=False, batch_size=64)

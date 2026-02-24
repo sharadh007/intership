@@ -1,15 +1,21 @@
 import re
-import spacy
-import pandas as pd
-from bs4 import BeautifulSoup
 from typing import List, Dict, Any
 
-# Load spaCy model for NLP tasks
-try:
-    nlp = spacy.load("en_core_web_sm")
-except:
-    # Fallback if model not loaded yet
-    nlp = None
+# Global cache for lazy-loaded models
+_nlp = None
+
+def get_nlp():
+    """Lazy load spaCy model."""
+    global _nlp
+    if _nlp is None:
+        try:
+            import spacy
+            print("📥 Loading spaCy (en_core_web_sm)...")
+            _nlp = spacy.load("en_core_web_sm")
+        except Exception as e:
+            print(f"⚠️ spaCy load failed: {e}")
+            _nlp = False # False means tried but failed
+    return _nlp if _nlp else None
 
 class DataProcessor:
     @staticmethod
@@ -17,8 +23,14 @@ class DataProcessor:
         """Basic text cleaning."""
         if not text:
             return ""
-        # Remove HTML tags if any
-        text = BeautifulSoup(text, "html.parser").get_text()
+        # Remove HTML tags if any (Lazy Load BeautifulSoup)
+        try:
+            from bs4 import BeautifulSoup
+            text = BeautifulSoup(text, "html.parser").get_text()
+        except ImportError:
+            # Fallback if bs4 not available or fails
+            text = re.sub(r'<[^>]*>', '', text)
+        
         # Remove special characters and extra whitespace
         text = re.sub(r'\s+', ' ', text)
         return text.strip()
@@ -63,6 +75,7 @@ class DataProcessor:
                 found_skills.add(skill)
         
         # 2. NLP Entity Recognition (if spaCy is available)
+        nlp = get_nlp()
         if nlp:
             doc = nlp(text)
             # This is a placeholder for more complex NER if needed
