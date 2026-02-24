@@ -181,7 +181,7 @@ def analyze_resume_deep(resume_text: str) -> dict:
         {resume_text}
         """
 
-        response = model.generate_content(prompt)
+        response = g_model.generate_content(prompt)
         text = response.text.strip()
         
         # Clean JSON if any markdown artifacts
