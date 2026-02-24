@@ -21,30 +21,42 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from dotenv import load_dotenv
 
-# ─── Setup ────────────────────────────────────────────────────────────────────
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+# ─── Lazy Model Loading ────────────────────────────────────────────────────────
+_transformer_model = None
+_gemini_model = None
+_gemini_initialized = False
 
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-gemini_available = False
+def get_transformer_model():
+    """Lazy load the SentenceTransformer model to save memory."""
+    global _transformer_model
+    if _transformer_model is None:
+        print("📥 Loading Sentence Transformer (MiniLM)...")
+        _transformer_model = SentenceTransformer('all-MiniLM-L6-v2')
+    return _transformer_model
 
-try:
-    import google.generativeai as genai
-    if GEMINI_API_KEY:
-        genai.configure(api_key=GEMINI_API_KEY)
-        gemini_available = True
-        # Shared small model for fast tasks
-        g_model = genai.GenerativeModel('gemini-1.5-flash')
-        print("✅ Gemini successfully initialized for Python Brain.")
-    else:
-        print("⚠️ GEMINI_API_KEY not found in .env — Python Brain will use fallbacks.")
-except Exception as e:
-    print(f"❌ Gemini initialization failed: {str(e)}")
-    gemini_available = False
-    g_model = None
+def get_gemini_model():
+    """Lazy load Gemini model."""
+    global _gemini_model, _gemini_initialized
+    if not _gemini_initialized:
+        api_key = os.getenv('GEMINI_API_KEY')
+        if api_key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=api_key)
+                _gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+                _gemini_initialized = True
+                print("✅ Gemini initialized.")
+            except Exception as e:
+                print(f"❌ Gemini failed: {e}")
+                _gemini_initialized = True # Mark as tried
+        else:
+            print("⚠️ No GEMINI_API_KEY.")
+            _gemini_initialized = True
+    return _gemini_model
 
+def is_gemini_available():
+    return get_gemini_model() is not None
 
-# Load Sentence Transformer model (cached after first load)
-model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # ─── STEP 1: RESUME PARSER ────────────────────────────────────────────────────
 # Known tech keywords for skill extraction from raw resume text
@@ -132,14 +144,16 @@ def analyze_resume_deep(resume_text: str) -> dict:
         "resumeStrengthScore": 50
     }
 
-    if not gemini_available:
+    if not is_gemini_available():
         parsed = parse_resume(resume_text, [])
         fallback_data["extractedSkills"] = parsed["skills"]
         fallback_data["education"] = parsed["education"]
         return fallback_data
 
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        g_model = get_gemini_model()
+        if not g_model:
+            return fallback_data
         
         prompt = f"""
         Extract the following structured information from this resume text as a clean JSON object.
@@ -234,7 +248,8 @@ def build_job_text(job: dict) -> str:
 def compute_similarities(student_text: str, job_texts: list) -> list:
     """Batch-encode all texts and compute cosine similarities at once (fast)."""
     all_texts = [student_text] + job_texts
-    embeddings = model.encode(all_texts, show_progress_bar=False, batch_size=128)
+    model = get_transformer_model()
+    embeddings = model.encode(all_texts, show_progress_bar=False, batch_size=64)
     student_vec = embeddings[0:1]
     job_vecs = embeddings[1:]
     scores = cosine_similarity(student_vec, job_vecs)[0]
@@ -286,7 +301,7 @@ def gemini_rerank_and_explain(student: dict, top_jobs: list, parsed_resume: dict
       b) Generate a personalized "Why this matches you" explanation
     Falls back to rule-based if Gemini is unavailable/slow.
     """
-    if not gemini_available:
+    if not is_gemini_available():
         return _fallback_explain(student, top_jobs)
 
     try:
@@ -295,7 +310,10 @@ def gemini_rerank_and_explain(student: dict, top_jobs: list, parsed_resume: dict
         
         def call_gemini():
             try:
-                g_model = genai.GenerativeModel('gemini-1.5-flash')  # fastest model
+                g_model = get_gemini_model()
+                if not g_model:
+                    results[0] = None
+                    return
                 
                 # Pre-calculate verified matches for each job to guide the LLM
                 def get_verified_matches(job_skills_str, student_skills):

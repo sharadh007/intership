@@ -94,7 +94,7 @@ async def analyze_resume(request: ResumeAnalysisRequest):
 async def generate_project_ideas(request: Dict[str, Any]):
     """Generates 3 unique project ideas for a missing skill with real-world 2024-25 context."""
     try:
-        from matcher import g_model, gemini_available
+        from matcher import get_gemini_model, is_gemini_available
         
         skill = request.get('skill', 'Development')
         company = request.get('company', 'this industry')
@@ -103,7 +103,8 @@ async def generate_project_ideas(request: Dict[str, Any]):
         clean_skill = skill.replace('Development', '').replace('Internship', '').strip()
         if not clean_skill: clean_skill = "Technical Implementation"
 
-        if not gemini_available or g_model is None:
+        g_model = get_gemini_model()
+        if not is_gemini_available() or g_model is None:
             return {
                 "success": True, 
                 "data": {
@@ -178,7 +179,7 @@ async def generate_dream_roadmap(request: RoadmapRequest):
     """Generates a personalized career roadmap from resume text and a dream company."""
     dream_company = request.company or "a top tech company"
     try:
-        from matcher import g_model, gemini_available
+        from matcher import get_gemini_model, is_gemini_available
 
         student = request.student or {}
         resume_text = request.resume_text or ""
@@ -194,8 +195,8 @@ async def generate_dream_roadmap(request: RoadmapRequest):
             student_context = f"QUALIFICATION: {qualification}\n(No skills or resume provided — generate a generic roadmap)"
 
         # Try to use Gemini model, with fallback to resume api key if needed
-        model_to_use = g_model
-        if not gemini_available or model_to_use is None:
+        model_to_use = get_gemini_model()
+        if not is_gemini_available() or model_to_use is None:
             # Try initializing locally with fallback key
             fb_key = os.getenv('GEMINI_RESUME_API_KEY') or os.getenv('GEMINI_API_KEY')
             if fb_key:
