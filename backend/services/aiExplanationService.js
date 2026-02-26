@@ -3,6 +3,34 @@ require('dotenv').config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy");
 
+// Helper to generate a fallback 'Road to 100%' roadmap when Python AI is unavailable
+const attachRoadmap = (internship) => {
+    let roadmap = null;
+    const missing = internship.missingSkills || [];
+
+    if (missing.length > 0) {
+        const topMissing = missing[0];
+        roadmap = {
+            summary: `Bridge the gap for ${topMissing}.`,
+            days: [
+                {
+                    day: 1,
+                    topic: "Skill Sync",
+                    action: `Master the core principles of ${topMissing} via YouTube tutorials`,
+                    link: `https://www.youtube.com/results?search_query=learn+${encodeURIComponent(topMissing)}`
+                },
+                {
+                    day: 2,
+                    topic: "Project Proof",
+                    action: `Build a real-world ${topMissing} solution to showcase your expertise`,
+                    link: ""
+                }
+            ]
+        };
+    }
+    return roadmap;
+};
+
 // Helper for Smart Fallback (Structure matching output constraints)
 const generateSmartFallback = (student, internship) => {
     // Basic logic to generate a structured backup explanation
@@ -129,14 +157,19 @@ const callGemini = async (model, student, internships) => {
 
         return {
             ...i,
-            aiExplanation: aiData
+            aiExplanation: aiData,
+            roadmap: typeof i.roadmap !== 'undefined' ? i.roadmap : attachRoadmap(i)
         };
     });
 };
 
 const generateExplanations = async (student, internships) => {
     if (!process.env.GEMINI_API_KEY) {
-        return internships.map(i => ({ ...i, aiExplanation: generateSmartFallback(student, i) }));
+        return internships.map(i => ({
+            ...i,
+            aiExplanation: generateSmartFallback(student, i),
+            roadmap: typeof i.roadmap !== 'undefined' ? i.roadmap : attachRoadmap(i)
+        }));
     }
 
     try {
@@ -152,7 +185,11 @@ const generateExplanations = async (student, internships) => {
         } catch (e2) {
             console.error("All AI models failed (" + e2.message + "). Using Smart Fallback.");
             // Final Fallback
-            return internships.map(i => ({ ...i, aiExplanation: generateSmartFallback(student, i) }));
+            return internships.map(i => ({
+                ...i,
+                aiExplanation: generateSmartFallback(student, i),
+                roadmap: typeof i.roadmap !== 'undefined' ? i.roadmap : attachRoadmap(i)
+            }));
         }
     }
 };
