@@ -2,7 +2,10 @@ const axios = require('axios');
 
 let PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
 if (!PYTHON_SERVICE_URL.startsWith('http')) {
-    PYTHON_SERVICE_URL = `http://${PYTHON_SERVICE_URL}`;
+    // Render external URLs need HTTPS, otherwise POST requests drop payloads during redirect
+    PYTHON_SERVICE_URL = PYTHON_SERVICE_URL.includes('onrender.com')
+        ? `https://${PYTHON_SERVICE_URL}`
+        : `http://${PYTHON_SERVICE_URL}`;
 }
 
 const pythonClient = {
