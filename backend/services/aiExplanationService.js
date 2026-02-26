@@ -27,6 +27,24 @@ const attachRoadmap = (internship) => {
                 }
             ]
         };
+    } else {
+        roadmap = {
+            summary: "You match all required skills. Now, level up your architecture.",
+            days: [
+                {
+                    day: 1,
+                    topic: "Advanced Mastery",
+                    action: "Explore advanced production patterns and system design.",
+                    link: `https://www.youtube.com/results?search_query=advanced+system+design+patterns`
+                },
+                {
+                    day: 2,
+                    topic: "Portfolio Polish",
+                    action: "Refine an existing project with industry best practices.",
+                    link: ""
+                }
+            ]
+        };
     }
     return roadmap;
 };

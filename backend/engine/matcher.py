@@ -481,8 +481,7 @@ def _build_fallback_explanation(student: dict, job: dict) -> dict:
         explanation = (f"Potential Fit: Based on architectural analysis of your career goals, "
                       f"this {role} at {company} offers a {pct}% alignment with your professional trajectory.")
     
-    # Career Bridge Roadmap
-    roadmap = None
+    # Career Bridge Roadmap (Always available to trigger the UI)
     if missing:
         top_missing = missing[0]
         roadmap = {
@@ -490,6 +489,16 @@ def _build_fallback_explanation(student: dict, job: dict) -> dict:
             "days": [
                 { "day": 1, "topic": "Skill Sync", "action": f"Master the core principles of {top_missing} via YouTube tutorials", "link": f"https://www.youtube.com/results?search_query=learn+{top_missing.replace(' ', '+')}" },
                 { "day": 2, "topic": "Project Proof", "action": f"Build a real-world {top_missing} solution to showcase your expertise", "link": "" }
+            ]
+        }
+    else:
+        # If the student matches 100%, give an advanced 'Next Level' roadmap so the UI still renders
+        adv_skill = matched[0] if matched else (job.get('role', 'System Architecture'))
+        roadmap = {
+            "summary": f"You match all required skills. Now, level up your {adv_skill}.",
+            "days": [
+                { "day": 1, "topic": "Advanced Mastery", "action": f"Explore advanced production patterns in {adv_skill}", "link": f"https://www.youtube.com/results?search_query=advanced+{adv_skill.replace(' ', '+')}" },
+                { "day": 2, "topic": "Portfolio Polish", "action": "Refine one of your existing projects with industry best practices", "link": "" }
             ]
         }
     
@@ -594,7 +603,7 @@ def process_matching(data: dict) -> list:
         tech_kws = ['software', 'developer', 'web', 'app', 'it', 'technical', 'data', 'coder', 'engineer', 'ai', 'ml', 'frontend', 'backend', 'fullstack', 'python', 'java', 'react', 'node']
         
         matches_tech = any(kw in r for kw in tech_kws)
-        is_hard_nontech = any(kw in role_raw for kw in ['marketing', 'sales', 'seo', 'recruitment', 'hr', 'acquisition'])
+        is_hard_nontech = any(kw in role_raw for kw in ['marketing', 'sales', 'seo', 'recruitment', 'hr', 'acquisition', 'data entry', 'content', 'writing', 'graphic', 'social media', 'business development'])
         if pref_sector in ['technology', 'technical']:
             return matches_tech and not is_hard_nontech
         return (pref_sector in r)
