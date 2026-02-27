@@ -580,56 +580,55 @@
     <!-- About Page -->
     <section id="about" class="page-section">
       <div class="container">
-        <h1 class="page-title" data-translate="about-title">About PM Internship Portal</h1>
+        <h1 class="page-title" data-translate="about-title">About InternHub India</h1>
 
         <div class="about-content">
           <div class="about-card">
-            <h2 data-translate="about-background-title">Background &amp; Objectives</h2>
-            <p data-translate="about-background-text">The PM Internship Portal was launched to address the
-              employability gap among Indian youth. It aims to provide practical work experience, enhance skills, and
-              improve the career prospects of young graduates across the country, with special focus on rural, tribal,
-              and
-              underserved communities.</p>
+            <h2 data-translate="about-background-title">Project Vision &amp; Objectives</h2>
+            <p data-translate="about-background-text">InternHub India is an advanced, AI-powered matchmaking platform
+              designed to revolutionize how students find internships. Instead of mindlessly scrolling through thousands
+              of irrelevant listings, our platform learns about your unique skills, education, and career aspirations to
+              instantly connect you with opportunities where you have the highest probability of success.</p>
           </div>
 
           <div class="about-card">
-            <h2 data-translate="about-eligibility-title">Eligibility Criteria</h2>
+            <h2 data-translate="about-eligibility-title">How the AI Recommendation Engine Works</h2>
             <ul class="about-list">
-              <li data-translate="about-eligibility-1">Age: 21-24 years</li>
-              <li data-translate="about-eligibility-2">Education: Bachelor's degree or Diploma in relevant field</li>
-              <li data-translate="about-eligibility-3">Family income: Up to ₹8 lakh per annum</li>
-              <li data-translate="about-eligibility-4">Indian citizen with valid Aadhaar card</li>
-              <li data-translate="about-eligibility-5">Not currently employed or enrolled in full-time education</li>
+              <li data-translate="about-eligibility-1"><strong>Skill Vectorization:</strong> Your provided skills (from
+                form or AI resume parsing) are mapped mathematically against industry-standard requirements.</li>
+              <li data-translate="about-eligibility-2"><strong>Location Intelligence:</strong> The system automatically
+                boosts internships in your preferred locations or major tech hubs matching your profile.</li>
+              <li data-translate="about-eligibility-3"><strong>Smart Scoring System:</strong> Each internship receives
+                an accuracy match score (0-100%) dynamically calculated based on your exact profile.</li>
+              <li data-translate="about-eligibility-4"><strong>Missing Skill Analysis:</strong> The AI identifies
+                exactly which skills you lack for your dream roles.</li>
+              <li data-translate="about-eligibility-5"><strong>Road to 100%:</strong> A dynamic roadmap is generated
+                instantly, guiding you on exactly what to learn to guarantee your placement!</li>
             </ul>
           </div>
 
           <div class="about-card">
-            <h2 data-translate="about-benefits-title">Benefits</h2>
+            <h2 data-translate="about-benefits-title">Key Student Benefits</h2>
             <ul class="about-list">
-              <li data-translate="about-benefits-1">Monthly stipend of ₹5,000</li>
-              <li data-translate="about-benefits-2">One-time assistance of ₹6,000</li>
-              <li data-translate="about-benefits-3">12 months of practical work experience</li>
-              <li data-translate="about-benefits-4">Industry exposure with leading companies</li>
-              <li data-translate="about-benefits-5">Certificate of completion</li>
-              <li data-translate="about-benefits-6">Skill development and training</li>
+              <li data-translate="about-benefits-1">Save hundreds of hours searching for relevant jobs</li>
+              <li data-translate="about-benefits-2">Clear, actionable feedback on how to improve your resume</li>
+              <li data-translate="about-benefits-3">Discover tech hubs and remote roles tailored to your needs</li>
+              <li data-translate="about-benefits-4">Practice with our advanced AI Interview Coach</li>
+              <li data-translate="about-benefits-5">Automated resume parsing and data extraction</li>
             </ul>
           </div>
 
           <div class="about-card">
-            <h2 data-translate="about-sectors-title">Participating Sectors</h2>
+            <h2 data-translate="about-sectors-title">Supported Tech Domains</h2>
             <div class="sectors-grid">
-              <span class="sector-tag">Information Technology</span>
-              <span class="sector-tag">Banking &amp; Finance</span>
-              <span class="sector-tag">Energy &amp; Oil &amp; Gas</span>
-              <span class="sector-tag">Automotive</span>
-              <span class="sector-tag">Manufacturing</span>
-              <span class="sector-tag">FMCG</span>
-              <span class="sector-tag">Healthcare</span>
-              <span class="sector-tag">Engineering &amp; Construction</span>
-              <span class="sector-tag">Telecommunications</span>
-              <span class="sector-tag">Retail</span>
-              <span class="sector-tag">Agriculture</span>
-              <span class="sector-tag">Education</span>
+              <span class="sector-tag">AI &amp; Machine Learning</span>
+              <span class="sector-tag">Frontend Development</span>
+              <span class="sector-tag">Cloud Architecture</span>
+              <span class="sector-tag">Data Science</span>
+              <span class="sector-tag">Cybersecurity</span>
+              <span class="sector-tag">Product Management</span>
+              <span class="sector-tag">UI/UX Design</span>
+              <span class="sector-tag">Mobile App Development</span>
             </div>
           </div>
         </div>
@@ -2559,7 +2558,14 @@
     <!-- Your app (AFTER Firebase) -->
 
     <script src="firebase-config.js?v=0223"></script>
-    <script src="app.js?v=20260227-0955"></script>
+    <script>
+      // CACHE OVERRIDE FIX: 
+      // If the browser refuses to load the new app.js, this block ensures the Profile button NEVER crashes again.
+      if (typeof window.$ === 'undefined') {
+        window.$ = id => document.getElementById(id);
+      }
+    </script>
+    <script src="app.js?v=20260227-1010"></script>
     <script>
       function handleWorkPreferenceChange(select) {
         const locationInput = document.getElementById('locationInput');
