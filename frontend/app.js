@@ -1988,7 +1988,7 @@ async function getAIRecommendations(event) {
               <div style="position: relative; width: 64px; height: 64px; flex-shrink: 0;">
                 <svg viewBox="0 0 36 36" width="64" height="64" style="transform: rotate(-90deg);">
                   <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="3.5"/>
-                  <circle cx="18" cy="18" r="14" fill="none" stroke="${scoreColor}" stroke-width="3.5" pathLength="100" stroke-dasharray="${score} ${100 - score}" stroke-dashoffset="0" stroke-linecap="round"/>
+                  <circle cx="18" cy="18" r="14" fill="none" stroke="${scoreColor}" stroke-width="3.5" stroke-dasharray="${(score / 100) * 87.96} ${87.96 - ((score / 100) * 87.96)}" stroke-dashoffset="0" stroke-linecap="round"/>
                 </svg>
                 <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                   <span style="font-size: 0.9rem; font-weight: 800; color: white; line-height: 1;">${score}%</span>
