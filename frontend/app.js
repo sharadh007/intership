@@ -347,7 +347,8 @@ const FIELD_CONFIG = {
 };
 
 // Helper function for the Profile object to easily grab elements
-const $ = id => document.getElementById(id);
+window.$ = id => document.getElementById(id);
+const $ = window.$;
 
 const Profile = {
   open() {
