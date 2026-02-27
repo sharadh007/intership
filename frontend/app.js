@@ -2645,10 +2645,12 @@ function initializeTheme() {
 // Language Selector
 function initializeLanguage() {
   const languageSelector = document.getElementById('languageSelector');
-  languageSelector.addEventListener('change', function () {
-    currentLanguage = this.value;
-    updateLanguage();
-  });
+  if (languageSelector) {
+    languageSelector.addEventListener('change', function () {
+      currentLanguage = this.value;
+      updateLanguage();
+    });
+  }
 }
 
 // Update Language UI
