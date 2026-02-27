@@ -729,6 +729,10 @@ def process_matching(data: dict) -> list:
         final_score_clamped = min(0.99, max(0.0, final_score))
         score_int = int(final_score_clamped * 100)
 
+        # Drop internships that have 0% skill match (0 matched skills)
+        if len(match_details) == 0:
+            continue
+
         scored.append({
             **job,
             'match_score': score_int,
@@ -742,7 +746,7 @@ def process_matching(data: dict) -> list:
             'semantic_score': round(semantic_score, 4),
             'skill_boost': round(boost, 4),
             'matched_skills_list': match_details
-        })
+        })    
 
     # ── Ranking ───────────────────────────────────────────────────────────────
     scored.sort(key=lambda x: x['match_score'], reverse=True)
