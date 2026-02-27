@@ -22,10 +22,15 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json());
 
-// Fix for Google Sign-In Cross-Origin-Opener-Policy error
+// Fix for Google Sign-In Cross-Origin-Opener-Policy error and strict cache-busting
 app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+
+  // Strict Cache Control to ensure CSS, JS, and HTML always stay fresh
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   next();
 });
 
