@@ -346,6 +346,9 @@ const FIELD_CONFIG = {
   industry: { label: 'Preferred Industry', type: 'select', options: ['Technical', 'IT / Software', 'Finance', 'Marketing', 'Manufacturing', 'Construction', 'Healthcare', 'Education'] }
 };
 
+// Helper function for the Profile object to easily grab elements
+const $ = id => document.getElementById(id);
+
 const Profile = {
   open() {
     if (!auth.currentUser || isProfileModalOpen) return;
@@ -403,15 +406,15 @@ const Profile = {
   },
 
   renderFieldReadMode(key, value) {
-    const el = $(`val_${key} `);
-    const container = $(`container_${key} `);
+    const el = $(`val_${key}`);
+    const container = $(`container_${key}`);
     const cleanVal = (value || '--').toString().trim();
 
     // Always enforce the correct structure (Value + Edit Button)
     // This fixes issues where the edit button might be missing initially
     if (container) {
       container.innerHTML = `
-    < span class="field-value" id = "val_${key}" > ${cleanVal === '' ? '--' : cleanVal}</span >
+      <span class="field-value" id="val_${key}">${cleanVal === '' ? '--' : cleanVal}</span>
       <span class="edit-icon" onclick="Profile.toggleEdit('${key}')" style="cursor:pointer; font-size:1.1rem;" title="Edit ${key.charAt(0).toUpperCase() + key.slice(1)}">✏️</span>
   `;
     }
@@ -432,7 +435,7 @@ const Profile = {
     }
 
     container.innerHTML = skillList.map(s =>
-      `< span class="skill-tag" > ${s}</span > `
+      `<span class="skill-tag">${s}</span>`
     ).join('');
   },
 
