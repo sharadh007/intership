@@ -592,30 +592,32 @@ def process_matching(data: dict) -> list:
                     active_states.add(state)
                     state_hints.append(state)
 
-    # 1. Tech Detection Expansion
+    # 1. Tech Detection Expansion - STRICT
     def is_tech_role(j):
         role_raw = str(j.get('role', '')).lower()
         sector_raw = str(j.get('sector', '')).lower()
         skills_raw = str(j.get('skills_required') or j.get('skills') or '').lower()
         r = (role_raw + ' ' + sector_raw + ' ' + skills_raw)
 
-        # Expanded keywords to ensure tech roles are correctly identified
         tech_kws = [
-            'software', 'developer', 'web', 'app', 'it', 'technical', 'data', 'coder', 
+            'software', 'developer', 'web', 'app', 'it ', 'technical', 'data', 'coder', 
             'engineer', 'ai', 'ml', 'frontend', 'backend', 'fullstack', 'python', 
             'java', 'react', 'node', 'sql', 'database', 'cloud', 'devops', 'cyber', 
             'security', 'mobile', 'android', 'ios', 'php', 'c++', 'c#'
         ]
-
+        
+        # Hard non-tech keywords
+        non_tech_kws = ['marketing', 'sales', 'seo', 'content writer', 'social media', 'hr ', 'recruitment', 'telecall', 'accounting', 'business development']
+        
+        is_hard_nontech = any(kw in role_raw or kw in sector_raw for kw in non_tech_kws)
         matches_tech = any(kw in r for kw in tech_kws)
-        # Only hard-exclude if it's strictly non-tech
-        is_hard_nontech = any(kw in role_raw for kw in ['sales representative', 'telecaller', 'receptionist', 'acquisition', 'hr trainee'])
         
         if pref_sector in ['technology', 'technical', 'it']:
-            return matches_tech and not is_hard_nontech
+            if is_hard_nontech: return False
+            return matches_tech
         return (pref_sector in r) or matches_tech
 
-    # 2. Skill Synonym Map for better matching
+    # 2. Skill Synonym Map
     SKILL_SYNONYMS = {
         'sql': ['mysql', 'postgresql', 'sql server', 'oracle', 'sqlite', 'database'],
         'javascript': ['js', 'react', 'vue', 'node', 'express', 'frontend'],
@@ -623,8 +625,7 @@ def process_matching(data: dict) -> list:
         'python': ['flask', 'django', 'pandas', 'numpy', 'scipy', 'backend'],
         'html': ['html5', 'web', 'frontend'],
         'css': ['css3', 'tailwind', 'bootstrap', 'sass', 'frontend'],
-        'excel': ['spreadsheet', 'data analysis', 'advanced excel'],
-        'power bi': ['powerbi', 'visualization', 'tableau'],
+        'excel': ['spreadsheet', 'data analysis', 'advanced excel', 'ms-excel', 'ms excel'],
         'ml': ['machine learning', 'ai', 'data science', 'deep learning']
     }
 
@@ -638,13 +639,11 @@ def process_matching(data: dict) -> list:
         is_tech = is_tech_role(job)
         job_loc_low = job['location'].lower()
         
-        # KEY: Remote/WFH Logic
         is_job_remote = any(kw in job_loc_low for kw in ['remote', 'work from home', 'wfh'])
         wants_remote = any(kw in [l.lower() for l in pref_locs] for kw in ['remote', 'work from home', 'wfh'])
         wants_remote = wants_remote or student.get('work_mode', '').lower() in ['remote', 'any']
 
         match_type = 'anywhere'
-        
         if city_hints and any(city in job_loc_low for city in city_hints):
             match_type = 'local'
         elif is_job_remote and wants_remote:
@@ -663,7 +662,6 @@ def process_matching(data: dict) -> list:
         job['work_mode'] = 'Remote' if is_job_remote else 'On-site'
         job['match_type'] = match_type
         
-        # BUCKETIZATION
         if is_tech:
             if match_type == 'local':
                 job['locationLabel'] = 'Direct Match'
@@ -696,62 +694,45 @@ def process_matching(data: dict) -> list:
     scored = []
     for i, job in enumerate(filtered):
         semantic_score = scores[i]
-        
-        # ADVANCED Skill Matching (Handling Synonyms)
         job_skills_str = str(job.get('skills_required') or job.get('skills') or '').lower()
-        raw_match_count = 0
         match_details = []
         
-        # Parse job requirements into a list for better ratio calculation
         required_list = [s.strip().lower() for s in re.split(r'[,;/|]', job_skills_str) if s.strip()]
         total_reqs = max(len(required_list), 1)
 
         for s in all_student_skills:
             s_low = s.lower()
-            # Direct check
             found = False
             if s_low in job_skills_str:
                 found = True
             else:
-                # Check synonyms
                 for main_skill, syns in SKILL_SYNONYMS.items():
                     if s_low == main_skill or s_low in syns:
                         if any(syn in job_skills_str for syn in [main_skill] + syns):
                             found = True
                             break
-            
             if found:
-                raw_match_count += 1
                 match_details.append(s)
         
-        # Skill Ratio (0.0 - 0.5)
-        skill_coverage_ratio = min(raw_match_count / total_reqs, 1.0)
-        skill_boost = skill_coverage_ratio * 0.5
+        # Skill Ratio (0.0 - 0.45)
+        skill_coverage_ratio = len(match_details) / total_reqs
+        skill_boost = skill_coverage_ratio * 0.45
         
-        # Location Bonus (0.0 - 0.4)
+        # Location Bonus (0.0 - 0.35)
         m_type = job.get('match_type', 'anywhere')
-        loc_bonus = 0.0
-        if m_type == 'local':
-            loc_bonus = 0.4  # Max location boost
-        elif m_type == 'remote_match':
-            loc_bonus = 0.35
-        elif m_type == 'regional':
-            loc_bonus = 0.25
+        loc_bonus = 0.35 if m_type == 'local' else (0.25 if m_type == 'remote_match' else 0.15)
         
-        # Profile Multiplier (Base alignment)
+        # Profile Multiplier - HEAVY PENALTY FOR WRONG INDUSTRY
         is_tech = is_tech_role(job)
-        sector_multiplier = 1.0 if is_tech else 0.5
+        sector_multiplier = 1.0 if is_tech else 0.1
         
-        # Calculation: Base Semantic + Skill Match (Primary) + Location (Bonus)
-        # We ensure that if skills match well, the score is high regardless of semantic similarity
-        base_score = (semantic_score * 0.3) + skill_boost + loc_bonus
-        
+        # Base calculation
+        base_score = (semantic_score * 0.2) + skill_boost + loc_bonus
         final_score = base_score * sector_multiplier
-        # Clamp between 20 and 99 if there is any match, otherwise low
         score_int = int(min(0.99, max(0.1, final_score)) * 100)
 
-        # Drop internships that have 0% skill match ONLY if they are not very semantically similar
-        if len(match_details) == 0 and semantic_score < 0.4:
+        # Skip high-quality tech candidates matching random marketing roles with low overlap
+        if is_tech == False and len(match_details) < 2:
             continue
 
         scored.append({
@@ -759,50 +740,20 @@ def process_matching(data: dict) -> list:
             'match_score': score_int,
             'finalScore': score_int,
             'match_percentage': f"{score_int}%",
-            'scoreBreakdown': {
-                'profileSkillScore': int(min(0.99, (semantic_score * 0.5 + skill_boost)) * 100),
-                'locationScore': 100 if m_type in ['local', 'remote_match'] else (75 if m_type == 'regional' else 25)
-            },
+            'skill_coverage': round(skill_coverage_ratio * 100),
             'matched_skills_list': list(set(match_details))
         })
 
-        
-        # Final Aggregate Score
-        final_score = ((semantic_score + boost + loc_bonus) * sector_multiplier)
-        final_score_clamped = min(0.99, max(0.0, final_score))
-        score_int = int(final_score_clamped * 100)
-
-        # Drop internships that have 0% skill match (0 matched skills)
-        if len(match_details) == 0:
-            continue
-
-        scored.append({
-            **job,
-            'match_score': score_int,
-            'finalScore': score_int,
-            'match_percentage': f"{score_int}%",
-            'scoreBreakdown': {
-                'profileSkillScore': int(min(0.99, (semantic_score + boost)) * 100),
-                'locationScore': 100 if m_type in ['local', 'remote_match'] else (75 if m_type == 'regional' else 25)
-            },
-
-            'semantic_score': round(semantic_score, 4),
-            'skill_boost': round(boost, 4),
-            'matched_skills_list': match_details
-        })    
-
     # ── Ranking ───────────────────────────────────────────────────────────────
     scored.sort(key=lambda x: x['match_score'], reverse=True)
-    top_results_pool = scored[:15]
+    top_results_pool = scored[:12]
 
     # Gap Analysis
     for res in top_results_pool:
         res['gap_analysis'] = compute_gap_analysis(all_student_skills, res)
 
-    top_results = top_results_pool[:10]
-
     # ── STEP 5: LLM Re-ranking + Explanations ────────────────────────
-    final_results = gemini_rerank_and_explain(student, top_results, parsed_resume)
+    final_results = gemini_rerank_and_explain(student, top_results_pool[:10], parsed_resume)
 
     return final_results
 
