@@ -1,4 +1,6 @@
 // ===== API + FIREBASE SETUP =====
+alert('🚀 LATEST FIX LOADED (19:00)');
+console.log('--- TEST PASS 19:00 ---');
 // Dynamic API base — always points to current host (works for localhost, tunnels, LAN, production)
 // Dynamic API base — Detects if we're on the frontend port, and switches to the backend port
 const currentPort = window.location.port;
