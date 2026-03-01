@@ -446,61 +446,58 @@ Only output the JSON array."""
 
 
 def _build_fallback_explanation(student: dict, job: dict) -> dict:
-    """Fast rule-based explanation and basic roadmap when Gemini is unavailable."""
+    """Fast rule-based explanation and role-specific roadmap when Gemini is unavailable."""
     import re
-    skill_list = student.get('skills', [])
+    skill_list = [s.lower() for s in student.get('skills', [])]
     job_skills_raw = (job.get('skills_required') or job.get('skills') or '')
-    job_skills_str = job_skills_raw.lower()
+    role = job.get('role', 'Internship')
+    company = job.get('company', 'this organization')
     
-    # Identify matched and missing
     all_job_skills = [s.strip().lower() for s in re.split(r'[,;/|]', job_skills_raw) if s.strip()]
     matched = []
     missing = []
     
     for s in all_job_skills:
-        # Avoid matching "OS" inside "Photoshop"
-        if len(s) <= 3:
-            pattern = rf'\b{re.escape(s)}\b'
-        else:
-            pattern = re.escape(s)
-            
-        if any(re.search(pattern, sk.lower()) for sk in skill_list):
+        # Fuzzy match for synonyms
+        if any(s in sk or sk in s for sk in skill_list):
             matched.append(s)
         else:
             missing.append(s)
             
-    pct = int(job.get('match_score', 0))
-    role = job.get('role', 'Internship')
-    company = job.get('company', 'this organization')
-
-    explanation = ""
-    if matched:
-        explanation = (f"Strategy Match: Your proficiency in {', '.join(matched[:2])} is a direct asset for this {role}. "
-                      f"We've calculated a {pct}% accuracy match based on your technical profile.")
-    else:
-        explanation = (f"Potential Fit: Based on architectural analysis of your career goals, "
-                      f"this {role} at {company} offers a {pct}% alignment with your professional trajectory.")
+    # -- HEAVY GENEROSITY SCORING --
+    # Base 35% if location matches + 10% per matched skill
+    loc_bonus = 40 if job.get('match_type') == 'local' else 15
+    skill_bonus = min(50, len(matched) * 15)
     
-    # Career Bridge Roadmap (Always available to trigger the UI)
-    if missing:
-        top_missing = missing[0]
-        roadmap = {
-            "summary": f"Bridge the gap for {top_missing}.",
-            "days": [
-                { "day": 1, "topic": "Skill Sync", "action": f"Master the core principles of {top_missing} via YouTube tutorials", "link": f"https://www.youtube.com/results?search_query=learn+{top_missing.replace(' ', '+')}" },
-                { "day": 2, "topic": "Project Proof", "action": f"Build a real-world {top_missing} solution to showcase your expertise", "link": "" }
-            ]
-        }
+    final_acc = int(min(98, max(25, 10 + loc_bonus + skill_bonus)))
+    job['match_score'] = final_acc
+    job['finalScore'] = final_acc
+
+    # -- ROLE-SPECIFIC FALLBACK ROADMAPS --
+    role_low = role.lower()
+    if "stack" in role_low or "web" in role_low or "developer" in role_low:
+        d1, a1 = "System Architecture", f"Design the frontend-backend connection patterns for this {role} project."
+        d2, a2 = "Feature Deployment", "Code a working CRUD prototype demonstrating your full-stack capability."
+    elif "ai" in role_low or "chatbot" in role_low or "vision" in role_low or "python" in role_low:
+        d1, a1 = "Model Integration", f"Select and test a pre-trained model for this {role} at {company}."
+        d2, a2 = "Pipeline Optimization", "Fine-tune your data processing scripts to ensure low-latency AI responses."
+    elif "marketing" in role_low or "sales" in role_low or "business" in role_low:
+        d1, a1 = "Target Demographics", "Analyze the user base of this company and draft a conversion strategy."
+        d2, a2 = "Campaign Prototype", "Create a mock ad cluster or landing page copy optimized for search intent."
     else:
-        # If the student matches 100%, give an advanced 'Next Level' roadmap so the UI still renders
-        adv_skill = matched[0] if matched else (job.get('role', 'System Architecture'))
-        roadmap = {
-            "summary": f"You match all required skills. Now, level up your {adv_skill}.",
-            "days": [
-                { "day": 1, "topic": "Advanced Mastery", "action": f"Explore advanced production patterns in {adv_skill}", "link": f"https://www.youtube.com/results?search_query=advanced+{adv_skill.replace(' ', '+')}" },
-                { "day": 2, "topic": "Portfolio Polish", "action": "Refine one of your existing projects with industry best practices", "link": "" }
-            ]
-        }
+        d1, a1 = "Deep Tech Standards", f"Master the specific library or stack used most in {role} roles."
+        d2, a2 = "Industry Showcase", "Write a technical case study of a project you built that matches this role."
+
+    explanation = (f"Smart Match: Your skills in {', '.join(matched[:2]) if matched else 'Technology'} provide a solid foundation. "
+                  f"Calculated {final_acc}% accuracy based on your {role} alignment and location proximity.")
+    
+    roadmap = {
+        "summary": f"Bridge the {role} gap in 48 hours.",
+        "days": [
+            { "day": 1, "topic": d1, "action": a1, "link": f"https://www.youtube.com/results?search_query={role.replace(' ', '+')}+tutorial" },
+            { "day": 2, "topic": d2, "action": a2, "link": "" }
+        ]
+    }
     
     return {"explanation": explanation, "roadmap": roadmap, "missing": missing}
 
