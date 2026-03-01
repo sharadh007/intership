@@ -13,6 +13,41 @@ console.log('🌐 API Config:', {
   API_BASE: API_BASE
 });
 
+// --- Auth Landing Page & View Switching ---
+window.showAuthTab = function (tab) {
+  const loginBtn = document.getElementById('tab-login');
+  const regBtn = document.getElementById('tab-register');
+  const loginForm = document.getElementById('landingLoginForm');
+  const regForm = document.getElementById('landingRegisterForm');
+
+  if (tab === 'login') {
+    if (loginBtn) {
+      loginBtn.style.color = '#0d9488';
+      loginBtn.style.borderBottomColor = '#0d9488';
+    }
+    if (regBtn) {
+      regBtn.style.color = '#94a3b8';
+      regBtn.style.borderBottomColor = 'transparent';
+    }
+    if (loginForm) loginForm.style.display = 'block';
+    if (regForm) regForm.style.display = 'none';
+  } else {
+    if (regBtn) {
+      regBtn.style.color = '#0d9488';
+      regBtn.style.borderBottomColor = '#0d9488';
+    }
+    if (loginBtn) {
+      loginBtn.style.color = '#94a3b8';
+      loginBtn.style.borderBottomColor = 'transparent';
+    }
+    if (regForm) regForm.style.display = 'block';
+    if (loginForm) loginForm.style.display = 'none';
+  }
+};
+
+window.$ = id => document.getElementById(id);
+const $ = window.$;
+
 // Initialize Firebase variables globally
 let auth = null;
 let db = null;
@@ -346,9 +381,7 @@ const FIELD_CONFIG = {
   industry: { label: 'Preferred Industry', type: 'select', options: ['Technical', 'IT / Software', 'Finance', 'Marketing', 'Manufacturing', 'Construction', 'Healthcare', 'Education'] }
 };
 
-// Helper function for the Profile object to easily grab elements
-window.$ = id => document.getElementById(id);
-const $ = window.$;
+
 
 const Profile = {
   open() {
@@ -1267,29 +1300,7 @@ function switchRecTab(tab) {
   }
 }
 
-// --- Auth Landing Page & View Switching ---
-function showAuthTab(tab) {
-  const loginBtn = document.getElementById('tab-login');
-  const regBtn = document.getElementById('tab-register');
-  const loginForm = document.getElementById('landingLoginForm');
-  const regForm = document.getElementById('landingRegisterForm');
 
-  if (tab === 'login') {
-    loginBtn.style.color = '#0d9488';
-    loginBtn.style.borderBottomColor = '#0d9488';
-    regBtn.style.color = '#94a3b8';
-    regBtn.style.borderBottomColor = 'transparent';
-    loginForm.style.display = 'block';
-    regForm.style.display = 'none';
-  } else {
-    regBtn.style.color = '#0d9488';
-    regBtn.style.borderBottomColor = '#0d9488';
-    loginBtn.style.color = '#94a3b8';
-    loginBtn.style.borderBottomColor = 'transparent';
-    regForm.style.display = 'block';
-    loginForm.style.display = 'none';
-  }
-}
 
 async function handleLandingLogin(e) {
   e.preventDefault();

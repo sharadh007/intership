@@ -2579,11 +2579,16 @@
     <script>
       // CACHE OVERRIDE FIX: 
       // If the browser refuses to load the new app.js, this block ensures the Profile button NEVER crashes again.
-      if (typeof window.$ === 'undefined') {
-        window.$ = id => document.getElementById(id);
-      }
+      window.$ = window.$ || (id => document.getElementById(id));
+      window.showAuthTab = window.showAuthTab || (function (tab) {
+        console.warn('CRITICAL: Initializing stub for showAuthTab. Please refresh.');
+        const loginForm = document.getElementById('landingLoginForm');
+        const regForm = document.getElementById('landingRegisterForm');
+        if (loginForm) loginForm.style.display = (tab === 'login' ? 'block' : 'none');
+        if (regForm) regForm.style.display = (tab === 'login' ? 'none' : 'block');
+      });
     </script>
-    <script src="app.js?v=1772365671447"></script>
+    <script src="app.js?v=PROPER_FIX_2026_03_01_V2"></script>
     <script>
       function handleWorkPreferenceChange(select) {
         const locationInput = document.getElementById('locationInput');
