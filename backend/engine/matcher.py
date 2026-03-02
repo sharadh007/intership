@@ -80,6 +80,31 @@ KNOWN_SKILLS = [
     "blockchain","solidity","web3","cybersecurity","networking","ethical hacking"
 ]
 
+# Skill Synonym Map for robust matching
+SKILL_SYNONYMS = {
+    "sql": ["mysql", "postgresql", "sql server", "oracle", "sqlite", "mariadb", "t-sql", "pl-sql"],
+    "javascript": ["js", "typescript", "ts", "ecmascript", "react", "vue", "angular", "node.js"],
+    "python": ["django", "flask", "fastapi", "pandas", "numpy", "pytorch", "tensorflow"],
+    "html": ["html5", "markup", "web dev"],
+    "css": ["css3", "sass", "less", "tailwind", "bootstrap", "flexbox", "grid"],
+    "ml": ["machine learning", "deep learning", "artificial intelligence", "ai", "nlp", "computer vision"],
+    "cloud": ["aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "devops"],
+    "design": ["ui/ux", "ui", "ux", "figma", "adobe xd", "photoshop", "illustrator"]
+}
+
+def get_synonym_expanded(skills):
+    """Expands a list of skills with their synonyms."""
+    expanded = set()
+    for s in skills:
+        s_low = s.lower().strip()
+        expanded.add(s_low)
+        for main, syns in SKILL_SYNONYMS.items():
+            if s_low == main or s_low in syns:
+                expanded.add(main)
+                for syn in syns:
+                    expanded.add(syn)
+    return list(expanded)
+
 def parse_resume(resume_text: str, existing_skills: list) -> dict:
     """
     STEP 1 - Resume Parser:
@@ -322,13 +347,20 @@ def gemini_rerank_and_explain(student: dict, top_jobs: list, parsed_resume: dict
                 def get_verified_matches(job_skills_str, student_skills):
                     verified = []
                     job_skills_low = job_skills_str.lower()
-                    for s in student_skills:
-                        s_low = s.lower()
-                        # Use word boundaries for strict matching
-                        pattern = rf'\b{re.escape(s_low)}\b'
-                        if re.search(pattern, job_skills_low):
-                            verified.append(s)
-                    return verified
+                    expanded_student = get_synonym_expanded(student_skills)
+                    
+                    # Split job skills for individual checking
+                    required = [s.strip().lower() for s in re.split(r'[,;/|]', job_skills_low) if s.strip()]
+                    
+                    for req in required:
+                        # Direct match or any student skill matches this requirement synonymously
+                        if req in expanded_student:
+                            verified.append(req)
+                        else:
+                            # Also check if any part of req is in student skills (e.g. "React JS" in "React")
+                            if any(sk in req or req in sk for sk in expanded_student):
+                                verified.append(req)
+                    return list(set(verified))
 
                 student_skills = student.get('skills', [])
                 
@@ -449,25 +481,24 @@ def _build_fallback_explanation(student: dict, job: dict) -> dict:
     """Fast rule-based explanation and basic roadmap when Gemini is unavailable."""
     import re
     skill_list = student.get('skills', [])
-    job_skills_raw = (job.get('skills_required') or job.get('skills') or '')
-    job_skills_str = job_skills_raw.lower()
+    expanded_student = get_synonym_expanded(skill_list)
     
-    # Identify matched and missing
+    job_skills_raw = (job.get('skills_required') or job.get('skills') or '')
     all_job_skills = [s.strip().lower() for s in re.split(r'[,;/|]', job_skills_raw) if s.strip()]
+    
     matched = []
     missing = []
     
-    for s in all_job_skills:
-        # Avoid matching "OS" inside "Photoshop"
-        if len(s) <= 3:
-            pattern = rf'\b{re.escape(s)}\b'
+    for req in all_job_skills:
+        # Check if requirement matches expanded student skills
+        if req in expanded_student:
+            matched.append(req)
         else:
-            pattern = re.escape(s)
-            
-        if any(re.search(pattern, sk.lower()) for sk in skill_list):
-            matched.append(s)
-        else:
-            missing.append(s)
+            # Substring match
+            if any(sk in req or req in sk for sk in expanded_student):
+                matched.append(req)
+            else:
+                missing.append(req)
             
     pct = int(job.get('match_score', 0))
     role = job.get('role', 'Internship')
@@ -535,10 +566,11 @@ def process_matching(data: dict) -> list:
     
     # Merge parsed skills back into student profile
     all_student_skills = list(set(
-        [s.lower() for s in student.get('skills', [])] +
-        [s.lower() for s in parsed_resume['skills']]
+        [s.lower().strip() for s in student.get('skills', [])] +
+        [s.lower().strip() for s in parsed_resume['skills']]
     ))
     student['skills'] = all_student_skills
+    expanded_student_skills = get_synonym_expanded(all_student_skills)
 
     # ── Data Cleaning & Sector Lock ──────────────────────────────────────────
     cleaned_internships = []
@@ -697,41 +729,49 @@ def process_matching(data: dict) -> list:
     for i, job in enumerate(filtered):
         semantic_score = scores[i]
         
-        # FIXED Skill Boost: Strict Regex-based matching
-        job_skills_str = (job.get('skills_required') or job.get('skills') or '').lower()
-        boost = 0
-        match_details = []
-        for s in all_student_skills:
-            pattern = re.compile(r'\b' + re.escape(s) + r'\b', re.IGNORECASE)
-            if pattern.search(job_skills_str):
-                boost += 0.06
-                match_details.append(s)
+        # IMPROVED Skill Match logic
+        job_skills_raw = (job.get('skills_required') or job.get('skills') or '').lower()
+        job_skills_list = [s.strip() for s in re.split(r'[,;/|]', job_skills_raw) if s.strip()]
+        total_reqs = max(len(job_skills_list), 1)
         
-        boost = min(boost, 0.35)
+        match_details = []
+        for req in job_skills_list:
+            # Check if requirement matches expanded student skills
+            if req in expanded_student_skills:
+                match_details.append(req)
+            else:
+                # Substring match (e.g. "React" in "React JS")
+                if any(sk in req or req in sk for sk in expanded_student_skills):
+                    match_details.append(req)
+        
+        match_details = list(set(match_details))
+        match_ratio = len(match_details) / total_reqs
+        
+        # Dropping internships with 0% skill match (unless it is a 100% semantic match which is rare)
+        if len(match_details) == 0 and semantic_score < 0.6:
+            continue
+
+        # Score Weighting
+        # Skill overlap is highest priority (0.5), Semantic (0.2), Location (0.3)
+        skill_score = match_ratio * 0.5
+        loc_type = job.get('match_type', 'anywhere')
+        
+        loc_weight = 0.0
+        if loc_type == 'local':
+            loc_weight = 0.35 # Huge boost for physical match (especially Coimbatore if requested)
+        elif loc_type == 'remote_match':
+            loc_weight = 0.25
+        elif loc_type == 'regional':
+            loc_weight = 0.15
+            
+        final_score = (skill_score + (semantic_score * 0.2) + loc_weight)
         
         # Sector Multiplier
         is_tech = is_tech_role(job)
-        sector_multiplier = 1.0 if is_tech else 0.4
-        
-        # POWERFUL LOCATION BOOST
-        m_type = job.get('match_type', 'anywhere')
-        loc_bonus = 0.0
-        if m_type == 'local':
-            loc_bonus = 0.35  # PREMIUM boost for direct physical city
-        elif m_type == 'remote_match':
-            loc_bonus = 0.25  # Strong boost for remote
-        elif m_type == 'regional':
-            loc_bonus = 0.20  # Regional boost
-
-        
-        # Final Aggregate Score
-        final_score = ((semantic_score + boost + loc_bonus) * sector_multiplier)
-        final_score_clamped = min(0.99, max(0.0, final_score))
-        score_int = int(final_score_clamped * 100)
-
-        # Drop internships that have 0% skill match (0 matched skills)
-        if len(match_details) == 0:
-            continue
+        if not is_tech:
+            final_score *= 0.5 # Diminish non-tech roles for tech students
+            
+        score_int = int(min(0.99, max(0.1, final_score)) * 100)
 
         scored.append({
             **job,
