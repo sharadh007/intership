@@ -752,25 +752,28 @@ def process_matching(data: dict) -> list:
         if len(match_details) == 0 and semantic_score < 0.6:
             continue
 
-        # Score Weighting
-        # Skill overlap is highest priority (0.5), Semantic (0.2), Location (0.3)
-        skill_score = match_ratio * 0.5
+        # Score Weighting (Strict 70/30 Split as requested)
+        # 1. Skill Component (70%) - Based on match ratio + small semantic nuance
+        skill_component = (match_ratio * 0.8 + semantic_score * 0.2) * 0.7
+        
+        # 2. Location Component (30%)
         loc_type = job.get('match_type', 'anywhere')
-        
-        loc_weight = 0.0
+        loc_val = 0.2 # Anywhere fallback
         if loc_type == 'local':
-            loc_weight = 0.35 # Huge boost for physical match (especially Coimbatore if requested)
+            loc_val = 1.0
         elif loc_type == 'remote_match':
-            loc_weight = 0.25
+            loc_val = 0.8
         elif loc_type == 'regional':
-            loc_weight = 0.15
+            loc_val = 0.5
             
-        final_score = (skill_score + (semantic_score * 0.2) + loc_weight)
+        loc_component = loc_val * 0.3
+            
+        final_score = skill_component + loc_component
         
-        # Sector Multiplier
+        # Sector Multiplier (Heavy penalty for wrong industry)
         is_tech = is_tech_role(job)
         if not is_tech:
-            final_score *= 0.5 # Diminish non-tech roles for tech students
+            final_score *= 0.4
             
         score_int = int(min(0.99, max(0.1, final_score)) * 100)
 
@@ -780,12 +783,12 @@ def process_matching(data: dict) -> list:
             'finalScore': score_int,
             'match_percentage': f"{score_int}%",
             'scoreBreakdown': {
-                'profileSkillScore': int(min(0.99, (semantic_score + skill_score)) * 100),
-                'locationScore': 100 if loc_type in ['local', 'remote_match'] else (75 if loc_type == 'regional' else 25)
+                'profileSkillScore': int(skill_component / 0.7 * 100),
+                'locationScore': int(loc_val * 100)
             },
 
             'semantic_score': round(semantic_score, 4),
-            'skill_boost': round(skill_score, 4),
+            'skill_boost': round(skill_component, 4),
             'matched_skills_list': match_details
         })    
 
