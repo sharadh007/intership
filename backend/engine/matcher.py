@@ -87,7 +87,7 @@ SKILL_SYNONYMS = {
     "python": ["django", "flask", "fastapi", "pandas", "numpy", "pytorch", "tensorflow"],
     "html": ["html5", "markup", "web dev"],
     "css": ["css3", "sass", "less", "tailwind", "bootstrap", "flexbox", "grid"],
-    "ml": ["machine learning", "deep learning", "artificial intelligence", "ai", "nlp", "computer vision"],
+    "ml": ["machine learning", "deep learning", "artificial intelligence", "ai", "nlp", "computer vision", "llm", "rag", "langchain"],
     "cloud": ["aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "devops"],
     "design": ["ui/ux", "ui", "ux", "figma", "adobe xd", "photoshop", "illustrator"]
 }
