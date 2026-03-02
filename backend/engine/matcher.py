@@ -87,9 +87,9 @@ SKILL_SYNONYMS = {
     "python": ["django", "flask", "fastapi", "pandas", "numpy", "pytorch", "tensorflow"],
     "html": ["html5", "markup", "web dev"],
     "css": ["css3", "sass", "less", "tailwind", "bootstrap", "flexbox", "grid"],
-    "ml": ["machine learning", "deep learning", "artificial intelligence", "ai", "nlp", "computer vision", "llm", "rag", "langchain"],
+    "ml": ["machine learning", "deep learning", "artificial intelligence", "ai", "nlp", "computer vision", "opencv", "llm", "rag", "langchain"],
     "cloud": ["aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "devops"],
-    "design": ["ui/ux", "ui", "ux", "figma", "adobe xd", "photoshop", "illustrator"]
+    "design": ["ui/ux", "ui", "ux", "figma", "adobe xd", "photoshop", "illustrator", "front-end", "frontend"]
 }
 
 def get_synonym_expanded(skills):
@@ -650,8 +650,9 @@ def process_matching(data: dict) -> list:
     for job in cleaned_internships:
         # AGGRESSIVE LOCATION CLEANING
         loc_val = str(job.get('location', ""))
-        loc_val = re.sub(r"[\(\)\[\]\'\"]", "", loc_val)
-        loc_parts = list(set([p.strip() for p in loc_val.split(',') if p.strip()]))
+        # Handle ('Coimbatore',) style tuples
+        loc_val = re.sub(r"[\(\)\[\]\'\",]", " ", loc_val).strip()
+        loc_parts = list(set([p.strip() for p in loc_val.split(' ') if p.strip()]))
         job['location'] = ", ".join(loc_parts)
         
         is_tech = is_tech_role(job)
@@ -779,12 +780,12 @@ def process_matching(data: dict) -> list:
             'finalScore': score_int,
             'match_percentage': f"{score_int}%",
             'scoreBreakdown': {
-                'profileSkillScore': int(min(0.99, (semantic_score + boost)) * 100),
-                'locationScore': 100 if m_type in ['local', 'remote_match'] else (75 if m_type == 'regional' else 25)
+                'profileSkillScore': int(min(0.99, (semantic_score + skill_score)) * 100),
+                'locationScore': 100 if loc_type in ['local', 'remote_match'] else (75 if loc_type == 'regional' else 25)
             },
 
             'semantic_score': round(semantic_score, 4),
-            'skill_boost': round(boost, 4),
+            'skill_boost': round(skill_score, 4),
             'matched_skills_list': match_details
         })    
 
