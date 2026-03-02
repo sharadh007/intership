@@ -171,6 +171,55 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* WORK MODE SELECTOR */
+    .work-mode-selector {
+      display: flex;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 12px;
+      gap: 4px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .mode-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 12px 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #64748b;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .mode-btn.active {
+      background: #ffffff;
+      color: #0d9488;
+      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.12);
+    }
+
+    .mode-btn:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.6);
+      color: #334155;
+    }
+
+    body.dark-mode .work-mode-selector {
+      background: #0f172a;
+      border-color: #334155;
+    }
+
+    body.dark-mode .mode-btn.active {
+      background: #1e293b;
+      color: #2dd4bf;
+    }
   </style>
 </head>
 
@@ -2575,28 +2624,6 @@
       });
     </script>
     <script src="app.js?v=1900"></script>
-    <script>
-      function handleWorkPreferenceChange(select) {
-        const locationInput = document.getElementById('locationInput');
-        if (!locationInput) return;
-
-        if (select.value === 'remote') {
-          locationInput.value = 'Remote';
-          locationInput.readOnly = true;
-          locationInput.style.backgroundColor = '#f3f4f6';
-        } else if (select.value === 'both') {
-          locationInput.readOnly = false;
-          locationInput.style.backgroundColor = '#fff';
-          if (locationInput.value === 'Remote') locationInput.value = '';
-          locationInput.placeholder = "Preferred City (Remote also considered)";
-        } else {
-          locationInput.readOnly = false;
-          locationInput.style.backgroundColor = '#fff';
-          if (locationInput.value === 'Remote') locationInput.value = '';
-          locationInput.placeholder = "Mumbai, Bangalore, Delhi";
-        }
-      }
-    </script>
     <script src="notifications.js?v=20260219-2120"></script>
 </body>
 

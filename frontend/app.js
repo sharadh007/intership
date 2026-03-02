@@ -1819,7 +1819,6 @@ function updateAuthUI(userName) {
 
 // Set Work Mode and Update Location Visibility
 function setWorkMode(mode, btn) {
-  // Update hidden input
   const workModeInput = document.getElementById('workModeRecommendation');
   const locationInput = document.getElementById('stateRecommendation');
   const locationLabel = document.getElementById('locationLabel');
@@ -1829,27 +1828,33 @@ function setWorkMode(mode, btn) {
   // Toggle button active states
   const btns = document.querySelectorAll('.mode-btn');
   btns.forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
 
-  // Smart Location Logic
+  if (!locationInput) return;
+
+  // USER REQUEST: If WFH, set to Remote. If both/local, let user type.
   if (mode === 'Remote') {
-    if (locationInput) {
-      locationInput.value = 'Remote';
-      locationInput.readOnly = true;
-      locationInput.style.background = '#f1f5f9';
-      locationInput.style.color = '#94a3b8';
-    }
-    if (locationLabel) locationLabel.textContent = 'Auto-assigned for WFH';
+    locationInput.value = 'Remote';
+    locationInput.readOnly = true;
+    locationInput.style.background = '#f1f5f9';
+    locationInput.style.color = '#94a3b8';
+    locationInput.style.cursor = 'not-allowed';
+    if (locationLabel) locationLabel.textContent = 'Location (Locked to Remote)';
   } else {
-    if (locationInput) {
-      if (locationInput.value === 'Remote') locationInput.value = '';
-      locationInput.readOnly = false;
-      locationInput.style.background = '#ffffff';
-      locationInput.style.color = '#1e293b';
-      locationInput.placeholder = mode === 'Any' ? 'e.g. Mumbai (Enter primary preference)' : 'e.g. Maharashtra, Mumbai';
-    }
-    if (locationLabel) {
-      locationLabel.textContent = mode === 'Any' ? 'Primary Location Preference' : 'City or State Preferred';
+    // If we transition from Remote to something else, clear it so user can type
+    if (locationInput.value === 'Remote') locationInput.value = '';
+
+    locationInput.readOnly = false;
+    locationInput.style.background = '#ffffff';
+    locationInput.style.color = '#1e293b';
+    locationInput.style.cursor = 'text';
+
+    if (mode === 'Any') {
+      locationInput.placeholder = 'e.g. Coimbatore (Prefers local, open to Remote)';
+      if (locationLabel) locationLabel.textContent = 'Preferred Home City';
+    } else {
+      locationInput.placeholder = 'e.g. Tamil Nadu, Coimbatore';
+      if (locationLabel) locationLabel.textContent = 'In-Office City Preferred';
     }
   }
 }
