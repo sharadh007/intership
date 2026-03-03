@@ -632,12 +632,23 @@ def process_matching(data: dict) -> list:
         sector_raw = j.get('sector', '').lower()
         r = (role_raw + ' ' + sector_raw)
         
-        tech_kws = ['software', 'developer', 'web', 'app', 'it', 'technical', 'data', 'coder', 'engineer', 'ai', 'ml', 'frontend', 'backend', 'fullstack', 'python', 'java', 'react', 'node']
+        # Expanded tech keywords
+        tech_kws = ['software', 'developer', 'web', 'app', 'it', 'technical', 'data', 'coder', 'engineer', 'ai', 'ml', 'frontend', 'backend', 'fullstack', 'python', 'java', 'react', 'node', 'computing', 'science', 'development', 'programming']
         
-        matches_tech = any(kw in r for kw in tech_kws)
-        is_hard_nontech = any(kw in role_raw for kw in ['marketing', 'sales', 'seo', 'recruitment', 'hr', 'acquisition', 'data entry', 'content', 'writing', 'graphic', 'social media', 'business development'])
-        if pref_sector in ['technology', 'technical']:
-            return matches_tech and not is_hard_nontech
+        # Hard non-tech keywords
+        is_hard_nontech = any(kw in role_raw for kw in ['marketing', 'sales', 'seo', 'recruitment', 'hr', 'acquisition', 'data entry', 'content', 'writing', 'social media', 'business development', 'customer support', 'tele-calling', 'retail', 'architecture'])
+        
+        # If user explicitly asked for tech, be suspicious of non-tech roles
+        if pref_sector in ['technology', 'technical', 'it & software', 'computer science', 'data science']:
+            # If it has tech keywords and no non-tech keywords, it's tech
+            if any(kw in r for kw in tech_kws) and not is_hard_nontech:
+                return True
+            # If role is clearly tech-related
+            if any(kw in role_raw for kw in ['developer', 'engineer', 'analyst', 'programmer']):
+                return not is_hard_nontech
+            return False
+            
+        # Fallback: check if the preferred sector is mentioned
         return (pref_sector in r)
 
     # -- TIERED LOCATION BUCKETS --
@@ -748,13 +759,14 @@ def process_matching(data: dict) -> list:
         match_details = list(set(match_details))
         match_ratio = len(match_details) / total_reqs
         
-        # Dropping internships with 0% skill match (unless it is a 100% semantic match which is rare)
-        if len(match_details) == 0 and semantic_score < 0.6:
+        # USER REQUEST: Strictly drop internships with 0% skill match
+        if len(match_details) == 0:
             continue
 
         # Score Weighting (Strict 70/30 Split as requested)
-        # 1. Skill Component (70%) - Based on match ratio + small semantic nuance
-        skill_component = (match_ratio * 0.8 + semantic_score * 0.2) * 0.7
+        # 1. Skill Component (70%) - Based on match ratio
+        # We use a mix of match_ratio (60%) and semantic similarity (10%) to reach 70% total weight
+        skill_score_raw = (match_ratio * 0.8 + (semantic_score * 0.2)) * 0.7
         
         # 2. Location Component (30%)
         loc_type = job.get('match_type', 'anywhere')
@@ -766,13 +778,13 @@ def process_matching(data: dict) -> list:
         elif loc_type == 'regional':
             loc_val = 0.5
             
-        loc_component = loc_val * 0.3
+        loc_score_raw = loc_val * 0.3
             
-        final_score = skill_component + loc_component
+        final_score = skill_score_raw + loc_score_raw
         
-        # Sector Multiplier (Heavy penalty for wrong industry)
+        # Sector Multiplier (Heavy penalty for non-technical roles if user wants tech)
         is_tech = is_tech_role(job)
-        if not is_tech:
+        if not is_tech and pref_sector in ['technology', 'technical', 'it & software', 'computer science', 'data science']:
             final_score *= 0.4
             
         score_int = int(min(0.99, max(0.1, final_score)) * 100)
@@ -782,13 +794,14 @@ def process_matching(data: dict) -> list:
             'match_score': score_int,
             'finalScore': score_int,
             'match_percentage': f"{score_int}%",
+            'skill_match_percentage': int(match_ratio * 100), # Return raw ratio for UI bar
             'scoreBreakdown': {
-                'profileSkillScore': int(skill_component / 0.7 * 100),
+                'profileSkillScore': int(match_ratio * 100), # Use raw ratio for the green line
                 'locationScore': int(loc_val * 100)
             },
 
             'semantic_score': round(semantic_score, 4),
-            'skill_boost': round(skill_component, 4),
+            'skill_boost': round(skill_score_raw, 4),
             'matched_skills_list': match_details
         })    
 
