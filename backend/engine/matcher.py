@@ -378,7 +378,8 @@ def gemini_rerank_and_explain(student: dict, top_jobs: list, parsed_resume: dict
                         f"- Company: {j['company']}\n"
                         f"- Location: {j.get('location')} ({loc_type})\n"
                         f"- Requirements: {j_skills[:150]}\n"
-                        f"- Verified Matches: {verified_str}"
+                        f"- Verified Matches: {verified_str}\n"
+                        f"- Selection Context: {'High technical match found in nearby district' if j.get('match_type') == 'regional' else 'Direct location match'}"
                     )
                 
                 jobs_summary = "\n\n".join(jobs_to_analyze)
@@ -394,22 +395,22 @@ INTERNSHIPS:
 {jobs_summary}
 
 TASK:
-For EVERY internship (even if 100% match), provide:
-1. explanation: A 1-sentence "Why you?" highlight focusing on a core technical match.
+For EVERY internship, provide:
+1. explanation: A 1-sentence "Why you?" highlight. If the 'Selection Context' mentions a nearby district, politely note that this role was selected for its superior technical alignment despite the distance.
 2. roadmap: 
    - Day 1: A specific technical topic to master (If match is 100%, suggest an 'advanced' or 'scale' version of their best skill). Provide a specific YouTube search query.
-   - Day 2: Suggest a UNIQUE, 2025-ready project idea that solves a real problem for {student.get('name')}'s career or for {student.get('name')}. Use modern tech tags.
+   - Day 2: Suggest a UNIQUE, 2025-ready project idea that solves a real problem for {student.get('name')}.
 
 Format as a strict JSON array where each object has:
 [
   {{
     "index": <Index>,
-    "explanation": "Brief technical highlight.",
+    "explanation": "Brief technical highlight explaining the fit.",
     "roadmap": {{
       "summary": "1-sentence strategic bridge.",
       "days": [
         {{ "day": 1, "topic": "Skill topic", "action": "Watch curated tutorials on X.", "link": "https://youtube.com/results?search_query=..." }},
-        {{ "day": 2, "topic": "Portfolio Impact", "action": "Project Idea: [Unique Title] - [Problem it solves in 2025 using Y]", "link": "" }}
+        {{ "day": 2, "topic": "Portfolio Impact", "action": "Project Idea: [Unique Title] - [Description]", "link": "" }}
       ]
     }}
   }}

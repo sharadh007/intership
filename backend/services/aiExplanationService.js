@@ -132,6 +132,8 @@ const callGemini = async (model, student, internships) => {
 
     TASK:
     For EACH internship, explain WHY it was recommended and HOW the student can improve their fit score.
+    
+    CRITICAL: If an internship is in a neighboring district (not the preferred city but the same state/nearby), explicitly note that this role was prioritized for its high technical alignment despite the distance.
 
     Constraints:
     - Use only the provided information.

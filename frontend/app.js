@@ -2027,6 +2027,7 @@ async function getAIRecommendations(event) {
                     <p style="color: var(--color-text-secondary, #626c71); font-size: 0.84rem; margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                       <span>🏢 ${rec.company || 'Company'}</span>
                       ${loc ? `<span style="color:#cbd5e1;">|</span><span>📍 ${loc}</span>` : ''}
+                      ${rec.match_type === 'regional' ? `<span style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; padding:1px 8px; border-radius:4px; font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.3px;">Nearby District</span>` : ''}
                     </p>
                   </div>
                   ${rec.sector ? `<span style="background:rgba(33,128,141,0.1);color:#1a6874;border:1px solid rgba(33,128,141,0.2);border-radius:6px;padding:3px 10px;font-size:0.72rem;font-weight:600;white-space:nowrap;flex-shrink:0;">${rec.sector}</span>` : ''}
