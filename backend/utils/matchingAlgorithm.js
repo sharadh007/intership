@@ -194,16 +194,15 @@ const calculateMatchMetaData = (studentProfile, internship) => {
   const roleText = ((internship.role || '') + ' ' + (internship.sector || '')).toLowerCase();
   const isHardNonTech = ['marketing', 'sales', 'seo', 'recruitment', 'hr', 'acquisition', 'data entry', 'content', 'writing', 'social media', 'business development', 'customer support', 'retail', 'hollywood', 'operations'].some(kw => roleText.includes(kw));
 
-  // If user wants tech but job is clearly marketing/hr -> huge penalty to hide it
-  let sectorMultiplier = 1.0;
+  // If user wants tech but job is clearly marketing/hr -> Skip it
   if (isTechTarget && isHardNonTech) {
-    sectorMultiplier = 0.3; // Drops it to the bottom
+    return null; // DISCARD - User wants tech roles
   }
 
   // 4. Calculate weighted match score
   // Pure 70/30 split
   const rawScore = (skillResult.score * WEIGHTS.SKILLS) + (locResult.score * WEIGHTS.LOCATION);
-  let finalScore = Math.round(rawScore * sectorMultiplier);
+  let finalScore = Math.round(rawScore);
   finalScore = Math.max(10, Math.min(99, finalScore));
 
   return {
