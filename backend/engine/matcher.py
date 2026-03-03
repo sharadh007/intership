@@ -14,12 +14,16 @@
 """
 import sys
 import json
-import os
 import re
 import numpy as np
+import gc
+import threading
 from dotenv import load_dotenv
 
-# Load Environment early
+# MEMORY OPTIMIZATION: Limit PyTorch threads BEFORE loading
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 # ─── Lazy Model Loading ────────────────────────────────────────────────────────
@@ -31,9 +35,14 @@ def get_transformer_model():
     """Lazy load the SentenceTransformer model to save memory."""
     global _transformer_model
     if _transformer_model is None:
-        print("📥 Loading Sentence Transformer (MiniLM)...")
-        from sentence_transformers import SentenceTransformer
-        _transformer_model = SentenceTransformer('all-MiniLM-L6-v2')
+        try:
+            from sentence_transformers import SentenceTransformer
+            # Use CPU explicitly and small model
+            _transformer_model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+            import torch
+            torch.set_num_threads(1)
+        except Exception as e:
+            print(f"⚠️ Transformer load failed: {e}")
     return _transformer_model
 
 def get_gemini_model():
@@ -273,15 +282,31 @@ def build_job_text(job: dict) -> str:
 
 # ─── STEP 4: SIMILARITY ENGINE ───────────────────────────────────────────────
 def compute_similarities(student_text: str, job_texts: list) -> list:
-    """Batch-encode all texts and compute cosine similarities at once (fast)."""
+    """Batch-encode all texts with memory safety."""
+    if not job_texts: return []
+    
+    # MEMORY SAFETY: Limit to 25 items to prevent 512MB OOM
+    limited_jobs = job_texts[:25]
+    
     from sklearn.metrics.pairwise import cosine_similarity
-    all_texts = [student_text] + job_texts
+    all_texts = [student_text] + limited_jobs
+    
     model = get_transformer_model()
-    embeddings = model.encode(all_texts, show_progress_bar=False, batch_size=64)
+    if not model: return [0.5] * len(job_texts)
+    
+    # Lower batch size for memory stability
+    embeddings = model.encode(all_texts, show_progress_bar=False, batch_size=16)
+    
     student_vec = embeddings[0:1]
     job_vecs = embeddings[1:]
     scores = cosine_similarity(student_vec, job_vecs)[0]
-    return scores.tolist()
+    
+    # Append low scores for anything beyond the limit
+    final_scores = scores.tolist()
+    if len(job_texts) > 25:
+        final_scores += [0.1] * (len(job_texts) - 25)
+        
+    return final_scores
 
 
 # ─── STEP 7: GAP ANALYSIS ────────────────────────────────────────────────────
@@ -822,6 +847,9 @@ def process_matching(data: dict) -> list:
     # ── STEP 5: LLM Re-ranking + Explanations ────────────────────────
     final_results = gemini_rerank_and_explain(student, top_results, parsed_resume)
 
+    # FINAL CLEANUP: Aggressive memory release
+    gc.collect()
+    
     return final_results
 
 
