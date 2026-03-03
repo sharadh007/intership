@@ -5,20 +5,18 @@
 // 3. Nearby Region Match (Tier 3)
 // 4. Global/Other (Tier 4)
 
-// Weights for Match Score Calculation
+// Weights for Match Score Calculation (Synchronized with Python Engine)
 const WEIGHTS = {
-  RESUME_SKILLS: 0.40,  // 40% - Skills from resume
-  PROFILE_SKILLS: 0.30, // 30% - Skills from profile
-  EDUCATION: 0.15,      // 15% - Education match
-  LOCATION: 0.15        // 15% - Location bonus (not primary sorting factor)
+  SKILLS: 0.70,   // 70% Total Skill Match
+  LOCATION: 0.30  // 30% Location Match
 };
 
 // Location Score Mapping for Match Percentage
 const LOCATION_TIER_SCORES = {
-  1: 100, // Tier 1 - Exact City
-  2: 75,  // Tier 2 - Same State
-  3: 50,  // Tier 3 - Nearby
-  4: 25   // Tier 4 - Other (reduced penalty)
+  1: 100, // Tier 1 - Exact City Match
+  2: 85,  // Tier 2 - Same State Match
+  3: 75,  // Tier 3 - Nearby District / Regional
+  4: 25   // Tier 4 - Other (Anywhere)
 };
 
 // Minimum skill matches required for good ranking
@@ -31,6 +29,8 @@ const CITY_STATE_MAP = {
   'chennai': 'tamil nadu', 'coimbatore': 'tamil nadu', 'madurai': 'tamil nadu', 'trichy': 'tamil nadu',
   'salem': 'tamil nadu', 'tirunelveli': 'tamil nadu', 'erode': 'tamil nadu', 'vellore': 'tamil nadu',
   'thanjavur': 'tamil nadu', 'kanchipuram': 'tamil nadu', 'tiruppur': 'tamil nadu', 'hosur': 'tamil nadu',
+  'tenkasi': 'tamil nadu', 'kanyakumari': 'tamil nadu', 'nagercoil': 'tamil nadu', 'theni': 'tamil nadu',
+  'karur': 'tamil nadu', 'namakkal': 'tamil nadu',
 
   // Karnataka
   'bangalore': 'karnataka', 'bengaluru': 'karnataka', 'mysore': 'karnataka', 'mangalore': 'karnataka',
@@ -177,40 +177,43 @@ const calculateMatchMetaData = (studentProfile, internship) => {
   const profileSkills = studentProfile.skills || [];
   const resumeSkills = resumeData.extractedSkills || [];
 
-  // 1. Skill Scores with match count
-  const resumeSkillResult = calculateSkillMatchDetailed(resumeSkills, internship.skills);
-  const profileSkillResult = calculateSkillMatchDetailed(profileSkills, internship.skills);
+  // 1. Skill Match Percentage (Combined Resume + Profile)
+  const combinedUserSkills = [...new Set([...profileSkills, ...resumeSkills])];
+  const skillResult = calculateSkillMatchDetailed(combinedUserSkills, internship.skills);
 
-  // 2. Education Score
-  const educationScore = calculateEducationMatch(studentProfile.qualification, resumeData.educationLevel, internship.requirements);
+  // USER REQUEST: STRICT FILTER - If 0 matches, return null to filter out
+  if (skillResult.matchCount === 0) return null;
 
-  // 3. Location Tier & Score
+  // 2. Location Tier & Score
   const locResult = calculateLocationTier(studentProfile.preferredState, internship.location);
 
-  // 4. Calculate total skill matches
-  const totalSkillMatches = resumeSkillResult.matchCount + profileSkillResult.matchCount;
+  // 3. Tech Sector Logic (Aggressive rejection of non-tech for tech users)
+  const targetSector = (studentProfile.preferredSector || 'Technology').toLowerCase();
+  const isTechTarget = ['tech', 'it', 'computer', 'science', 'data'].some(kw => targetSector.includes(kw));
 
-  // 5. Calculate weighted match score
-  const skillScore =
-    (resumeSkillResult.score * WEIGHTS.RESUME_SKILLS) +
-    (profileSkillResult.score * WEIGHTS.PROFILE_SKILLS) +
-    (educationScore * WEIGHTS.EDUCATION) +
-    (locResult.score * WEIGHTS.LOCATION);
+  const roleText = ((internship.role || '') + ' ' + (internship.sector || '')).toLowerCase();
+  const isHardNonTech = ['marketing', 'sales', 'seo', 'recruitment', 'hr', 'acquisition', 'data entry', 'content', 'writing', 'social media', 'business development', 'customer support', 'retail', 'hollywood', 'operations'].some(kw => roleText.includes(kw));
 
-  // Round to whole number
-  let finalScore = Math.round(skillScore);
-  finalScore = Math.max(0, Math.min(100, finalScore));
+  // If user wants tech but job is clearly marketing/hr -> huge penalty to hide it
+  let sectorMultiplier = 1.0;
+  if (isTechTarget && isHardNonTech) {
+    sectorMultiplier = 0.3; // Drops it to the bottom
+  }
+
+  // 4. Calculate weighted match score
+  // Pure 70/30 split
+  const rawScore = (skillResult.score * WEIGHTS.SKILLS) + (locResult.score * WEIGHTS.LOCATION);
+  let finalScore = Math.round(rawScore * sectorMultiplier);
+  finalScore = Math.max(10, Math.min(99, finalScore));
 
   return {
     finalScore: finalScore,
     locationTier: locResult.tier,
     locationLabel: locResult.label,
     locationScore: locResult.score,
-    resumeSkillScore: resumeSkillResult.score,
-    profileSkillScore: profileSkillResult.score,
-    educationScore: educationScore,
-    totalSkillMatches: totalSkillMatches,
-    hasMinimumSkills: totalSkillMatches >= MIN_SKILL_MATCHES
+    profileSkillScore: skillResult.score, // Used for the green line in UI
+    totalSkillMatches: skillResult.matchCount,
+    hasMinimumSkills: skillResult.matchCount > 0
   };
 };
 
@@ -221,13 +224,15 @@ const getRankedRecommendations = (studentProfile, internships, limit = 50) => {
 
   const processed = internships.map(internship => {
     const meta = calculateMatchMetaData(studentProfile, internship);
+    if (!meta) return null; // Filtered out by zero-match logic
+
     return {
       ...internship,
       ...meta,
       matchPercentage: meta.finalScore + '%',
       matchLabel: getMatchLabel(meta.finalScore)
     };
-  });
+  }).filter(p => p !== null);
 
   // STRICT FILTERING LOGIC
   const prefLocs = (studentProfile.preferredState || '').split(',').map(l => l.trim()).filter(l => l && l.toLowerCase() !== 'any');

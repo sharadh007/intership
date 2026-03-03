@@ -15,7 +15,7 @@ const pythonClient = {
                 student,
                 internships,
                 workPreference
-            });
+            }, { timeout: 10000 }); // 10s timeout
             return response.data;
         } catch (error) {
             console.error('Python Service Match Error:', error.message);

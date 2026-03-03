@@ -143,15 +143,18 @@ const getRecommendations = async (req, res) => {
       if (result.success) {
         console.log(`✅ Success (API): Generated ${result.data.length} semantic matches.`);
 
-        const formattedRecommendations = result.data.map((rec, index) => ({
-          ...rec,
-          id: rec.id,
-          rank: index + 1,
-          finalScore: (rec.match_score * 100).toFixed(0),
-          matchPercentage: (rec.match_score * 100).toFixed(0) + '%',
-          matchLabel: rec.match_score > 0.8 ? 'Excellent Match' : (rec.match_score > 0.6 ? 'Good Match' : 'Fair Match'),
-          aiExplanation: rec.aiExplanation
-        }));
+        const formattedRecommendations = result.data.map((rec, index) => {
+          const score = rec.match_score > 1 ? rec.match_score : (rec.match_score * 100);
+          return {
+            ...rec,
+            id: rec.id,
+            rank: index + 1,
+            finalScore: Math.round(score),
+            matchPercentage: Math.round(score) + '%',
+            matchLabel: score > 80 ? 'Excellent Match' : (score > 65 ? 'Better Match' : (score > 45 ? 'Good Match' : 'Fair Match')),
+            aiExplanation: rec.aiExplanation
+          };
+        });
 
         return res.json({
           success: true,
@@ -172,16 +175,24 @@ const getRecommendations = async (req, res) => {
     let errorString = '';
     let processEnded = false;
 
-    // Hard timeout: kill Python if it takes > 90 seconds
-    const killTimer = setTimeout(() => {
+    // Hard timeout: kill Python if it takes > 15 seconds
+    const killTimer = setTimeout(async () => {
       if (!processEnded) {
-        console.error('⏱️ Python process timed out after 90s — killing.');
+        console.error('⏱️ Python process timed out after 15s — killing and falling back to JS.');
         pythonProcess.kill('SIGKILL');
         if (!res.headersSent) {
-          res.status(504).json({ success: false, error: 'Recommendation engine timed out. Please try again.' });
+          try {
+            const { getDeterministicMatches } = require('../services/matchingService');
+            const { generateExplanations } = require('../services/aiExplanationService');
+            const fallbackResults = await getDeterministicMatches(studentProfile, allInternships);
+            const withExplanations = await generateExplanations(studentProfile, fallbackResults.slice(0, 10));
+            res.json({ success: true, studentName: name, recommendations: withExplanations });
+          } catch (e) {
+            res.status(504).json({ success: false, error: 'AI engine timeout' });
+          }
         }
       }
-    }, 90000);
+    }, 15000);
 
     // Send ONLY pre-filtered candidates to Python (much faster)
     const inputData = JSON.stringify({
@@ -226,15 +237,18 @@ const getRecommendations = async (req, res) => {
         if (result.success) {
           console.log(`✅ Success (Spawn): Generated ${result.data.length} semantic matches.`);
 
-          const formattedRecommendations = result.data.map((rec, index) => ({
-            ...rec,
-            id: rec.id,
-            rank: index + 1,
-            finalScore: (rec.match_score * 100).toFixed(0),
-            matchPercentage: (rec.match_score * 100).toFixed(0) + '%',
-            matchLabel: rec.match_score > 0.8 ? 'Excellent Match' : (rec.match_score > 0.6 ? 'Good Match' : 'Fair Match'),
-            aiExplanation: rec.aiExplanation
-          }));
+          const formattedRecommendations = result.data.map((rec, index) => {
+            const score = rec.match_score > 1 ? rec.match_score : (rec.match_score * 100);
+            return {
+              ...rec,
+              id: rec.id,
+              rank: index + 1,
+              finalScore: Math.round(score),
+              matchPercentage: Math.round(score) + '%',
+              matchLabel: score > 80 ? 'Excellent Match' : (score > 65 ? 'Better Match' : (score > 45 ? 'Good Match' : 'Fair Match')),
+              aiExplanation: rec.aiExplanation
+            };
+          });
 
           if (!res.headersSent) {
             res.json({
