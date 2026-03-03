@@ -10,37 +10,39 @@ const attachRoadmap = (internship) => {
 
     if (missing.length > 0) {
         const topMissing = missing[0];
+        const role = internship.role || "this role";
         roadmap = {
-            summary: `Bridge the gap for ${topMissing}.`,
+            summary: `Accelerated bridge to master ${topMissing} for ${role}.`,
             days: [
                 {
                     day: 1,
-                    topic: "Skill Sync",
-                    action: `Master the core principles of ${topMissing} via YouTube tutorials`,
-                    link: `https://www.youtube.com/results?search_query=learn+${encodeURIComponent(topMissing)}`
+                    topic: `${topMissing} Foundations`,
+                    action: `Master the core principles of ${topMissing} required for the ${role} tech stack`,
+                    link: `https://www.youtube.com/results?search_query=learn+${encodeURIComponent(topMissing)}+for+developers`
                 },
                 {
                     day: 2,
-                    topic: "Project Proof",
-                    action: `Build a real-world ${topMissing} solution to showcase your expertise`,
+                    topic: "Practical Implementation",
+                    action: `Build a ${topMissing}-based solution that solves a common problem in the ${internship.sector || 'technical'} sector`,
                     link: ""
                 }
             ]
         };
     } else {
+        const bestSkill = (internship.skills || "").split(',')[0] || "Architecture";
         roadmap = {
-            summary: "You match all required skills. Now, level up your architecture.",
+            summary: "You match all core requirements. Now, specialize for senior-level impact.",
             days: [
                 {
                     day: 1,
-                    topic: "Advanced Mastery",
-                    action: "Explore advanced production patterns and system design.",
-                    link: `https://www.youtube.com/results?search_query=advanced+system+design+patterns`
+                    topic: `Advanced ${bestSkill}`,
+                    action: `Explore complex production patterns and scalability best practices for ${bestSkill}`,
+                    link: `https://www.youtube.com/results?search_query=advanced+${encodeURIComponent(bestSkill)}+tutorial`
                 },
                 {
                     day: 2,
-                    topic: "Portfolio Polish",
-                    action: "Refine an existing project with industry best practices.",
+                    topic: "Expert Portfolio Piece",
+                    action: `Refine your existing projects to demonstrate high-load optimization and clean code standards`,
                     link: ""
                 }
             ]

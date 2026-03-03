@@ -383,37 +383,38 @@ def gemini_rerank_and_explain(student: dict, top_jobs: list, parsed_resume: dict
                 
                 jobs_summary = "\n\n".join(jobs_to_analyze)
                 
-                prompt = f"""You are a senior career mentor.
-For the student and internships below, create a personalized "Road to 100%" 2-Day Fast-Track.
+                prompt = f"""You are an elite career mentor for tech students.
+For the student and internships below, create a personalized "Career Bridge" Roadmap.
 
 STUDENT PROFILE:
 - Name: {student.get('name')}
-- Current Skills: {', '.join(student_skills[:12])}
+- Professional Skills: {', '.join(student_skills[:12])}
 
 INTERNSHIPS:
 {jobs_summary}
 
-For each internship with a skill gap:
-1. explanation: ONE "Match Highlight" (technical matches only).
+TASK:
+For EVERY internship (even if 100% match), provide:
+1. explanation: A 1-sentence "Why you?" highlight focusing on a core technical match.
 2. roadmap: 
-   - Day 1: Learn the basics of the most critical missing skill (YouTube search link).
-   - Day 2: Suggest ONE unique, industry-specific project idea that uses that skill to solve a problem for {student.get('name')}.
+   - Day 1: A specific technical topic to master (If match is 100%, suggest an 'advanced' or 'scale' version of their best skill). Provide a specific YouTube search query.
+   - Day 2: Suggest a UNIQUE, 2025-ready project idea that solves a real problem for {student.get('name')}'s career or for {student.get('name')}. Use modern tech tags.
 
-Format your response as a strict JSON array:
+Format as a strict JSON array where each object has:
 [
   {{
     "index": <Index>,
-    "explanation": "Brief highlight.",
+    "explanation": "Brief technical highlight.",
     "roadmap": {{
-      "summary": "1-sentence bridge to 100%.",
+      "summary": "1-sentence strategic bridge.",
       "days": [
-        {{ "day": 1, "topic": "Master Basics", "action": "Watch curated tutorials.", "link": "https://youtube.com/results?search_query=..." }},
-        {{ "day": 2, "topic": "Build Proof", "action": "Project Idea: [Unique Idea Name] - [2-sentence creative description]", "link": "" }}
+        {{ "day": 1, "topic": "Skill topic", "action": "Watch curated tutorials on X.", "link": "https://youtube.com/results?search_query=..." }},
+        {{ "day": 2, "topic": "Portfolio Impact", "action": "Project Idea: [Unique Title] - [Problem it solves in 2025 using Y]", "link": "" }}
       ]
     }}
   }}
 ]
-Only output the JSON array."""
+Ensure the project ideas are CREATIVE and DIFFERENT for each internship. Only output the JSON array."""
 
                 response = g_model.generate_content(
                     prompt,
@@ -428,7 +429,7 @@ Only output the JSON array."""
 
         thread = threading.Thread(target=call_gemini, daemon=True)
         thread.start()
-        thread.join(timeout=4)  # Max 4 seconds for Gemini (Faster loading)
+        thread.join(timeout=8)  # Increased timeout for better AI quality
 
         if results[0]:
             # Parse Gemini output
@@ -516,20 +517,20 @@ def _build_fallback_explanation(student: dict, job: dict) -> dict:
     if missing:
         top_missing = missing[0]
         roadmap = {
-            "summary": f"Bridge the gap for {top_missing}.",
+            "summary": f"Strategic bridge to master {top_missing} at {company}.",
             "days": [
-                { "day": 1, "topic": "Skill Sync", "action": f"Master the core principles of {top_missing} via YouTube tutorials", "link": f"https://www.youtube.com/results?search_query=learn+{top_missing.replace(' ', '+')}" },
-                { "day": 2, "topic": "Project Proof", "action": f"Build a real-world {top_missing} solution to showcase your expertise", "link": "" }
+                { "day": 1, "topic": f"{top_missing} Fast-Track", "action": f"Master the production-ready principles of {top_missing} needed for {role}", "link": f"https://www.youtube.com/results?search_query=learn+{top_missing.replace(' ', '+')}+for+beginners" },
+                { "day": 2, "topic": "Industry Proof", "action": f"Project Idea: {top_missing} Micro-Solution - Build a specific tool for {company} using {top_missing}", "link": "" }
             ]
         }
     else:
-        # If the student matches 100%, give an advanced 'Next Level' roadmap so the UI still renders
-        adv_skill = matched[0] if matched else (job.get('role', 'System Architecture'))
+        # 100% Match Customization
+        adv_skill = matched[0] if matched else (job.get('role', 'architecture'))
         roadmap = {
-            "summary": f"You match all required skills. Now, level up your {adv_skill}.",
+            "summary": f"Level up your {adv_skill} mastery for {company}'s standards.",
             "days": [
-                { "day": 1, "topic": "Advanced Mastery", "action": f"Explore advanced production patterns in {adv_skill}", "link": f"https://www.youtube.com/results?search_query=advanced+{adv_skill.replace(' ', '+')}" },
-                { "day": 2, "topic": "Portfolio Polish", "action": "Refine one of your existing projects with industry best practices", "link": "" }
+                { "day": 1, "topic": f"Advanced {adv_skill}", "action": f"Explore high-concurrency patterns and scalability in {adv_skill}", "link": f"https://www.youtube.com/results?search_query=advanced+{adv_skill.replace(' ', '+')}+best+practices" },
+                { "day": 2, "topic": "Expert Portfolio", "action": f"Scalable {adv_skill} Optimization - Refine an existing {adv_skill} project for high-load performance", "link": "" }
             ]
         }
     
