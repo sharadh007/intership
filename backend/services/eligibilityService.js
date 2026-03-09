@@ -26,12 +26,20 @@ const checkEligibility = (student, internship) => {
         }
     }
 
-    // 3. CGPA Check (Score >= 6.0)
-    // User Rule: CGPA >= 6.0 -> PASS
-    // If student CGPA < 6.0, REJECT
-    if (student.cgpa && parseFloat(student.cgpa) < 6.0) {
-        console.log(`Rejecting due to low CGPA: ${student.cgpa}`);
-        return false;
+    // 3. CGPA Check (Score >= 6.0 or normalized 4.0 scale)
+    if (student.cgpa) {
+        let cgpa = parseFloat(student.cgpa);
+
+        // Detect 4.0 scale (GPA <= 4.0) and normalize to 10.0 scale
+        // A 2.4/4.0 is equivalent to a 6.0/10.0
+        if (cgpa <= 4.0) {
+            cgpa = (cgpa / 4.0) * 10.0;
+        }
+
+        if (cgpa < 6.0) {
+            console.log(`Rejecting due to low CGPA (Normalized: ${cgpa.toFixed(1)}): ${student.cgpa}`);
+            return false;
+        }
     }
 
     // 4. Availability Check

@@ -90,6 +90,7 @@ KNOWN_SKILLS = [
     "excel","powerbi","tableau","power bi","data analysis","data visualization",
     "photoshop","illustrator","figma","ui/ux","design","video editing",
     "digital marketing","seo","social media","content writing","copywriting",
+    "finance","accounting","tally","gst","taxation","auditing","banking","investment","stock market","excel","financial modeling","bloomberg","quickbooks","ledger","payroll",
     "autocad","solidworks","matlab","embedded systems","iot","arduino","raspberry pi",
     "blockchain","solidity","web3","cybersecurity","networking","ethical hacking"
 ]
@@ -103,7 +104,9 @@ SKILL_SYNONYMS = {
     "css": ["css3", "sass", "less", "tailwind", "bootstrap", "flexbox", "grid"],
     "ml": ["machine learning", "deep learning", "artificial intelligence", "ai", "nlp", "computer vision", "opencv", "llm", "rag", "langchain"],
     "cloud": ["aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "devops"],
-    "design": ["ui/ux", "ui", "ux", "figma", "adobe xd", "photoshop", "illustrator", "front-end", "frontend"]
+    "design": ["ui/ux", "ui", "ux", "figma", "adobe xd", "photoshop", "illustrator", "front-end", "frontend"],
+    "finance": ["accounting", "taxation", "gst", "tally", "finance", "audit", "banking", "equity", "investment", "excel"],
+    "excel": ["microsoft excel", "ms excel", "spreadsheets", "vlookup", "pivoting"]
 }
 
 def get_synonym_expanded(skills):
@@ -708,6 +711,12 @@ def process_matching(data: dict) -> list:
             ops_kws = ['hr', 'human', 'recruitment', 'talent', 'ops', 'operation', 'admin', 'coordinator', 'office']
             if any(kw in job_text for kw in ops_kws):
                 return True
+                
+        # 5. Finance/Accounts Match
+        if any(sec in target_sector for sec in ['finance', 'account', 'banking', 'audit', 'commerce']):
+            fin_kws = ['finance', 'account', 'banking', 'audit', 'tax', 'tally', 'investment', 'ledger', 'payroll', 'equity', 'gst', 'financial']
+            if any(kw in job_text for kw in fin_kws):
+                return True
             
         return False
 
@@ -804,6 +813,8 @@ def process_matching(data: dict) -> list:
         
         # IMPROVED Skill Match logic
         job_skills_raw = (job.get('skills_required') or job.get('skills') or '').lower()
+        # Clean potential list markers like ['Skill'] or ("Skill",)
+        job_skills_raw = re.sub(r"[\[\]\(\)\'\"]", "", job_skills_raw)
         job_skills_list = [s.strip() for s in re.split(r'[,;/|]', job_skills_raw) if s.strip()]
         total_reqs = max(len(job_skills_list), 1)
         
@@ -814,6 +825,7 @@ def process_matching(data: dict) -> list:
                 match_details.append(req)
             else:
                 # Substring match (e.g. "React" in "React JS")
+                # Also include synonym checks
                 if any(sk in req or req in sk for sk in expanded_student_skills):
                     match_details.append(req)
         
@@ -821,7 +833,8 @@ def process_matching(data: dict) -> list:
         match_ratio = len(match_details) / total_reqs
         
         # USER REQUEST: Strictly drop internships with 0% skill match
-        if len(match_details) == 0:
+        # RELAXATION: If it's a sector match and has strong semantic alignment (>0.4), don't drop even if skills don't overlap perfectly
+        if len(match_details) == 0 and not (is_sector_match and semantic_score > 0.45):
             continue
 
         # Score Weighting (Pure 70/30 Split as requested by USER)

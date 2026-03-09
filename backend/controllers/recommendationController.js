@@ -124,6 +124,8 @@ const getRecommendations = async (req, res) => {
           if (jobTextFull.includes('market') || jobTextFull.includes('sales') || jobTextFull.includes('business') || jobTextFull.includes('growth')) hasSectorMatch = true;
         } else if (targetSector.includes('hr') || targetSector.includes('human') || targetSector.includes('admin')) {
           if (jobTextFull.includes('hr') || jobTextFull.includes('human') || jobTextFull.includes('recruitment') || jobTextFull.includes('admin')) hasSectorMatch = true;
+        } else if (targetSector.includes('finance') || targetSector.includes('account') || targetSector.includes('bank') || targetSector.includes('audit')) {
+          if (jobTextFull.includes('finance') || jobTextFull.includes('account') || jobTextFull.includes('audit') || jobTextFull.includes('tax') || jobTextFull.includes('tally') || jobTextFull.includes('bank') || jobTextFull.includes('financial')) hasSectorMatch = true;
         } else if (targetSector !== 'any' && jobTextFull.includes(targetSector)) {
           hasSectorMatch = true;
         }
