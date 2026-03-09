@@ -19,7 +19,14 @@ import re
 import numpy as np
 import gc
 import threading
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 from dotenv import load_dotenv
+import logging
+
+# Setup Logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("Matcher")
 
 # MEMORY OPTIMIZATION: Limit PyTorch threads BEFORE loading
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -27,24 +34,24 @@ os.environ["MKL_NUM_THREADS"] = "1"
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-# ─── Lazy Model Loading ────────────────────────────────────────────────────────
-_transformer_model = None
-_gemini_model = None
-_gemini_initialized = False
+# ─── TF-IDF Memory Efficient Engine ───────────────────────────────────────────
+_tfidf_vectorizer = None
 
-def get_transformer_model():
-    """Lazy load the SentenceTransformer model to save memory."""
-    global _transformer_model
-    if _transformer_model is None:
+def get_matcher():
+    """Lightweight TF-IDF matcher for 512MB RAM environments."""
+    global _tfidf_vectorizer
+    if _tfidf_vectorizer is None:
         try:
-            from sentence_transformers import SentenceTransformer
-            # Use CPU explicitly and small model
-            _transformer_model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
-            import torch
-            torch.set_num_threads(1)
+            from sklearn.feature_extraction.text import TfidfVectorizer
+            # Pre-configured to match tech profile well
+            _tfidf_vectorizer = TfidfVectorizer(
+                stop_words='english', 
+                max_features=1000, 
+                ngram_range=(1, 2)
+            )
         except Exception as e:
-            print(f"⚠️ Transformer load failed: {e}")
-    return _transformer_model
+            logger.error(f"⚠️ TfIdf setup failed: {e}")
+    return _tfidf_vectorizer
 
 def get_gemini_model():
     """Lazy load Gemini model."""
@@ -283,31 +290,36 @@ def build_job_text(job: dict) -> str:
 
 # ─── STEP 4: SIMILARITY ENGINE ───────────────────────────────────────────────
 def compute_similarities(student_text: str, job_texts: list) -> list:
-    """Batch-encode all texts with memory safety."""
+    """Memory-efficient TF-IDF compute for Render (512MB RAM cap)."""
     if not job_texts: return []
     
-    # MEMORY SAFETY: Limit to 25 items to prevent 512MB OOM
-    limited_jobs = job_texts[:25]
-    
-    from sklearn.metrics.pairwise import cosine_similarity
-    all_texts = [student_text] + limited_jobs
-    
-    model = get_transformer_model()
-    if not model: return [0.5] * len(job_texts)
-    
-    # Lower batch size for memory stability
-    embeddings = model.encode(all_texts, show_progress_bar=False, batch_size=16)
-    
-    student_vec = embeddings[0:1]
-    job_vecs = embeddings[1:]
-    scores = cosine_similarity(student_vec, job_vecs)[0]
-    
-    # Append low scores for anything beyond the limit
-    final_scores = scores.tolist()
-    if len(job_texts) > 25:
-        final_scores += [0.1] * (len(job_texts) - 25)
+    try:
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.metrics.pairwise import cosine_similarity
         
-    return final_scores
+        # Max pool of 50 to keep RAM ultra-low
+        limited_jobs = job_texts[:50]
+        all_texts = [student_text] + limited_jobs
+        
+        vectorizer = TfidfVectorizer(stop_words='english', lowercase=True)
+        tfidf_matrix = vectorizer.fit_transform(all_texts)
+        
+        # [0] is student, [1:] are jobs
+        scores = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:])[0]
+        
+        final_scores = scores.tolist()
+        if len(job_texts) > 50:
+            final_scores += [0.1] * (len(job_texts) - 50)
+            
+        # Clear large objects immediately
+        del vectorizer
+        del tfidf_matrix
+        gc.collect()
+        
+        return final_scores
+    except Exception as e:
+        logger.error(f"Semantic Compute Error: {e}")
+        return [0.5] * len(job_texts)
 
 
 # ─── STEP 7: GAP ANALYSIS ────────────────────────────────────────────────────
@@ -372,40 +384,36 @@ def gemini_rerank_and_explain(student: dict, top_jobs: list, parsed_resume: dict
                 # Pre-calculate verified matches for each job to guide the LLM
                 def get_verified_matches(job_skills_str, student_skills):
                     verified = []
-                    job_skills_low = job_skills_str.lower()
+                    job_skills_low = (job_skills_str or "").lower()
                     expanded_student = get_synonym_expanded(student_skills)
                     
                     # Split job skills for individual checking
                     required = [s.strip().lower() for s in re.split(r'[,;/|]', job_skills_low) if s.strip()]
                     
                     for req in required:
-                        # Direct match or any student skill matches this requirement synonymously
                         if req in expanded_student:
                             verified.append(req)
-                        else:
-                            # Also check if any part of req is in student skills (e.g. "React JS" in "React")
-                            if any(sk in req or req in sk for sk in expanded_student):
-                                verified.append(req)
+                        elif any(sk in req or req in sk for sk in expanded_student):
+                            verified.append(req)
                     return list(set(verified))
 
                 student_skills = student.get('skills', [])
                 
-                # Build a detailed job list for the prompt with verified matches
+                # ONLY ANALYZE TOP 3 JOBS WITH GEMINI TO SAVE TIME/MEMORY
                 jobs_to_analyze = []
-                for i, j in enumerate(top_jobs[:5]):
+                for i, j in enumerate(top_jobs[:3]): # REDUCED TO 3 FOR FAST RESPONSE
                     j_skills = j.get('skills_required') or j.get('skills') or 'N/A'
                     verified = get_verified_matches(j_skills, student_skills)
                     verified_str = ", ".join(verified) if verified else "NONE"
                     loc_type = j.get('locationLabel', 'Nationwide match')
                     
                     jobs_to_analyze.append(
-                        f"JOB #{i} (Index {i}):\n"
+                        f"JOB #{i}:\n"
                         f"- Role: {j['role']}\n"
                         f"- Company: {j['company']}\n"
                         f"- Location: {j.get('location')} ({loc_type})\n"
-                        f"- Requirements: {j_skills[:150]}\n"
                         f"- Verified Matches: {verified_str}\n"
-                        f"- Selection Context: {'High technical match found in nearby district' if j.get('match_type') == 'regional' else 'Direct location match'}"
+                        f"- Context: {'High technical match found in nearby district' if j.get('match_type') == 'regional' else 'Direct location match'}"
                     )
                 
                 jobs_summary = "\n\n".join(jobs_to_analyze)

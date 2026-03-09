@@ -1,13 +1,12 @@
 fastapi
 uvicorn
-sentence-transformers
 scikit-learn
 pandas
 beautifulsoup4
-spacy
 pydantic
 python-dotenv
 google-generativeai
 pytest
 httpx
 requests
+numpy
