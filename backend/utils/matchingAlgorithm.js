@@ -310,19 +310,23 @@ const calculateSkillMatchDetailed = (userSkills, internshipSkillsStr) => {
   if (!internshipSkillsStr) return { score: 50, matchCount: 0 };
   if (!userSkills || userSkills.length === 0) return { score: 10, matchCount: 0 };
 
-  const iSkills = internshipSkillsStr.split(',').map(s => s.trim().toLowerCase());
+  const iSkills = internshipSkillsStr.replace(/[\[\]\(\)\'\"]/g, '').split(',').map(s => s.trim().toLowerCase());
   const uSkills = userSkills.map(s => s.toLowerCase());
 
   let matchCount = 0;
 
-  // Check for exact matches and similar matches
+  // Check for exact matches and similar matches with normalization
+  const normU = uSkills.map(s => s.replace(/[-.\s]/g, ''));
+
   const matchedSkills = iSkills.reduce((acc, iSkill) => {
-    const hasMatch = uSkills.some(uSkill =>
-      uSkill === iSkill ||
-      uSkill.includes(iSkill) ||
-      iSkill.includes(uSkill) ||
-      areSkillsSimilar(uSkill, iSkill)
-    );
+    const normI = iSkill.replace(/[-.\s]/g, '');
+    const hasMatch = uSkills.some((uSkill, idx) => {
+      const nu = normU[idx];
+      return nu === normI ||
+        nu.includes(normI) ||
+        normI.includes(nu) ||
+        areSkillsSimilar(uSkill, iSkill)
+    });
 
     if (hasMatch) {
       matchCount++;
@@ -353,7 +357,9 @@ const areSkillsSimilar = (skill1, skill2) => {
     'java': ['spring', 'j2ee', 'springboot'],
     'database': ['sql', 'mysql', 'mongodb', 'postgresql', 'postgres'],
     'design': ['figma', 'ui/ux', 'photoshop', 'illustrator', 'adobe'],
-    'machine learning': ['ml', 'ai', 'deep learning', 'nlp', 'tensorflow', 'pytorch']
+    'machine learning': ['ml', 'ai', 'deep learning', 'nlp', 'tensorflow', 'pytorch'],
+    'finance': ['accounting', 'taxation', 'gst', 'tally', 'finance', 'audit', 'banking', 'equity', 'investment', 'excel', 'finance'],
+    'excel': ['microsoft excel', 'ms excel', 'spreadsheets', 'vlookup', 'pivoting', 'excel']
   };
 
   for (const [key, values] of Object.entries(skillMap)) {

@@ -105,8 +105,8 @@ SKILL_SYNONYMS = {
     "ml": ["machine learning", "deep learning", "artificial intelligence", "ai", "nlp", "computer vision", "opencv", "llm", "rag", "langchain"],
     "cloud": ["aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "devops"],
     "design": ["ui/ux", "ui", "ux", "figma", "adobe xd", "photoshop", "illustrator", "front-end", "frontend"],
-    "finance": ["accounting", "taxation", "gst", "tally", "finance", "audit", "banking", "equity", "investment", "excel"],
-    "excel": ["microsoft excel", "ms excel", "spreadsheets", "vlookup", "pivoting"]
+    "finance": ["accounting", "taxation", "gst", "tally", "finance", "audit", "banking", "equity", "investment", "excel", "tally prime", "mis", "tally erp"],
+    "excel": ["microsoft excel", "ms excel", "spreadsheets", "vlookup", "pivoting", "advanced excel", "data entry"]
 }
 
 def get_synonym_expanded(skills):
@@ -817,24 +817,28 @@ def process_matching(data: dict) -> list:
         job_skills_raw = re.sub(r"[\[\]\(\)\'\"]", "", job_skills_raw)
         job_skills_list = [s.strip() for s in re.split(r'[,;/|]', job_skills_raw) if s.strip()]
         total_reqs = max(len(job_skills_list), 1)
+        is_sm = is_preferred_sector_match(job)
         
         match_details = []
+        # Normalization for robust matching (removes hyphens, dots, spaces)
+        norm_expanded = set(re.sub(r'[-.\s]', '', s).lower() for s in expanded_student_skills)
+        
         for req in job_skills_list:
+            norm_req = re.sub(r'[-.\s]', '', req).lower()
             # Check if requirement matches expanded student skills
-            if req in expanded_student_skills:
+            if norm_req in norm_expanded:
                 match_details.append(req)
             else:
-                # Substring match (e.g. "React" in "React JS")
-                # Also include synonym checks
-                if any(sk in req or req in sk for sk in expanded_student_skills):
+                # Substring match (e.g. "Excel" in "MS-Excel")
+                if any(sk in norm_req or norm_req in sk for sk in norm_expanded):
                     match_details.append(req)
         
         match_details = list(set(match_details))
         match_ratio = len(match_details) / total_reqs
         
         # USER REQUEST: Strictly drop internships with 0% skill match
-        # RELAXATION: If it's a sector match and has strong semantic alignment (>0.4), don't drop even if skills don't overlap perfectly
-        if len(match_details) == 0 and not (is_sector_match and semantic_score > 0.45):
+        # RELAXATION: If it's a sector match and has decent semantic alignment (>0.15), don't drop
+        if len(match_details) == 0 and not (is_sm and semantic_score > 0.15):
             continue
 
         # Score Weighting (Pure 70/30 Split as requested by USER)
