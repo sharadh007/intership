@@ -90,7 +90,7 @@ KNOWN_SKILLS = [
     "excel","powerbi","tableau","power bi","data analysis","data visualization",
     "photoshop","illustrator","figma","ui/ux","design","video editing",
     "digital marketing","seo","social media","content writing","copywriting",
-    "finance","accounting","tally","gst","taxation","auditing","banking","investment","stock market","excel","financial modeling","bloomberg","quickbooks","ledger","payroll",
+    "finance","accounting","tally","gst","taxation","auditing","banking","investment","stock market","excel","financial modeling","bloomberg","quickbooks","ledger","payroll","business analysis","commerce","business development",
     "autocad","solidworks","matlab","embedded systems","iot","arduino","raspberry pi",
     "blockchain","solidity","web3","cybersecurity","networking","ethical hacking"
 ]
@@ -105,8 +105,8 @@ SKILL_SYNONYMS = {
     "ml": ["machine learning", "deep learning", "artificial intelligence", "ai", "nlp", "computer vision", "opencv", "llm", "rag", "langchain"],
     "cloud": ["aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "devops"],
     "design": ["ui/ux", "ui", "ux", "figma", "adobe xd", "photoshop", "illustrator", "front-end", "frontend"],
-    "finance": ["accounting", "taxation", "gst", "tally", "finance", "audit", "banking", "equity", "investment", "excel", "tally prime", "mis", "tally erp"],
-    "excel": ["microsoft excel", "ms excel", "spreadsheets", "vlookup", "pivoting", "advanced excel", "data entry"]
+    "finance": ["accounting", "taxation", "gst", "tally", "finance", "audit", "banking", "equity", "investment", "excel", "tally prime", "mis", "tally erp", "ledger", "bookkeeping", "corporate finance", "financial", "auditor", "accounts"],
+    "excel": ["microsoft excel", "ms excel", "spreadsheets", "vlookup", "pivoting", "advanced excel", "data entry", "excel formulas", "excel templates"]
 }
 
 def get_synonym_expanded(skills):
@@ -150,8 +150,8 @@ def parse_resume(resume_text: str, existing_skills: list) -> dict:
 
     # 1c. Extract education hints
     edu_keywords = ["bachelor", "master", "b.tech", "m.tech", "b.e", "m.e",
-                    "bca", "mca", "bsc", "msc", "phd", "diploma", "12th", "10th"]
-    education = next((kw for kw in edu_keywords if kw in text_lower), "")
+                    "bca", "mca", "bsc", "msc", "phd", "diploma", "12th", "10th", "business", "commerce", "finance"]
+    education = next((kw for kw in edu_keywords if kw in text_lower), "Management")
 
     # 1d. Build a clean summary (first 300 chars of resume as context)
     summary = resume_text.strip()[:300]
@@ -185,6 +185,7 @@ def analyze_resume_deep(resume_text: str) -> dict:
         "education": "",
         "college": "",
         "graduationYear": "",
+        "cgpa": "",
         "resumeStrengthScore": 50
     }
 
@@ -213,9 +214,10 @@ def analyze_resume_deep(resume_text: str) -> dict:
           "experienceLevel": "Entry/Intermediate/Senior",
           "experienceYears": 0,
           "educationLevel": "Bachelor/Master/Diploma/etc.",
-          "education": "Degree Name",
+          "education": "Full Degree Name (e.g. Bachelor of Science in Finance)",
           "college": "College Name",
           "graduationYear": "YYYY",
+          "cgpa": "Detect GPA/CGPA (e.g. 3.5/4.0 or 8.5)",
           "resumeStrengthScore": 0 (0-100)
         }}
 
@@ -713,8 +715,8 @@ def process_matching(data: dict) -> list:
                 return True
                 
         # 5. Finance/Accounts Match
-        if any(sec in target_sector for sec in ['finance', 'account', 'banking', 'audit', 'commerce']):
-            fin_kws = ['finance', 'account', 'banking', 'audit', 'tax', 'tally', 'investment', 'ledger', 'payroll', 'equity', 'gst', 'financial']
+        if any(sec in target_sector for sec in ['finance', 'account', 'banking', 'audit', 'commerce', 'business']):
+            fin_kws = ['finance', 'account', 'banking', 'audit', 'tax', 'tally', 'investment', 'ledger', 'payroll', 'equity', 'gst', 'financial', 'analytical', 'bookkeep', 'corporate', 'business', 'commerce']
             if any(kw in job_text for kw in fin_kws):
                 return True
             
@@ -810,68 +812,69 @@ def process_matching(data: dict) -> list:
     scored = []
     for i, job in enumerate(filtered):
         semantic_score = scores[i]
+        is_sm = is_preferred_sector_match(job)
         
         # IMPROVED Skill Match logic
         job_skills_raw = (job.get('skills_required') or job.get('skills') or '').lower()
-        # Clean potential list markers like ['Skill'] or ("Skill",)
         job_skills_raw = re.sub(r"[\[\]\(\)\'\"]", "", job_skills_raw)
         job_skills_list = [s.strip() for s in re.split(r'[,;/|]', job_skills_raw) if s.strip()]
         total_reqs = max(len(job_skills_list), 1)
-        is_sm = is_preferred_sector_match(job)
-        
-        match_details = []
-        # Normalization for robust matching (removes hyphens, dots, spaces)
+
+        # 0. EDUCATION MATCH (New Requirement)
+        edu_score = 0.5 
+        raw_edu = (student.get('education') or student.get('qualification') or '').lower()
+        if is_sm:
+            edu_score = 0.95
+        elif any(kw in raw_edu for kw in (job.get('sector') or '').lower().split()):
+            edu_score = 0.8
+            
+        # 1. Skill Component (60%)
+        # Normalization for robust matching
         norm_expanded = set(re.sub(r'[-.\s]', '', s).lower() for s in expanded_student_skills)
         
+        match_details = []
         for req in job_skills_list:
             norm_req = re.sub(r'[-.\s]', '', req).lower()
-            # Check if requirement matches expanded student skills
             if norm_req in norm_expanded:
                 match_details.append(req)
-            else:
-                # Substring match (e.g. "Excel" in "MS-Excel")
-                if any(sk in norm_req or norm_req in sk for sk in norm_expanded):
-                    match_details.append(req)
+            elif any(sk in norm_req or norm_req in sk for sk in norm_expanded):
+                match_details.append(req)
         
         match_details = list(set(match_details))
         match_ratio = len(match_details) / total_reqs
         
-        # USER REQUEST: Strictly drop internships with 0% skill match
-        # RELAXATION: If it's a sector match and has decent semantic alignment (>0.15), don't drop
-        if len(match_details) == 0 and not (is_sm and semantic_score > 0.15):
+        # EXACT MATCH REQUIREMENT: 
+        # If it's a sector match, we NEVER drop it (even items with 0% skill match stay)
+        # We only drop if it's NOT a sector match AND has 0 skills.
+        if len(match_details) == 0 and not is_sm:
             continue
-
-        # Score Weighting (Pure 70/30 Split as requested by USER)
-        # 1. Skill Component (70%)
-        # Accuracy MUST be above 70% if skills are 100% matched.
-        # We give match_ratio (60%) and semantic similarity (10%)
-        skill_score_raw = (match_ratio * 0.7) + (semantic_score * 0.1)
+            
+        # Skill sub-score (Skills + Semantic)
+        skill_score_raw = (match_ratio * 0.5) + (semantic_score * 0.1)
         
-        # 2. Location Component (30%)
-        # Accuracy boost for nearby districts
+        # 2. Location Component (20%)
         loc_type = job.get('match_type', 'anywhere')
-        loc_val = 0.25 # Anywhere fallback (Matches user example showing 25% for other location)
+        loc_val = 0.25 
+        if loc_type == 'local': loc_val = 1.0
+        elif loc_type == 'remote_match' and (wants_remote or work_preference in ['remote', 'both']): loc_val = 1.0
+        elif loc_type == 'regional': loc_val = 0.8
+        else: loc_val = 0.3
+            
+        loc_score_raw = loc_val * 0.2
         
-        if loc_type == 'local':
-            loc_val = 1.0 # 100% Location Match
-        elif loc_type == 'remote_match' and (wants_remote or work_preference in ['remote', 'both']):
-            loc_val = 1.0 # Highest priority for remote seekers
-        elif loc_type == 'regional':
-            loc_val = 0.8 # NEARBY DISTRICT BOOST
-        elif loc_type == 'remote_match':
-            loc_val = 0.7 # Remote is generally good
-        else:
-            loc_val = 0.3 # Anywhere
-            
-        loc_score_raw = loc_val * 0.3
-            
-        final_score = skill_score_raw + loc_score_raw
+        # 3. Final Integration
+        # Weighted Accuracy: Skills(50%) + Edu(30%) + Loc(20%)
+        final_score = (skill_score_raw) + (edu_score * 0.3) + loc_score_raw
         
-        # Sector Multiplier (Heavy penalty for roles NOT in preferred sector)
-        if not is_preferred_sector_match(job):
-            final_score *= 0.5 
+        # Hard Sector Protection
+        if not is_sm:
+            final_score *= 0.4 # Brutal penalty for out-of-sector roles
             
-        score_int = int(min(0.99, max(0.1, final_score)) * 100)
+        score_int = int(min(0.98, max(0.2, final_score)) * 100)
+        
+        # If is_sm is true, ensure a minimum visibility floor
+        if is_sm and score_int < 40:
+             score_int = 40 + int(match_ratio * 20)
 
         scored.append({
             **job,

@@ -177,26 +177,45 @@ const calculateMatchMetaData = (studentProfile, internship) => {
   const profileSkills = studentProfile.skills || [];
   const resumeSkills = resumeData.extractedSkills || [];
 
+  const roleText = ((internship.role || '') + ' ' + (internship.sector || '')).toLowerCase();
+  const targetSector = (studentProfile.preferredSector || 'Technology').toLowerCase();
+
+  // Sector alignment check
+  let isSectorMatch = false;
+  if (targetSector.includes('finance') || targetSector.includes('account') || targetSector.includes('bank')) {
+    if (roleText.includes('finance') || roleText.includes('account') || roleText.includes('bank') || roleText.includes('tax') || roleText.includes('audit')) isSectorMatch = true;
+  } else if (targetSector.includes('market') || targetSector.includes('business')) {
+    if (roleText.includes('market') || roleText.includes('sales') || roleText.includes('business') || roleText.includes('growth')) isSectorMatch = true;
+  } else if (targetSector.includes('hr') || targetSector.includes('human') || targetSector.includes('admin')) {
+    if (roleText.includes('hr') || roleText.includes('human') || roleText.includes('recruitment') || roleText.includes('admin')) isSectorMatch = true;
+  } else if (targetSector.includes('tech') || targetSector.includes('it') || targetSector.includes('computer')) {
+    if (roleText.includes('tech') || roleText.includes('software') || roleText.includes('it') || roleText.includes('developer') || roleText.includes('code') || roleText.includes('program')) isSectorMatch = true;
+  } else if (roleText.includes(targetSector)) {
+    isSectorMatch = true;
+  }
+
   // 1. Skill Match Percentage (Combined Resume + Profile)
   const combinedUserSkills = [...new Set([...profileSkills, ...resumeSkills])];
   const skillResult = calculateSkillMatchDetailed(combinedUserSkills, internship.skills);
 
-  // USER REQUEST: STRICT FILTER - If 0 matches, return null to filter out
-  if (skillResult.matchCount === 0) return null;
+  // USER REQUEST: If 0 matches, return null to filter out...
+  // BUT: If it's a sector match, we KEEP IT even with 0 skills (exact match logic for all sectors)
+  if (skillResult.matchCount === 0 && !isSectorMatch) return null;
 
   // 2. Location Tier & Score
   const locResult = calculateLocationTier(studentProfile.preferredState, internship.location);
 
-  // 3. Tech Sector Logic (Aggressive rejection of non-tech for tech users)
-  const targetSector = (studentProfile.preferredSector || 'Technology').toLowerCase();
-  const isTechTarget = ['tech', 'it', 'computer', 'science', 'data'].some(kw => targetSector.includes(kw));
+  // 3. Global Cross-Sector Protection
+  // If sector is clearly DIFFERENT from target (e.g. Finance student looking at a Tech job), reject it
+  if (!isSectorMatch && targetSector !== 'any') {
+    const isTechJob = ['tech', 'software', 'developer', 'it'].some(kw => roleText.includes(kw));
+    const isBizJob = ['market', 'sales', 'business', 'growth'].some(kw => roleText.includes(kw));
+    const isFinJob = ['finance', 'account', 'audit', 'tax'].some(kw => roleText.includes(kw));
 
-  const roleText = ((internship.role || '') + ' ' + (internship.sector || '')).toLowerCase();
-  const isHardNonTech = ['marketing', 'sales', 'seo', 'recruitment', 'hr', 'acquisition', 'data entry', 'content', 'writing', 'social media', 'business development', 'customer support', 'retail', 'hollywood', 'operations'].some(kw => roleText.includes(kw));
-
-  // If user wants tech but job is clearly marketing/hr -> Skip it
-  if (isTechTarget && isHardNonTech) {
-    return null; // DISCARD - User wants tech roles
+    // Cross rejection
+    if (targetSector.includes('finance') && (isTechJob || isBizJob)) return null;
+    if (targetSector.includes('tech') && (isFinJob || isBizJob)) return null;
+    if (targetSector.includes('market') && (isTechJob || isFinJob)) return null;
   }
 
   // 4. Calculate weighted match score

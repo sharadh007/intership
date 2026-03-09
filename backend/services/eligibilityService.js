@@ -18,10 +18,9 @@ const checkEligibility = (student, internship) => {
 
     // 2. Field of Study Check (CSE / IT)
     // If internship is IT/Technical, require CSE/IT background
-    if (internship.sector === 'Information Technology') {
+    if (internship.sector === 'Information Technology' && (internship.role || "").toLowerCase().includes('software')) {
         const isIT = sQual.includes('computer') || sQual.includes('it') || sQual.includes('cse') || sQual.includes('technology');
         if (!isIT) {
-            // console.log(`Rejecting ${student.name} for IT role due to qualification: ${sQual}`);
             return false;
         }
     }
