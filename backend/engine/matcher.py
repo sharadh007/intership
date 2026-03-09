@@ -628,7 +628,17 @@ def process_matching(data: dict) -> list:
             val = str(job_copy.get(key, ""))
             # Handle ALL types of tuple formats: ('...',), ("...",), (...), etc
             if "(" in val or "'" in val or '"' in val:
-                job_copy[key] = re.sub(r"[\(\)\'\",]", "", val).strip()
+                # Remove tuple punctuation
+                cleaned_val = re.sub(r"[\(\)\'\",]", " ", val)
+                # Deduplicate tokens (e.g., "Delhi Chennai Delhi" -> "Delhi Chennai")
+                words = cleaned_val.split()
+                seen = set()
+                deduped = []
+                for w in words:
+                    if w.lower() not in seen:
+                        deduped.append(w)
+                        seen.add(w.lower())
+                job_copy[key] = " ".join(deduped).strip()
         cleaned_internships.append(job_copy)
 
     pref_sector = (student.get('preferredSector') or 'Technology').lower().strip()
