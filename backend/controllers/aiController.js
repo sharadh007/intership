@@ -151,6 +151,7 @@ const getAIRecommendations = async (req, res) => {
             stipend_pref: stipend || 0,
             duration_pref: duration || 'Any',
             interests: interests || '',
+            preferredSector: interests || 'Technology', // Added so Python engine recognizes the sector
             college: college || '',
             grad_year: gradYear || '',
             availability: availability || 'Full-time',

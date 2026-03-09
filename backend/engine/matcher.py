@@ -416,7 +416,7 @@ def gemini_rerank_and_explain(student: dict, top_jobs: list, parsed_resume: dict
                 
                 jobs_summary = "\n\n".join(jobs_to_analyze)
                 
-                prompt = f"""You are an elite career mentor for tech students.
+                prompt = f"""You are an elite career mentor for students in the {student.get('preferredSector', 'Technology')} sector.
 For the student and internships below, create a personalized "Career Bridge" Roadmap.
 
 STUDENT PROFILE:
@@ -429,12 +429,12 @@ INTERNSHIPS:
 TASK:
 For EVERY internship, provide:
 1. explanation: A 1-sentence "Why this match?" highlight. 
-   - CRITICAL: If the 'Selection Context' mentions a 'high technical match found in nearby district', you MUST use this specific mentor phrasing: "No high-skill [Skill] roles were found in [Student's Location], so we prioritized this match in [Job's Location] to ensure you get a high-quality technical internship."
+   - CRITICAL: If the 'Selection Context' mentions a 'high technical match found in nearby district', you MUST use this specific mentor phrasing: "No high-skill [Skill] roles were found in [Student's Location], so we prioritized this match in [Job's Location] to ensure you get a high-quality professional internship."
    - CRITICAL: If the context is 'Remote internship', explain how the flexibility of working from home in [Student's Location] allows them to gain experience with [Job's Company] without relocating.
-   - Otherwise, provide a brief highlight explaining why their skills fit the role in the {student.get('preferredSector', 'Technology')} sector. Do not call Work from Home a "tech hub".
+   - Otherwise, provide a brief highlight explaining why their skills fit the role in the {student.get('preferredSector', 'Technology')} sector. 
 2. roadmap: 
-   - Day 1: A specific technical topic to master (If match is 100%, suggest an 'advanced' or 'scale' version of their best skill). Provide a specific YouTube search query.
-   - Day 2: Suggest a UNIQUE, 2025-ready project idea that solves a real problem for {student.get('name')}.
+   - Day 1: A specific industry topic to master (If match is 100%, suggest an 'advanced' or 'expert' version of their best skill). Provide a specific YouTube search query.
+   - Day 2: Suggest a UNIQUE, 2025-ready project idea that solves a real problem in the {student.get('preferredSector', 'Technology')} field.
 
 Format as a strict JSON array where each object has:
 [
@@ -548,16 +548,16 @@ def _build_fallback_explanation(student: dict, job: dict) -> dict:
     if job.get('match_type') == 'regional':
         student_loc = (student.get('preferred_state') or student.get('location') or 'your area').split(',')[0].strip()
         job_loc = job.get('location', 'this area')
-        top_skill = list(expanded_student)[0].capitalize() if expanded_student else 'Technical'
-        explanation = f"No high-skill {top_skill} roles were found in {student_loc}, so we prioritized this match in {job_loc} to ensure you get a high-quality technical internship."
+        top_skill = list(expanded_student)[0].capitalize() if expanded_student else 'Professional'
+        explanation = f"No high-skill {top_skill} roles were found in {student_loc}, so we prioritized this match in {job_loc} to ensure you get a high-quality professional internship."
     elif is_remote_job:
         student_loc = (student.get('preferred_state') or student.get('location') or 'your area').split(',')[0].strip()
-        explanation = f"This remote role allows you to gain specialized technical experience at {company} directly from {student_loc} with full work-from-home flexibility."
+        explanation = f"This remote role allows you to gain specialized professional experience at {company} directly from {student_loc} with full work-from-home flexibility."
     elif matched:
         explanation = (f"Strategy Match: Your proficiency in {', '.join(matched[:2])} is a direct asset for this {role}. "
-                      f"We've calculated a {pct}% accuracy match based on your technical profile.")
+                      f"We've calculated a {pct}% accuracy match based on your professional profile.")
     else:
-        explanation = (f"Potential Fit: Based on architectural analysis of your career goals, "
+        explanation = (f"Potential Fit: Based on analytical comparison of your career goals, "
                       f"this {role} at {company} offers a {pct}% alignment with your professional trajectory.")
     
     # Career Bridge Roadmap (Always available to trigger the UI)
@@ -566,18 +566,18 @@ def _build_fallback_explanation(student: dict, job: dict) -> dict:
         roadmap = {
             "summary": f"Strategic bridge to master {top_missing} at {company}.",
             "days": [
-                { "day": 1, "topic": f"{top_missing} Fast-Track", "action": f"Master the production-ready principles of {top_missing} needed for {role}", "link": f"https://www.youtube.com/results?search_query=learn+{top_missing.replace(' ', '+')}+for+beginners" },
-                { "day": 2, "topic": "Industry Proof", "action": f"Project Idea: {top_missing} Micro-Solution - Build a specific tool for {company} using {top_missing}", "link": "" }
+                { "day": 1, "topic": f"{top_missing} Fast-Track", "action": f"Master the core principles of {top_missing} needed for {role}", "link": f"https://www.youtube.com/results?search_query=learn+{top_missing.replace(' ', '+')}+for+beginners" },
+                { "day": 2, "topic": "Industry Proof", "action": f"Project Idea: {top_missing} implementation - Build a specific tool or solution for {company} using {top_missing}", "link": "" }
             ]
         }
     else:
         # 100% Match Customization
-        adv_skill = matched[0] if matched else (job.get('role', 'architecture'))
+        adv_skill = matched[0] if matched else (job.get('role', 'your field'))
         roadmap = {
             "summary": f"Level up your {adv_skill} mastery for {company}'s standards.",
             "days": [
-                { "day": 1, "topic": f"Advanced {adv_skill}", "action": f"Explore high-concurrency patterns and scalability in {adv_skill}", "link": f"https://www.youtube.com/results?search_query=advanced+{adv_skill.replace(' ', '+')}+best+practices" },
-                { "day": 2, "topic": "Expert Portfolio", "action": f"Scalable {adv_skill} Optimization - Refine an existing {adv_skill} project for high-load performance", "link": "" }
+                { "day": 1, "topic": f"Advanced {adv_skill}", "action": f"Explore advanced industry patterns and best practices in {adv_skill}", "link": f"https://www.youtube.com/results?search_query=advanced+{adv_skill.replace(' ', '+')}+best+practices" },
+                { "day": 2, "topic": "Expert Portfolio", "action": f"Professional {adv_skill} Optimization - Refine an existing {adv_skill} project for high-quality production standards", "link": "" }
             ]
         }
     
