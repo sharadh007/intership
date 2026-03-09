@@ -535,7 +535,13 @@ def _build_fallback_explanation(student: dict, job: dict) -> dict:
     company = job.get('company', 'this organization')
 
     explanation = ""
-    if matched:
+    # USER SPECIFIC MENTOR PHRASING FOR REGIONAL MATCHES
+    if job.get('match_type') == 'regional':
+        student_loc = (student.get('preferred_state') or student.get('location') or 'your area').split(',')[0].strip()
+        job_loc = job.get('location', 'this area')
+        top_skill = list(expanded_student)[0].capitalize() if expanded_student else 'Technical'
+        explanation = f"No high-skill {top_skill} roles were found in {student_loc}, so we prioritized this match in {job_loc} to ensure you get a high-quality technical internship."
+    elif matched:
         explanation = (f"Strategy Match: Your proficiency in {', '.join(matched[:2])} is a direct asset for this {role}. "
                       f"We've calculated a {pct}% accuracy match based on your technical profile.")
     else:
@@ -609,7 +615,8 @@ def process_matching(data: dict) -> list:
         for key in ['location', 'role', 'company', 'sector']:
             val = str(job_copy.get(key, ""))
             if val.startswith("('") or val.startswith('("'):
-                job_copy[key] = re.sub(r'^[\(\'"]+|[\)\'"]+$', '', val)
+                # Handle raw SQL/Python tuples like ('Chennai',) or ("Salem",)
+                job_copy[key] = re.sub(r"[\(\)\'\",]", "", val).strip()
         cleaned_internships.append(job_copy)
 
     pref_sector = (student.get('preferredSector') or 'Technology').lower().strip()
