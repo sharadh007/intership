@@ -422,7 +422,9 @@ INTERNSHIPS:
 
 TASK:
 For EVERY internship, provide:
-1. explanation: A 1-sentence "Why you?" highlight. If the 'Selection Context' mentions a nearby district, politely note that this role was selected for its superior technical alignment despite the distance.
+1. explanation: A 1-sentence "Why this match?" highlight. 
+   - CRITICAL: If the 'Selection Context' mentions a 'high technical match found in nearby district', you MUST use this specific mentor phrasing: "No high-skill [Skill] roles were found in [Student's Location], so we prioritized this match in [Job's Location] to ensure you get a high-quality technical internship."
+   - Otherwise, provide a brief technical highlight explaining why their skills fit the role.
 2. roadmap: 
    - Day 1: A specific technical topic to master (If match is 100%, suggest an 'advanced' or 'scale' version of their best skill). Provide a specific YouTube search query.
    - Day 2: Suggest a UNIQUE, 2025-ready project idea that solves a real problem for {student.get('name')}.
@@ -431,7 +433,7 @@ Format as a strict JSON array where each object has:
 [
   {{
     "index": <Index>,
-    "explanation": "Brief technical highlight explaining the fit.",
+    "explanation": "The mentor highlight sentence.",
     "roadmap": {{
       "summary": "1-sentence strategic bridge.",
       "days": [
@@ -616,16 +618,25 @@ def process_matching(data: dict) -> list:
     
     # India-wide Tech Hub Map for automatic regional expansion
     INDIA_TECH_HUBS = {
-        "tamil nadu": ["namakkal", "salem", "erode", "trichy", "tiruchirappalli", "coimbatore", "chennai", "madurai", "vellore", "thoothukudi", "tirunelveli", "thanjavur", "dindigul", "karur", "tiruppur", "hosur"],
-        "karnataka": ["bangalore", "bengaluru", "mysore", "mysuru", "mangalore", "mangaluru", "hubli", "dharwad", "belgaum"],
-        "maharashtra": ["mumbai", "pune", "nagpur", "nashik", "aurangabad", "thane", "navi mumbai", "vashi"],
-        "telangana": ["hyderabad", "warangal", "secunderabad", "nizamabad"],
-        "andhra pradesh": ["visakhapatnam", "vizag", "vijayawada", "guntur", "nellore", "tirupati"],
-        "delhi ncr": ["delhi", "new delhi", "gurgaon", "gurugram", "noida", "greater noida", "ghaziabad", "faridabad"],
-        "kerala": ["kochi", "trivandrum", "thiruvananthapuram", "kozhikode", "thrissur"],
-        "gujarat": ["ahmedabad", "surat", "vadodara", "baroda", "rajkot", "gandhinagar"],
-        "west bengal": ["kolkata", "howrah", "durgapur", "siliguri"],
-        "rajasthan": ["jaipur", "jodhpur", "udaipur", "kota", "ajmer"]
+        "tamil nadu": ["chennai", "coimbatore", "madurai", "trichy", "tiruchirappalli", "salem", "tiruppur", "erode", "vellore", "thoothukudi", "tirunelveli", "thanjavur", "dindigul", "karur", "hosur", "namakkal", "tenkasi", "pudukkottai", "kanyakumari", "nagercoil", "virudhunagar", "sivakasi", "ramanathapuram", "ariyalur", "perambalur", "nagapattinam", "tiruvarur", "mayiladuthurai", "cuddalore", "villupuram", "kallakurichi", "tiruvannamalai", "ranipet", "tirupattur", "dharmapuri", "krishnagiri"],
+        "karnataka": ["bangalore", "bengaluru", "mysore", "mysuru", "mangalore", "mangaluru", "hubli", "dharwad", "belgaum", "gulbarga", "davangere", "bellary", "shimoga", "tumkur", "udupi", "bidar"],
+        "maharashtra": ["mumbai", "pune", "nagpur", "nashik", "aurangabad", "thane", "navi mumbai", "vashi", "solapur", "kolhapur", "amravati", "akola", "nanded", "sangli", "jalgaon"],
+        "telangana": ["hyderabad", "warangal", "secunderabad", "nizamabad", "karimnagar", "khammam", "ramagundam", "mahbubnagar"],
+        "andhra pradesh": ["visakhapatnam", "vizag", "vijayawada", "guntur", "nellore", "tirupati", "kakinada", "rajahmundry", "kurnool", "kadapa", "anantapur", "vizianagaram", "eluru"],
+        "delhi ncr": ["delhi", "new delhi", "gurgaon", "gurugram", "noida", "greater noida", "ghaziabad", "faridabad", "gurugram"],
+        "kerala": ["kochi", "trivandrum", "thiruvananthapuram", "kozhikode", "thrissur", "kollam", "palakkad", "alappuzha", "kottayam", "malappuram"],
+        "gujarat": ["ahmedabad", "surat", "vadodara", "baroda", "rajkot", "gandhinagar", "bhavnagar", "jamnagar", "junagadh", "anand", "navsari"],
+        "west bengal": ["kolkata", "howrah", "durgapur", "siliguri", "asansol", "kharagpur", "haldia", "bardhaman"],
+        "rajasthan": ["jaipur", "jodhpur", "udaipur", "kota", "ajmer", "bikaner", "alwar", "bhilwara", "sikar"],
+        "uttar pradesh": ["lucknow", "kanpur", "agra", "varanasi", "meerut", "prayagraj", "allahabad", "bareilly", "aligarh", "moradabad", "saharanpur", "gorakhpur", "jhansi"],
+        "madhya pradesh": ["indore", "bhopal", "jabalpur", "gwalior", "ujjain", "sagar", "ratlam", "rewa"],
+        "punjab": ["ludhiana", "amritsar", "jalandhar", "patiala", "bathinda", "mohali", "ajitgarh"],
+        "haryana": ["faridabad", "gurugram", "panipat", "ambala", "yamunanagar", "rohtak", "hissar", "karnal"],
+        "bihar": ["patna", "gaya", "bhagalpur", "muzaffarpur", "purnia", "darbhanga"],
+        "odisha": ["bhubaneswar", "cuttack", "rourkela", "berhampur", "sambalpur", "puri"],
+        "chhattisgarh": ["raipur", "bhilai", "bilaspur", "korba", "durg"],
+        "assam": ["guwahati", "silchar", "dibrugarh", "jorhat", "nagaon"],
+        "jharkhand": ["jamshedpur", "ranchi", "dhanbad", "bokaro", "hazaribagh"]
     }
 
     # ── TIERED LOCATION EXPANSION (All India Support) ──────────────────────
