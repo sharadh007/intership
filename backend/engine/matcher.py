@@ -16,7 +16,6 @@ import sys
 import json
 import os
 import re
-import numpy as np
 import gc
 import threading
 from dotenv import load_dotenv
