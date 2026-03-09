@@ -5,17 +5,8 @@ from typing import List, Dict, Any
 _nlp = None
 
 def get_nlp():
-    """Lazy load spaCy model."""
-    global _nlp
-    if _nlp is None:
-        try:
-            import spacy
-            print("📥 Loading spaCy (en_core_web_sm)...")
-            _nlp = spacy.load("en_core_web_sm")
-        except Exception as e:
-            print(f"⚠️ spaCy load failed: {e}")
-            _nlp = False # False means tried but failed
-    return _nlp if _nlp else None
+    """No-op for memory safety on Render."""
+    return None
 
 class DataProcessor:
     @staticmethod
