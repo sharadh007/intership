@@ -398,6 +398,7 @@ def gemini_rerank_and_explain(student: dict, top_jobs: list, parsed_resume: dict
                     verified = get_verified_matches(j_skills, student_skills)
                     verified_str = ", ".join(verified) if verified else "NONE"
                     loc_type = j.get('locationLabel', 'Nationwide match')
+                    is_remote = j.get('work_mode') == 'Remote' or 'work from home' in j.get('location', '').lower()
                     
                     jobs_to_analyze.append(
                         f"JOB #{i}:\n"
@@ -405,7 +406,7 @@ def gemini_rerank_and_explain(student: dict, top_jobs: list, parsed_resume: dict
                         f"- Company: {j['company']}\n"
                         f"- Location: {j.get('location')} ({loc_type})\n"
                         f"- Verified Matches: {verified_str}\n"
-                        f"- Context: {'High technical match found in nearby district' if j.get('match_type') == 'regional' else 'Direct location match'}"
+                        f"- Context: {'High technical match found in nearby district' if j.get('match_type') == 'regional' else 'Remote internship' if is_remote else 'Direct location match'}"
                     )
                 
                 jobs_summary = "\n\n".join(jobs_to_analyze)
@@ -424,7 +425,8 @@ TASK:
 For EVERY internship, provide:
 1. explanation: A 1-sentence "Why this match?" highlight. 
    - CRITICAL: If the 'Selection Context' mentions a 'high technical match found in nearby district', you MUST use this specific mentor phrasing: "No high-skill [Skill] roles were found in [Student's Location], so we prioritized this match in [Job's Location] to ensure you get a high-quality technical internship."
-   - Otherwise, provide a brief technical highlight explaining why their skills fit the role.
+   - CRITICAL: If the context is 'Remote internship', explain how the flexibility of working from home in [Student's Location] allows them to gain experience with [Job's Company] without relocating.
+   - Otherwise, provide a brief technical highlight explaining why their skills fit the role. Do not call Work from Home a "tech hub".
 2. roadmap: 
    - Day 1: A specific technical topic to master (If match is 100%, suggest an 'advanced' or 'scale' version of their best skill). Provide a specific YouTube search query.
    - Day 2: Suggest a UNIQUE, 2025-ready project idea that solves a real problem for {student.get('name')}.
@@ -535,12 +537,17 @@ def _build_fallback_explanation(student: dict, job: dict) -> dict:
     company = job.get('company', 'this organization')
 
     explanation = ""
+    is_remote_job = any(kw in (job.get('location') or "").lower() for kw in ['remote', 'work from home', 'wfh'])
+    
     # USER SPECIFIC MENTOR PHRASING FOR REGIONAL MATCHES
     if job.get('match_type') == 'regional':
         student_loc = (student.get('preferred_state') or student.get('location') or 'your area').split(',')[0].strip()
         job_loc = job.get('location', 'this area')
         top_skill = list(expanded_student)[0].capitalize() if expanded_student else 'Technical'
         explanation = f"No high-skill {top_skill} roles were found in {student_loc}, so we prioritized this match in {job_loc} to ensure you get a high-quality technical internship."
+    elif is_remote_job:
+        student_loc = (student.get('preferred_state') or student.get('location') or 'your area').split(',')[0].strip()
+        explanation = f"This remote role allows you to gain specialized technical experience at {company} directly from {student_loc} with full work-from-home flexibility."
     elif matched:
         explanation = (f"Strategy Match: Your proficiency in {', '.join(matched[:2])} is a direct asset for this {role}. "
                       f"We've calculated a {pct}% accuracy match based on your technical profile.")
@@ -614,8 +621,8 @@ def process_matching(data: dict) -> list:
         job_copy = dict(job)
         for key in ['location', 'role', 'company', 'sector']:
             val = str(job_copy.get(key, ""))
-            if val.startswith("('") or val.startswith('("'):
-                # Handle raw SQL/Python tuples like ('Chennai',) or ("Salem",)
+            # Handle ALL types of tuple formats: ('...',), ("...",), (...), etc
+            if "(" in val or "'" in val or '"' in val:
                 job_copy[key] = re.sub(r"[\(\)\'\",]", "", val).strip()
         cleaned_internships.append(job_copy)
 
@@ -716,6 +723,7 @@ def process_matching(data: dict) -> list:
         is_job_remote = any(kw in job_loc_low for kw in ['remote', 'work from home', 'wfh'])
         wants_remote = any(kw in [l.lower() for l in pref_locs] for kw in ['remote', 'work from home', 'wfh'])
         wants_remote = wants_remote or student.get('work_mode', '').lower() in ['remote', 'any']
+        wants_remote = wants_remote or work_preference in ['remote', 'both']
 
         match_type = 'anywhere'
         
@@ -755,10 +763,10 @@ def process_matching(data: dict) -> list:
                 job['locationLabel'] = 'Regional Match'
                 bucket_tech_regional.append(job)
             else:
-                job['locationLabel'] = ''
+                job['locationLabel'] = 'Anywhere'
                 bucket_tech_anywhere.append(job)
         else:
-            job['locationLabel'] = ''
+            job['locationLabel'] = 'Non-Tech'
             bucket_others.append(job)
 
     # ── POOL CONSTRUCTION (Strategic Balancing) ──────────────────────────
@@ -819,12 +827,14 @@ def process_matching(data: dict) -> list:
         
         if loc_type == 'local':
             loc_val = 1.0 # 100% Location Match
-        elif loc_type == 'remote_match' and 'remote' in [l.lower() for l in pref_locs]:
-            loc_val = 0.9 # User specifically asked for remote
+        elif loc_type == 'remote_match' and (wants_remote or work_preference in ['remote', 'both']):
+            loc_val = 1.0 # Highest priority for remote seekers
         elif loc_type == 'regional':
-            loc_val = 0.8 # NEARBY DISTRICT BOOST (Namakkal, Salem, etc) - Higher than generic remote
+            loc_val = 0.8 # NEARBY DISTRICT BOOST
         elif loc_type == 'remote_match':
-            loc_val = 0.6 # Remote is good, but user might prefer nearby cities in Tamil Nadu
+            loc_val = 0.7 # Remote is generally good
+        else:
+            loc_val = 0.3 # Anywhere
             
         loc_score_raw = loc_val * 0.3
             

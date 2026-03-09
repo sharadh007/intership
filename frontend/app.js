@@ -1996,8 +1996,8 @@ async function getAIRecommendations(event) {
 
         // Clean up location (strip Python tuple format if present)
         let loc = rec.location || 'N/A';
-        if (loc.startsWith("('") || loc.startsWith('("')) {
-          loc = loc.replace(/^[\('"]|[\)'"]]$/g, '');
+        if (loc.includes('(') || loc.includes("'") || loc.includes('"')) {
+          loc = loc.replace(/[\(\)\[\]\'\",]/g, ' ').replace(/\s+/g, ' ').trim();
         }
 
         card.innerHTML = `
@@ -2027,7 +2027,8 @@ async function getAIRecommendations(event) {
                     <p style="color: var(--color-text-secondary, #626c71); font-size: 0.84rem; margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                       <span>🏢 ${rec.company || 'Company'}</span>
                       ${loc ? `<span style="color:#cbd5e1;">|</span><span>📍 ${loc}</span>` : ''}
-                      ${rec.match_type === 'regional' ? `<span style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; padding:1px 8px; border-radius:4px; font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.3px;">Nearby District</span>` : ''}
+                      ${rec.match_type === 'regional' ? `<span style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; padding:1px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.3px;">Nearby District</span>` : ''}
+                      ${rec.match_type === 'remote_match' ? `<span style="background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; padding:1px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.3px;">Remote Match</span>` : ''}
                     </p>
                   </div>
                   ${rec.sector ? `<span style="background:rgba(33,128,141,0.1);color:#1a6874;border:1px solid rgba(33,128,141,0.2);border-radius:6px;padding:3px 10px;font-size:0.72rem;font-weight:600;white-space:nowrap;flex-shrink:0;">${rec.sector}</span>` : ''}
