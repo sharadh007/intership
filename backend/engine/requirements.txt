@@ -1,7 +1,6 @@
 fastapi
 uvicorn
 scikit-learn
-pandas
 beautifulsoup4
 pydantic
 python-dotenv

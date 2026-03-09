@@ -6,7 +6,7 @@ services:
     region: singapore # Using a close region for India
     plan: free
     rootDirectory: backend/engine
-    buildCommand: pip install -r requirements.txt && python -m spacy download en_core_web_sm
+    buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
