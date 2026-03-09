@@ -1,11 +1,6 @@
 fastapi
 uvicorn
-scikit-learn
-beautifulsoup4
 pydantic
 python-dotenv
 google-generativeai
-pytest
-httpx
-requests
 numpy

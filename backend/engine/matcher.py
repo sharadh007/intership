@@ -19,8 +19,6 @@ import re
 import numpy as np
 import gc
 import threading
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 from dotenv import load_dotenv
 import logging
 
@@ -290,36 +288,31 @@ def build_job_text(job: dict) -> str:
 
 # ─── STEP 4: SIMILARITY ENGINE ───────────────────────────────────────────────
 def compute_similarities(student_text: str, job_texts: list) -> list:
-    """Memory-efficient TF-IDF compute for Render (512MB RAM cap)."""
+    """Ultra-lightweight keyword overlap matching (0MB overhead)."""
     if not job_texts: return []
     
-    try:
-        from sklearn.feature_extraction.text import TfidfVectorizer
-        from sklearn.metrics.pairwise import cosine_similarity
-        
-        # Max pool of 50 to keep RAM ultra-low
-        limited_jobs = job_texts[:50]
-        all_texts = [student_text] + limited_jobs
-        
-        vectorizer = TfidfVectorizer(stop_words='english', lowercase=True)
-        tfidf_matrix = vectorizer.fit_transform(all_texts)
-        
-        # [0] is student, [1:] are jobs
-        scores = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:])[0]
-        
-        final_scores = scores.tolist()
-        if len(job_texts) > 50:
-            final_scores += [0.1] * (len(job_texts) - 50)
+    def get_word_set(text):
+        # Basic cleaning and tokenization
+        return set(re.findall(r'\w+', (text or "").lower()))
+    
+    student_words = get_word_set(student_text)
+    scores = []
+    
+    for job_text in job_texts:
+        job_words = get_word_set(job_text)
+        if not job_words:
+            scores.append(0.1)
+            continue
             
-        # Clear large objects immediately
-        del vectorizer
-        del tfidf_matrix
-        gc.collect()
+        # Jaccard Similarity (Intersection / Union)
+        intersection = student_words.intersection(job_words)
+        union = student_words.union(job_words)
         
-        return final_scores
-    except Exception as e:
-        logger.error(f"Semantic Compute Error: {e}")
-        return [0.5] * len(job_texts)
+        # We give a slight boost to technical keywords
+        jaccard = len(intersection) / len(union) if union else 0
+        scores.append(min(0.9, jaccard * 2)) # Normalize to a reasonable range
+        
+    return scores
 
 
 # ─── STEP 7: GAP ANALYSIS ────────────────────────────────────────────────────
