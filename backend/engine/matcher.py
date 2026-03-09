@@ -426,7 +426,7 @@ For EVERY internship, provide:
 1. explanation: A 1-sentence "Why this match?" highlight. 
    - CRITICAL: If the 'Selection Context' mentions a 'high technical match found in nearby district', you MUST use this specific mentor phrasing: "No high-skill [Skill] roles were found in [Student's Location], so we prioritized this match in [Job's Location] to ensure you get a high-quality technical internship."
    - CRITICAL: If the context is 'Remote internship', explain how the flexibility of working from home in [Student's Location] allows them to gain experience with [Job's Company] without relocating.
-   - Otherwise, provide a brief technical highlight explaining why their skills fit the role. Do not call Work from Home a "tech hub".
+   - Otherwise, provide a brief highlight explaining why their skills fit the role in the {student.get('preferredSector', 'Technology')} sector. Do not call Work from Home a "tech hub".
 2. roadmap: 
    - Day 1: A specific technical topic to master (If match is 100%, suggest an 'advanced' or 'scale' version of their best skill). Provide a specific YouTube search query.
    - Day 2: Suggest a UNIQUE, 2025-ready project idea that solves a real problem for {student.get('name')}.
@@ -680,32 +680,42 @@ def process_matching(data: dict) -> list:
                     active_states.add(state)
                     state_hints.append(state)
 
-    def is_tech_role(j):
+    def is_preferred_sector_match(j):
         role_raw = j.get('role', '').lower()
         sector_raw = (j.get('sector') or j.get('internType') or '').lower()
-        r = (role_raw + ' ' + sector_raw)
+        job_text = (role_raw + ' ' + sector_raw)
         
-        # Expanded tech keywords (If title has these, it's likely tech)
-        tech_kws = ['software', 'developer', 'web', 'app', 'it', 'technical', 'data', 'coder', 'engineer', 'ai', 'ml', 'frontend', 'backend', 'fullstack', 'python', 'java', 'react', 'node', 'computing', 'science', 'development', 'programming', 'architecture', 'embedded', 'iot']
+        target_sector = pref_sector.lower()
         
-        # Hard non-tech strings (If title has these, it's likely not dev role)
-        non_tech_strings = ['marketing', 'sales', 'seo', 'recruitment', 'hr', 'acquisition', 'data entry', 'content', 'writing', 'social media', 'business development', 'customer support', 'tele-calling', 'retail', 'e-commerce associate', 'digital marketing']
-        
-        # Explicit Tech Sector Check
-        if any(sec in pref_sector for sec in ['tech', 'it', 'computer', 'science', 'data']):
-            # If the role is explicitly a developer/engineer/analyst/it person
-            if any(kw in role_raw for kw in ['developer', 'engineer', 'analyst', 'it', 'programmer', 'scientist']):
-                return not any(kw in role_raw for kw in non_tech_strings)
-            # Or if it matches tech keywords
-            return any(kw in r for kw in tech_kws) and not any(kw in role_raw for kw in non_tech_strings)
+        # 1. Exact Match
+        if target_sector in job_text:
+            return True
             
-        return (pref_sector in r)
+        # 2. Tech Synonym Logic (Keep for backward compatibility)
+        if any(sec in target_sector for sec in ['tech', 'it', 'computer', 'science', 'data']):
+            tech_kws = ['software', 'developer', 'web', 'app', 'it', 'technical', 'data', 'coder', 'engineer', 'ai', 'ml', 'frontend', 'backend', 'fullstack', 'python', 'java', 'react', 'node', 'computing', 'science', 'development', 'programming', 'architecture', 'embedded', 'iot']
+            if any(kw in job_text for kw in tech_kws):
+                return True
+        
+        # 3. Marketing/Business Match
+        if any(sec in target_sector for sec in ['market', 'business', 'sales', 'commerce']):
+            biz_kws = ['marketing', 'sales', 'searc', 'seo', 'growth', 'business', 'commerce', 'retail', 'brand', 'content']
+            if any(kw in job_text for kw in biz_kws):
+                return True
+
+        # 4. HR/Ops Match
+        if any(sec in target_sector for sec in ['hr', 'human', 'ops', 'operation', 'admin']):
+            ops_kws = ['hr', 'human', 'recruitment', 'talent', 'ops', 'operation', 'admin', 'coordinator', 'office']
+            if any(kw in job_text for kw in ops_kws):
+                return True
+            
+        return False
 
     # -- TIERED LOCATION BUCKETS --
-    bucket_tech_local = []
-    bucket_tech_remote = []
-    bucket_tech_regional = []
-    bucket_tech_anywhere = []
+    bucket_pref_local = []
+    bucket_pref_remote = []
+    bucket_pref_regional = []
+    bucket_pref_anywhere = []
     bucket_others = []
 
     for job in cleaned_internships:
@@ -716,7 +726,7 @@ def process_matching(data: dict) -> list:
         loc_parts = list(set([p.strip() for p in loc_val.split(' ') if p.strip()]))
         job['location'] = ", ".join(loc_parts)
         
-        is_tech = is_tech_role(job)
+        is_sector_match = is_preferred_sector_match(job)
         job_loc_low = job['location'].lower()
         
         # KEY: Remote/WFH Logic
@@ -752,32 +762,32 @@ def process_matching(data: dict) -> list:
         job['match_type'] = match_type
         
         # BUCKETIZATION
-        if is_tech:
+        if is_sector_match:
             if match_type == 'local':
                 job['locationLabel'] = 'Direct Match'
-                bucket_tech_local.append(job)
+                bucket_pref_local.append(job)
             elif match_type == 'remote_match':
                 job['locationLabel'] = 'Remote Match'
-                bucket_tech_remote.append(job)
+                bucket_pref_remote.append(job)
             elif match_type == 'regional':
                 job['locationLabel'] = 'Regional Match'
-                bucket_tech_regional.append(job)
+                bucket_pref_regional.append(job)
             else:
                 job['locationLabel'] = 'Anywhere'
-                bucket_tech_anywhere.append(job)
+                bucket_pref_anywhere.append(job)
         else:
-            job['locationLabel'] = 'Non-Tech'
+            job['locationLabel'] = 'Alternative'
             bucket_others.append(job)
 
     # ── POOL CONSTRUCTION (Strategic Balancing) ──────────────────────────
     # Prioritize physical local, then regional (nearby), then remote
-    filtered = bucket_tech_local[:25] + bucket_tech_regional[:25] + bucket_tech_remote[:15]
+    filtered = bucket_pref_local[:25] + bucket_pref_regional[:25] + bucket_pref_remote[:15]
     
-    # Fill remaining space with 'anywhere' tech matches up to pool size
+    # Fill remaining space with 'anywhere' pref matches up to pool size
     if len(filtered) < 50:
-        filtered += bucket_tech_anywhere[:(50 - len(filtered))]
+        filtered += bucket_pref_anywhere[:(50 - len(filtered))]
     
-    # Emergency fallback to non-tech if pool is empty
+    # Emergency fallback to other sectors if pool is empty
     if not filtered:
         filtered = bucket_others[:20]
 
@@ -840,10 +850,9 @@ def process_matching(data: dict) -> list:
             
         final_score = skill_score_raw + loc_score_raw
         
-        # Sector Multiplier (Heavy penalty for non-technical roles ONLY if user wants tech)
-        is_tech = is_tech_role(job)
-        if not is_tech and any(sec in pref_sector for sec in ['tech', 'it', 'computer', 'science', 'data']):
-            final_score *= 0.5 # Less aggressive but still penalizing
+        # Sector Multiplier (Heavy penalty for roles NOT in preferred sector)
+        if not is_preferred_sector_match(job):
+            final_score *= 0.5 
             
         score_int = int(min(0.99, max(0.1, final_score)) * 100)
 

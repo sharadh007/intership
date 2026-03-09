@@ -111,13 +111,24 @@ const getRecommendations = async (req, res) => {
           }
         });
 
-        // Sector alignment bonus
+        // Sector alignment bonus (Special Shield for ALL sectors)
         const jobSector = (job.sector || '').toLowerCase();
-        if ((targetSector === 'technology' || targetSector === 'technical') && (jobSector.includes('tech') || jobSector.includes('software') || jobSector.includes('it'))) {
-          kScore += 5;
-        } else if (targetSector !== 'any' && jobSector.includes(targetSector)) {
-          kScore += 5;
+        const jobRole = (job.role || '').toLowerCase();
+        const jobTextFull = jobSector + ' ' + jobRole;
+
+        let hasSectorMatch = false;
+
+        if (targetSector.includes('tech') || targetSector.includes('it') || targetSector.includes('computer')) {
+          if (jobTextFull.includes('tech') || jobTextFull.includes('software') || jobTextFull.includes('it') || jobTextFull.includes('developer')) hasSectorMatch = true;
+        } else if (targetSector.includes('market') || targetSector.includes('business')) {
+          if (jobTextFull.includes('market') || jobTextFull.includes('sales') || jobTextFull.includes('business') || jobTextFull.includes('growth')) hasSectorMatch = true;
+        } else if (targetSector.includes('hr') || targetSector.includes('human') || targetSector.includes('admin')) {
+          if (jobTextFull.includes('hr') || jobTextFull.includes('human') || jobTextFull.includes('recruitment') || jobTextFull.includes('admin')) hasSectorMatch = true;
+        } else if (targetSector !== 'any' && jobTextFull.includes(targetSector)) {
+          hasSectorMatch = true;
         }
+
+        if (hasSectorMatch) kScore += 10; // Strong bonus for preferred sector
 
         return { ...job, kScore };
       });
