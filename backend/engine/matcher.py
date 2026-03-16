@@ -566,23 +566,69 @@ def _build_fallback_explanation(student: dict, job: dict) -> dict:
                       f"this {role} at {company} offers a {pct}% alignment with your professional trajectory.")
     
     # Career Bridge Roadmap (Always available to trigger the UI)
+    role_low = str(role).lower()
+    sector_low = str(job.get('sector') or job.get('internType') or '').lower()
+    domain = role_low + ' ' + sector_low
+
+    is_finance = any(k in domain for k in ['finance', 'account', 'banking', 'audit', 'tax'])
+    is_marketing = any(k in domain for k in ['market', 'sales', 'seo', 'content', 'brand'])
+    is_hr = any(k in domain for k in ['hr', 'human', 'recruit', 'talent'])
+    is_design = any(k in domain for k in ['design', 'archit', 'ui', 'ux', 'graphic', 'video'])
+    
     if missing:
         top_missing = missing[0]
+        if is_finance:
+            day2_action = f"Complete a sample financial model, reconciliation or audit task relevant to {company} using {top_missing}."
+        elif is_marketing:
+            day2_action = f"Draft a mock campaign, competitor analysis, or social strategy for {company} integrating {top_missing}."
+        elif is_hr:
+            day2_action = f"Develop a mock onboarding plan, sourcing strategy, or policy doc for {company} concerning {top_missing}."
+        elif is_design:
+            day2_action = f"Create a wireframe, blueprint, or visual asset demonstrating {top_missing} tailored for {company}."
+        else:
+            day2_action = f"Project Idea: Build a specific tool or solution for {company} using {top_missing}."
+
         roadmap = {
             "summary": f"Strategic bridge to master {top_missing} at {company}.",
             "days": [
                 { "day": 1, "topic": f"{top_missing} Fast-Track", "action": f"Master the core principles of {top_missing} needed for {role}", "link": f"https://www.youtube.com/results?search_query=learn+{top_missing.replace(' ', '+')}+for+beginners" },
-                { "day": 2, "topic": "Industry Proof", "action": f"Project Idea: {top_missing} implementation - Build a specific tool or solution for {company} using {top_missing}", "link": "" }
+                { "day": 2, "topic": "Industry Proof", "action": day2_action, "link": "" }
             ]
         }
     else:
         # 100% Match Customization
-        adv_skill = matched[0] if matched else (job.get('role', 'your field'))
+        adv_skill = matched[0] if matched else role
+        if is_finance:
+            day1_topic = "Advanced Financial Analysis"
+            day1_action = f"Explore complex regulatory frameworks, financial modeling, and precision reporting using {adv_skill}."
+            day2_topic = "Expert Case Study"
+            day2_action = f"Formulate an industry-grade valuation, reconciliation, or compliance audit demonstrating mastery in {adv_skill}."
+        elif is_marketing:
+            day1_topic = "Growth & Strategy"
+            day1_action = f"Analyze advanced funnel optimization, conversion metrics, and multi-channel strategies for {adv_skill}."
+            day2_topic = "Strategic Portfolio"
+            day2_action = f"Present an end-to-end performance marketing campaign or branding audit showing high ROI logic."
+        elif is_hr:
+            day1_topic = "Strategic Ops"
+            day1_action = f"Dive into advanced talent acquisition analytics, retention strategy, and organizational behavior."
+            day2_topic = "Execution Plan"
+            day2_action = f"Draft an executive-level presentation on culture building or process improvement using {adv_skill}."
+        elif is_design:
+            day1_topic = "Design Systems"
+            day1_action = f"Study enterprise design systems, accessibility standards, and advanced visual hierarchy in {adv_skill}."
+            day2_topic = "Portfolio Polish"
+            day2_action = f"Refine an existing project with pixel-perfect precision and user-centered research backing."
+        else:
+            day1_topic = f"Advanced {adv_skill}"
+            day1_action = f"Explore complex production patterns and scalability best practices for {adv_skill}."
+            day2_topic = "Expert Portfolio Piece"
+            day2_action = f"Refine your existing projects to demonstrate high-load optimization and clean code standards."
+
         roadmap = {
             "summary": f"Level up your {adv_skill} mastery for {company}'s standards.",
             "days": [
-                { "day": 1, "topic": f"Advanced {adv_skill}", "action": f"Explore advanced industry patterns and best practices in {adv_skill}", "link": f"https://www.youtube.com/results?search_query=advanced+{adv_skill.replace(' ', '+')}+best+practices" },
-                { "day": 2, "topic": "Expert Portfolio", "action": f"Professional {adv_skill} Optimization - Refine an existing {adv_skill} project for high-quality production standards", "link": "" }
+                { "day": 1, "topic": day1_topic, "action": day1_action, "link": f"https://www.youtube.com/results?search_query=advanced+{adv_skill.replace(' ', '+')}+best+practices" },
+                { "day": 2, "topic": day2_topic, "action": day2_action, "link": "" }
             ]
         }
     
@@ -849,10 +895,8 @@ def process_matching(data: dict) -> list:
         elif any(kw in raw_edu for kw in (job.get('sector') or '').lower().split()):
             edu_score = 0.8
             
-        # 1. Skill Component (60%)
-        # Normalization for robust matching
+        # 1. Skill Component
         norm_expanded = set(re.sub(r'[-.\s]', '', s).lower() for s in expanded_student_skills)
-        
         match_details = []
         for req in job_skills_list:
             norm_req = re.sub(r'[-.\s]', '', req).lower()
@@ -862,16 +906,18 @@ def process_matching(data: dict) -> list:
                 match_details.append(req)
         
         match_details = list(set(match_details))
-        match_ratio = len(match_details) / total_reqs
         
+        if len(job_skills_list) == 0:
+            match_ratio = 1.0 if semantic_score > 0.1 else 0.5
+        else:
+            match_ratio = len(match_details) / total_reqs
+            
         # EXACT MATCH REQUIREMENT: 
-        # If it's a sector match, we NEVER drop it (even items with 0% skill match stay)
-        # We only drop if it's NOT a sector match AND has 0 skills.
-        if len(match_details) == 0 and not is_sm:
+        if len(match_details) == 0 and not is_sm and semantic_score < 0.1:
             continue
             
-        # Skill sub-score (Skills + Semantic)
-        skill_score_raw = (match_ratio * 0.5) + (semantic_score * 0.1)
+        # Skill sub-score: More balanced relying on semantic meaning for non-tech
+        skill_score_raw = (match_ratio * 0.4) + (semantic_score * 0.4)
         
         # 2. Location Component (20%)
         loc_type = job.get('match_type', 'anywhere')
@@ -884,18 +930,22 @@ def process_matching(data: dict) -> list:
         loc_score_raw = loc_val * 0.2
         
         # 3. Final Integration
-        # Weighted Accuracy: Skills(50%) + Edu(30%) + Loc(20%)
+        # Weighted Accuracy: Skills(40-80%) + Edu(30%) + Loc(20%)
         final_score = (skill_score_raw) + (edu_score * 0.3) + loc_score_raw
         
-        # Hard Sector Protection
-        if not is_sm:
-            final_score *= 0.4 # Brutal penalty for out-of-sector roles
+        # Smart Sector Protection
+        is_strong_semantic = semantic_score > 0.15 or match_ratio >= 0.3
+        is_valid_match = is_sm or is_strong_semantic
+        
+        if not is_valid_match:
+            final_score *= 0.4 # Brutal penalty for truly unrelated roles
             
         score_int = int(min(0.98, max(0.2, final_score)) * 100)
         
-        # If is_sm is true, ensure a minimum visibility floor
-        if is_sm and score_int < 40:
-             score_int = 40 + int(match_ratio * 20)
+        # Minimum visibility floor for relevant matches
+        if is_valid_match and score_int < 60:
+             score_int = 50 + int(match_ratio * 25) + int(semantic_score * 50)
+             score_int = min(85, score_int) # Cap the floor boost
 
         scored.append({
             **job,
