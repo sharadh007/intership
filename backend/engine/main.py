@@ -101,20 +101,50 @@ async def generate_project_ideas(request: Dict[str, Any]):
         
         # Ensure we don't use 'Internship' or 'Development' as the core skill if possible
         clean_skill = skill.replace('Development', '').replace('Internship', '').strip()
-        if not clean_skill: clean_skill = "Technical Implementation"
+        if not clean_skill: clean_skill = "Industry Analysis"
+
+        sk_lower = clean_skill.lower()
+        is_finance = any(k in sk_lower for k in ['finance', 'account', 'banking', 'audit', 'tax', 'tally', 'bookkeep'])
+        is_hr = any(k in sk_lower for k in ['hr', 'human', 'recruit', 'talent'])
+        is_auto_mech = any(k in sk_lower for k in ['auto', 'mech', 'cad', 'ansys', 'manufacturing'])
+        is_marketing = any(k in sk_lower for k in ['market', 'sales', 'seo', 'content', 'brand'])
 
         g_model = get_gemini_model()
         if not is_gemini_available() or g_model is None:
             # Dynamic role-based fallback
-            if "data" in clean_skill.lower() or "analytics" in clean_skill.lower():
+            if "data" in sk_lower or "analytics" in sk_lower:
                 ideas = [
                     f"2025 Predictive {clean_skill} Dashboard: Real-time industry trend analyzer for {company}.",
-                    f"Automated Data Cleaning Engine: A tool to optimize {company}'s raw data ingestion pipelines.",
-                    f"Privacy-First Data Vault: High-security storage compliant with 2025 regulations."
+                    f"Automated Data Cleaning Engine: A pipeline to optimize {company}'s raw data ingestion.",
+                    f"Data Privacy Audit: Ensuring {company}'s storage is compliant with 2025 regulations."
                 ]
-            elif "web" in clean_skill.lower() or "frontend" in clean_skill.lower() or "backend" in clean_skill.lower():
+            elif is_finance:
                 ideas = [
-                    f"Scalable {clean_skill} Micro-Frontend: Optimized for low-bandwidth mobile users in {company}'s sector.",
+                    f"Comprehensive {clean_skill} Financial Model: A 5-year growth forecast for {company}.",
+                    f"Mock Audit & Tax Compliance Report: A detailed review of {company}'s financial health using {clean_skill}.",
+                    f"Investment Risk Assessment: Evaluating market trends and portfolio strength for {company}."
+                ]
+            elif is_hr:
+                ideas = [
+                    f"90-Day {clean_skill} Onboarding Playbook: A comprehensive integration plan for {company}.",
+                    f"Compensation & Benefits Benchmarking: Comparing {company}'s offering against current industry standards.",
+                    f"Modern Recruitment Strategy: Interview scorecards and sourcing techniques targeting {company}'s talent gaps."
+                ]
+            elif is_auto_mech:
+                ideas = [
+                    f"3D CAD {clean_skill} Design: High-precision modeling of a mechanical component for {company}.",
+                    f"Finite Element Analysis (FEA): Simulating stress, heat, or impact on a robust vehicle or industrial part.",
+                    f"Manufacturing Process Optimization: Reducing assembly line time and material waste for {company}."
+                ]
+            elif is_marketing:
+                ideas = [
+                    f"B2B {clean_skill} Growth Strategy: Increasing funnel conversion for {company} in Q4.",
+                    f"Brand Sentiment Audit: Analyzing customer lifecycle and social presence using {clean_skill}.",
+                    f"Performance Marketing Campaign: High-ROI customer acquisition roadmap for {company}."
+                ]
+            elif "web" in sk_lower or "frontend" in sk_lower or "backend" in sk_lower:
+                ideas = [
+                    f"Scalable {clean_skill} Micro-Frontend: Optimized for low-bandwidth users in {company}'s sector.",
                     f"AI-Enhanced CMS: An automated content manager tailored for {company}'s branding.",
                     f"Next-Gen Serverless {clean_skill} App: Ultra-fast deployment for high-traffic campaigns."
                 ]
@@ -126,23 +156,27 @@ async def generate_project_ideas(request: Dict[str, Any]):
                 ]
             return {"success": True, "data": {"ideas": ideas}}
 
-        prompt = f"""You are a creative technical mentor. 
+        prompt = f"""You are a creative technical and professional mentor. 
         A student needs to master '{clean_skill}' to impress recruiters at '{company}'.
         
-        TASK: Suggest exactly 3 UNIQUE, PROBLEM-SOLVING project ideas for 2025.
+        TASK: Suggest exactly 3 UNIQUE, PROBLEM-SOLVING projects for 2025.
         
         Rules:
-        1. Every idea MUST revolve around '{clean_skill}'.
-        2. Solve a REAL-WORLD 2025 problem (e.g. LLM latency, energy tracking, supply chain resilience, fintech fraud).
-        3. Tailor the project to '{company}''s specific niche.
-        4. Be specific: Don't just say 'Build a bot'. Say what the bot solves.
+        1. Every idea MUST revolve around '{clean_skill}' and '{company}'.
+        2. Solve a REAL-WORLD 2025 problem.
+        3. DO NOT force software concepts ("prototypes", "backends") unless the skill is programming.
+           - If it's Accounting/Finance, suggest financial models, audits, ledgers, or Tableau visualizations.
+           - If it's HR, suggest payroll analyses, onboarding playbooks, or retention strategies.
+           - If it's Mechanical/Civil, suggest CAD blueprints, FEA stress tests, or supply chain optimizations.
+           - If it's Marketing, suggest campaign mockups, SEO audits, or conversion funnels.
+        4. Make them sound professional and actionable.
         
         FORMAT (JSON ONLY):
         {{
           "ideas": [
-            "Project Title: Problem it solves + 1-sentence tech implementation.",
-            "Project Title: Problem it solves + 1-sentence tech implementation.",
-            "Project Title: Problem it solves + 1-sentence tech implementation."
+            "Project Title: Concise summary of what will be produced and the value it brings to {company}.",
+            "Project Title: Concise summary of what will be produced and the value it brings to {company}.",
+            "Project Title: Concise summary of what will be produced and the value it brings to {company}."
           ]
         }}
         
@@ -164,15 +198,36 @@ async def generate_project_ideas(request: Dict[str, Any]):
         return {"success": True, "data": json.loads(content)}
     except Exception as e:
         logger.error(f"Project Ideas Error: {str(e)}")
-        # Ultimate fallback
+        # Ultimate fallback with generic professional logic
+        sk_lower = clean_skill.lower() if 'clean_skill' in locals() else ""
+        if any(k in sk_lower for k in ['finance', 'account']):
+            ideas = [
+                f"Financial Health Model: A robust forecast tailored for {company}.",
+                f"Ledger & Bookkeeping Audit: Ensuring precision and compliance using {clean_skill}.",
+                f"Cost Optimization Report: Identifying waste and maximizing ROI for {company}."
+            ]
+        elif any(k in sk_lower for k in ['hr', 'human']):
+            ideas = [
+                f"Talent Acquisition Strategy: Building a high-converting candidate pipeline for {company}.",
+                f"Employee Retention Program: Using {clean_skill} to boost morale and stay rates.",
+                f"Culture Integration Plan: A 90-day onboarding structure specifically for {company}."
+            ]
+        elif any(k in sk_lower for k in ['mech', 'auto', 'cad']):
+            ideas = [
+                f"Precision Component Design: Utilizing {clean_skill} to draft blueprints for {company}.",
+                f"Stress & Performance Analysis: Validating materials against industry constraints.",
+                f"Workflow Automation Plan: Streamlining assembly and QA for {company}."
+            ]
+        else:
+            ideas = [
+                f"Strategic {clean_skill} Implementation: A comprehensive deep-dive solving a key issue for {company}.",
+                f"Modern {clean_skill} Workflow: Optimizing current standards for the 2025 market.",
+                f"Impact Assessment Report: Analyzing {clean_skill} metrics and growth opportunities at {company}."
+            ]
         return {
             "success": True,
             "data": {
-                "ideas": [
-                    f"Advanced {clean_skill} Prototype: A technical showcase for {company}.",
-                    f"Modern {clean_skill} Implementation: Scalable solution for the 2025 market.",
-                    f"Efficiency {clean_skill} Tool: Automated solver for current industry gaps."
-                ]
+                "ideas": ideas
             }
         }
 
