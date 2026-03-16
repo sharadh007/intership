@@ -12,3 +12,9 @@
 - Added smart heuristic detection for domains checking against arrays of keywords (`Finance`, `HR`, `Auto/Mech`, `Marketing`). 
 - Completely rewrote the static prompt fallbacks to suggest domain-correct projects (Financial Health Models, Brand Sentiment Audits, Stress Analysis, 90-day playbooks).
 - Updated the AI prompt constraints strictly forbidding "prototypes" and explicitly prompting realistic projects for finance, HR, civil, and marketing so the generated LLM responses also behave properly.
+
+## 2026-03-16 10:35 - Fixed Node.js Bridge roadmap overrides
+- Detected that the Node.js backend (`aiExplanationService.js`) fallback was aggressively overriding Python's custom roadmaps and failing to parse `missing_skills` out of the Python `gap_analysis` dictionary.
+- Repaired `attachRoadmap` in the Node service to identify `internship.gap_analysis.missing_skills`, properly routing mismatched students to the "Fast Track" UI instead of incorrectly labelling them as 100% matched.
+- Injected identical domain-detection heuristics into Node's `attachRoadmap` as Python, ensuring any Node-generated roadmaps use proper terminology for HR, Finance, and Marketing instead of "high-load optimization".
+- Fixed the frontend `app.js` click handler to correctly pass `gap_analysis.missing_skills` to the project generator when the `💡 EXPLORE 2024-25 PROJECT IDEAS` button is clicked.

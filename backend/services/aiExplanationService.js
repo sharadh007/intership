@@ -6,43 +6,86 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy");
 // Helper to generate a fallback 'Road to 100%' roadmap when Python AI is unavailable
 const attachRoadmap = (internship) => {
     let roadmap = null;
-    const missing = internship.missingSkills || [];
+    const missing = internship.missingSkills || (internship.gap_analysis ? internship.gap_analysis.missing_skills : []) || [];
+    const roleIdStr = String(internship.role || '').toLowerCase() + " " + String(internship.sector || '').toLowerCase();
+    
+    // Domain Check Heuristics
+    const isFinance = /finance|account|banking|audit|tax/i.test(roleIdStr);
+    const isHR = /hr|human|recruit|talent|admin/i.test(roleIdStr);
+    const isMechAuto = /mech|auto|cad|ansys|manufacturing/i.test(roleIdStr);
+    const isMarketing = /market|sales|seo|content|brand/i.test(roleIdStr);
 
     if (missing.length > 0) {
         const topMissing = missing[0];
         const role = internship.role || "this role";
+        
+        let day2Action = `Build a ${topMissing}-based solution that solves a common problem in the ${internship.sector || 'technical'} sector.`;
+        if (isFinance) day2Action = `Complete a sample financial model, reconciliation or audit task relevant to ${internship.company} using ${topMissing}.`;
+        else if (isHR) day2Action = `Develop a mock onboarding plan, sourcing strategy, or policy doc concerning ${topMissing}.`;
+        else if (isMechAuto) day2Action = `Create a CAD wireframe, physical blueprint, or stress analysis demonstrating ${topMissing}.`;
+        else if (isMarketing) day2Action = `Draft a mock campaign, competitor analysis, or social strategy using ${topMissing}.`;
+
         roadmap = {
             summary: `Accelerated bridge to master ${topMissing} for ${role}.`,
             days: [
                 {
                     day: 1,
                     topic: `${topMissing} Foundations`,
-                    action: `Master the core principles of ${topMissing} required for the ${role} tech stack`,
-                    link: `https://www.youtube.com/results?search_query=learn+${encodeURIComponent(topMissing)}+for+developers`
+                    action: `Master the core principles of ${topMissing} required for the ${role} requirements.`,
+                    link: `https://www.youtube.com/results?search_query=learn+${encodeURIComponent(topMissing)}+for+beginners`
                 },
                 {
                     day: 2,
                     topic: "Practical Implementation",
-                    action: `Build a ${topMissing}-based solution that solves a common problem in the ${internship.sector || 'technical'} sector`,
+                    action: day2Action,
                     link: ""
                 }
             ]
         };
     } else {
-        const bestSkill = (internship.skills || "").split(',')[0] || "Architecture";
+        const bestSkill = (internship.skills || "the role").split(',')[0];
+        
+        // 100% Match Sub-cases based on domain
+        let day1Topic = `Advanced ${bestSkill}`;
+        let day1Action = `Explore complex production patterns and scalability best practices for ${bestSkill}.`;
+        let day2Topic = "Expert Portfolio Piece";
+        let day2Action = `Refine your existing projects to demonstrate high-load optimization and clean code standards.`;
+        
+        if (isFinance) {
+            day1Topic = "Advanced Financial Analysis";
+            day1Action = `Explore complex regulatory frameworks, financial modeling, and precision reporting using ${bestSkill}.`;
+            day2Topic = "Expert Case Study";
+            day2Action = `Formulate an industry-grade valuation, reconciliation, or compliance audit demonstrating mastery.`;
+        } else if (isHR) {
+            day1Topic = "Strategic Ops";
+            day1Action = `Dive into advanced talent acquisition analytics, retention strategy, and organizational behavior.`;
+            day2Topic = "Execution Plan";
+            day2Action = `Draft an executive-level presentation on culture building or process improvement using ${bestSkill}.`;
+        } else if (isMechAuto) {
+            day1Topic = "Precision Engineering";
+            day1Action = `Study mechanical viability, material selection, and advanced failure simulations with ${bestSkill}.`;
+            day2Topic = "Design Blueprint";
+            day2Action = `Generate a robust high-efficiency mechanical blueprint or CAD render with tight industry tolerances.`;
+        } else if (isMarketing) {
+            day1Topic = "Growth Strategy";
+            day1Action = `Analyze advanced funnel optimization, conversion metrics, and multi-channel strategies.`;
+            day2Topic = "Performance Portfolio";
+            day2Action = `Present an end-to-end performance marketing campaign showing high ROI data metrics.`;
+        }
+
         roadmap = {
             summary: "You match all core requirements. Now, specialize for senior-level impact.",
             days: [
                 {
                     day: 1,
-                    topic: `Advanced ${bestSkill}`,
-                    action: `Explore complex production patterns and scalability best practices for ${bestSkill}`,
+                    topic: day1Topic,
+                    action: day1Action,
                     link: `https://www.youtube.com/results?search_query=advanced+${encodeURIComponent(bestSkill)}+tutorial`
                 },
                 {
                     day: 2,
-                    topic: "Expert Portfolio Piece",
-                    action: `Refine your existing projects to demonstrate high-load optimization and clean code standards`,
+                    topic: day2Topic,
+                    action: day2Action,
                     link: ""
                 }
             ]

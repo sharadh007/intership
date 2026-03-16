@@ -2062,7 +2062,7 @@ async function getAIRecommendations(event) {
                           </div>
                           <p style="font-size: 0.68rem; color: #475569; margin: 0; line-height: 1.4; font-weight: 500;">${day.action}</p>
                           ${day.day === 2 ? `
-                            <button onclick="event.stopPropagation(); generateProjectIdeas('${(rec.missing_skills && rec.missing_skills.length > 0) ? rec.missing_skills[0] : (rec.missingSkills && rec.missingSkills.length > 0) ? rec.missingSkills[0] : (rec.role || 'Practical')}', '${rec.company || 'this role'}', this)" style="margin-top: 8px; width: 100%; background: #21808d; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.2s;">
+                            <button onclick="event.stopPropagation(); generateProjectIdeas('${(rec.gap_analysis && rec.gap_analysis.missing_skills && rec.gap_analysis.missing_skills.length > 0) ? rec.gap_analysis.missing_skills[0] : (rec.role || 'Practical')}', '${rec.company || 'this role'}', this)" style="margin-top: 8px; width: 100%; background: #21808d; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.2s;">
                               💡 EXPLORE 2024-25 PROJECT IDEAS
                             </button>
                           ` : ''}
