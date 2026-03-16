@@ -190,6 +190,8 @@ const calculateMatchMetaData = (studentProfile, internship) => {
     if (roleText.includes('hr') || roleText.includes('human') || roleText.includes('recruitment') || roleText.includes('admin')) isSectorMatch = true;
   } else if (targetSector.includes('tech') || targetSector.includes('it') || targetSector.includes('computer')) {
     if (roleText.includes('tech') || roleText.includes('software') || roleText.includes('it') || roleText.includes('developer') || roleText.includes('code') || roleText.includes('program')) isSectorMatch = true;
+  } else if (['mechanical', 'automobile', 'civil', 'electrical', 'electronic', 'manufacturing', 'engineering', 'energy'].some(sec => targetSector.includes(sec))) {
+    if (['mechanical', 'automobile', 'automotive', 'civil', 'electrical', 'electronic', 'manufacturing', 'construct', 'energy', 'power', 'engineer', 'cad', 'solidworks', 'autocad', 'catia', 'ansys', 'robotics', 'mechatronics', 'ev', 'renewable', 'site', 'circuit', 'embedded'].some(kw => roleText.includes(kw))) isSectorMatch = true;
   } else if (roleText.includes(targetSector)) {
     isSectorMatch = true;
   }
@@ -211,11 +213,13 @@ const calculateMatchMetaData = (studentProfile, internship) => {
     const isTechJob = ['tech', 'software', 'developer', 'it'].some(kw => roleText.includes(kw));
     const isBizJob = ['market', 'sales', 'business', 'growth'].some(kw => roleText.includes(kw));
     const isFinJob = ['finance', 'account', 'audit', 'tax'].some(kw => roleText.includes(kw));
+    const isEngJob = ['mechanical', 'automobile', 'civil', 'electrical', 'manufacturing', 'construct'].some(kw => roleText.includes(kw));
 
     // Cross rejection
-    if (targetSector.includes('finance') && (isTechJob || isBizJob)) return null;
-    if (targetSector.includes('tech') && (isFinJob || isBizJob)) return null;
-    if (targetSector.includes('market') && (isTechJob || isFinJob)) return null;
+    if (targetSector.includes('finance') && (isTechJob || isBizJob || isEngJob)) return null;
+    if (targetSector.includes('tech') && (isFinJob || isBizJob || isEngJob)) return null;
+    if (targetSector.includes('market') && (isTechJob || isFinJob || isEngJob)) return null;
+    if (['mechanical', 'automobile', 'civil', 'electrical'].some(sec => targetSector.includes(sec)) && (isTechJob || isFinJob || isBizJob)) return null;
   }
 
   // 4. Calculate weighted match score

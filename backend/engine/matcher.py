@@ -91,7 +91,8 @@ KNOWN_SKILLS = [
     "photoshop","illustrator","figma","ui/ux","design","video editing",
     "digital marketing","seo","social media","content writing","copywriting",
     "finance","accounting","tally","gst","taxation","auditing","banking","investment","stock market","excel","financial modeling","bloomberg","quickbooks","ledger","payroll","business analysis","commerce","business development",
-    "autocad","solidworks","matlab","embedded systems","iot","arduino","raspberry pi",
+    "autocad","solidworks","matlab","embedded systems","iot","arduino","raspberry pi","catia","ansys","revit","staad pro","plc","scada","vlsi","verilog",
+    "automobile","mechanical","electrical","electronics","civil","mechatronics","robotics","aerospace","manufacturing","energy","power plant",
     "blockchain","solidity","web3","cybersecurity","networking","ethical hacking"
 ]
 
@@ -106,7 +107,11 @@ SKILL_SYNONYMS = {
     "cloud": ["aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "devops"],
     "design": ["ui/ux", "ui", "ux", "figma", "adobe xd", "photoshop", "illustrator", "front-end", "frontend"],
     "finance": ["accounting", "taxation", "gst", "tally", "finance", "audit", "banking", "equity", "investment", "excel", "tally prime", "mis", "tally erp", "ledger", "bookkeeping", "corporate finance", "financial", "auditor", "accounts"],
-    "excel": ["microsoft excel", "ms excel", "spreadsheets", "vlookup", "pivoting", "advanced excel", "data entry", "excel formulas", "excel templates"]
+    "excel": ["microsoft excel", "ms excel", "spreadsheets", "vlookup", "pivoting", "advanced excel", "data entry", "excel formulas", "excel templates"],
+    "mechanical": ["solidworks", "autocad", "catia", "ansys", "mechanical", "manufacturing", "cad", "cam", "cae", "robotics", "mechatronics", "thermodynamics", "fluid mechanics", "ansys fluent", "hvac"],
+    "automobile": ["automobile", "automotive", "ev", "electrical vehicle", "engine", "chassis", "powertrain", "vehicle dynamics", "hybrid", "hybrid vehicle"],
+    "electrical": ["plc", "scada", "electrical", "electronics", "circuit", "vlsi", "embedded", "microcontroller", "arduino", "raspberry pi", "power systems", "solar", "renewable energy"],
+    "civil": ["civil", "construction", "site engineer", "revit", "staad pro", "surveying", "concrete", "structural", "architecture", "urban planning"]
 }
 
 def get_synonym_expanded(skills):
@@ -728,6 +733,12 @@ def process_matching(data: dict) -> list:
         if any(sec in target_sector for sec in ['finance', 'account', 'banking', 'audit', 'commerce', 'business']):
             fin_kws = ['finance', 'account', 'banking', 'audit', 'tax', 'tally', 'investment', 'ledger', 'payroll', 'equity', 'gst', 'financial', 'analytical', 'bookkeep', 'corporate', 'business', 'commerce']
             if any(kw in job_text for kw in fin_kws):
+                return True
+            
+        # 6. Engineering & Industrial Match (Mechanical, Auto, Civil, etc)
+        if any(sec in target_sector for sec in ['mechanical', 'automobile', 'civil', 'electrical', 'electronics', 'manufacturing', 'engineering', 'energy']):
+            eng_kws = ['mechanical', 'automobile', 'automotive', 'civil', 'electrical', 'electronic', 'manufacturing', 'construct', 'energy', 'power', 'engineer', 'cad', 'solidworks', 'autocad', 'catia', 'ansys', 'robotics', 'mechatronics', 'ev', 'renewable', 'site', 'circuit', 'embedded']
+            if any(kw in job_text for kw in eng_kws):
                 return True
             
         return False
