@@ -891,8 +891,12 @@ def process_matching(data: dict) -> list:
     if not filtered:
         filtered = bucket_others[:20]
 
+    # Global Location Fallback Detection
+    # If user provided a specific city, but we found nothing locally for their preferred sector
+    location_fallback = False
+    if city_hints and not bucket_pref_local and any(j.get('match_type') == 'regional' for j in (filtered[:15])):
+        location_fallback = True
 
-    
     # ── STEP 2 & 3: Build Embeddings & Scoring ────────────────────────────────
     student_text = build_student_text(student, parsed_resume)
     job_texts = [build_job_text(j) for j in filtered]
@@ -918,35 +922,29 @@ def process_matching(data: dict) -> list:
             edu_score = 0.8
             
         # 1. Skill Component
-        norm_expanded = set(re.sub(r'[-.\s]', '', s).lower() for s in expanded_student_skills)
+        # Find exact matches in synonym set
         match_details = []
+        match_count = 0
+        expanded_student = get_synonym_expanded(all_student_skills)
         for req in job_skills_list:
-            norm_req = re.sub(r'[-.\s]', '', req).lower()
-            if norm_req in norm_expanded:
+            req_low = req.lower()
+            if req_low in expanded_student:
+                match_count += 1
                 match_details.append(req)
-            elif any(sk in norm_req or norm_req in sk for sk in norm_expanded):
-                match_details.append(req)
+            else:
+                # Substring match
+                if any(sk in req_low or req_low in sk for sk in expanded_student):
+                    match_count += 0.8
+                    match_details.append(req)
+
+        match_ratio = match_count / total_reqs
+        skill_score_raw = (match_ratio * 0.6) + (semantic_score * 0.4)
         
-        match_details = list(set(match_details))
-        
-        if len(job_skills_list) == 0:
-            match_ratio = 1.0 if semantic_score > 0.1 else 0.5
-        else:
-            match_ratio = len(match_details) / total_reqs
-            
-        # EXACT MATCH REQUIREMENT: 
-        if len(match_details) == 0 and not is_sm and semantic_score < 0.1:
-            continue
-            
-        # Skill sub-score: More balanced relying on semantic meaning for non-tech
-        skill_score_raw = (match_ratio * 0.4) + (semantic_score * 0.4)
-        
-        # 2. Location Component (20%)
-        loc_type = job.get('match_type', 'anywhere')
-        loc_val = 0.25 
-        if loc_type == 'local': loc_val = 1.0
-        elif loc_type == 'remote_match' and (wants_remote or work_preference in ['remote', 'both']): loc_val = 1.0
-        elif loc_type == 'regional': loc_val = 0.8
+        # 2. Location Component
+        match_type = job.get('match_type', 'anywhere')
+        if match_type == 'local': loc_val = 1.0
+        elif match_type == 'remote_match': loc_val = 0.85
+        elif match_type == 'regional': loc_val = 0.65
         else: loc_val = 0.3
             
         loc_score_raw = loc_val * 0.2
@@ -1001,7 +999,10 @@ def process_matching(data: dict) -> list:
     # FINAL CLEANUP: Aggressive memory release
     gc.collect()
     
-    return final_results
+    return {
+        "results": final_results,
+        "location_fallback": location_fallback
+    }
 
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────

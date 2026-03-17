@@ -169,10 +169,13 @@ const getAIRecommendations = async (req, res) => {
             console.log("📡 Calling Python service for advanced matching...");
             const pyMatch = await pythonClient.match(student, allInternships, 'both');
             if (pyMatch.success) {
-                const topTen = (pyMatch.data || []).slice(0, 10);
+                const results = pyMatch.data.results || [];
+                const locationFallback = pyMatch.data.location_fallback || false;
+                const topTen = results.slice(0, 10);
                 return res.json({
                     success: true,
-                    recommendations: topTen
+                    recommendations: topTen,
+                    location_fallback: locationFallback
                 });
             }
         } catch (pyError) {
@@ -183,9 +186,15 @@ const getAIRecommendations = async (req, res) => {
         const topMatches = await getDeterministicMatches(student, allInternships);
         const finalResults = await generateExplanations(student, topMatches);
 
+        const locationFallback = topMatches.length > 0 && 
+                                 student.preferred_state && 
+                                 !student.preferred_state.toLowerCase().includes('any') &&
+                                 !topMatches.some(m => m.locationTier === 1);
+
         res.json({
             success: true,
-            recommendations: finalResults.slice(0, 10)
+            recommendations: finalResults.slice(0, 10),
+            location_fallback: locationFallback
         });
 
     } catch (error) {

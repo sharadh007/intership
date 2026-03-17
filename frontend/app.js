@@ -1946,6 +1946,29 @@ async function getAIRecommendations(event) {
 
     if (data.success && data.recommendations) {
       if (cardsContainer) cardsContainer.innerHTML = '';
+      
+      // Clear previous fallback banner if any
+      const existingBanner = resultsSection.querySelector('.info-banner');
+      if (existingBanner) existingBanner.remove();
+      
+      // NEW: Location Fallback Alert
+      if (data.location_fallback) {
+          const fallbackAlert = document.createElement('div');
+          fallbackAlert.className = 'info-banner';
+          fallbackAlert.style = "background: #fdf2f2; border-left: 5px solid #ef4444; padding: 20px; margin-bottom: 30px; border-radius: 12px; color: #991b1b; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);";
+          fallbackAlert.innerHTML = `
+            <div style="font-size: 2rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">📍</div>
+            <div style="flex: 1;">
+                <h4 style="margin: 0 0 4px; color: #7f1d1d; font-size: 1.1rem; font-weight: 700;">Location Search Expanded</h4>
+                <p style="margin: 0; font-size: 0.95rem; line-height: 1.5; color: #991b1b; opacity: 0.9;">
+                    We couldn't find highly relevant internships specifically in <strong>${location}</strong> right now. 
+                    To ensure you don't miss out on career growth, we have prioritized excellent skill-matched internships in <u>nearby districts</u> for you!
+                </p>
+            </div>
+          `;
+          if (cardsContainer) cardsContainer.parentNode.insertBefore(fallbackAlert, cardsContainer);
+      }
+
       const count = data.recommendations.length;
       if (msgText) msgText.textContent = `🎯 Found ${count} best - matched internship${count !== 1 ? 's' : ''} for your profile.`;
 
