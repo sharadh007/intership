@@ -570,10 +570,12 @@ def _build_fallback_explanation(student: dict, job: dict) -> dict:
     sector_low = str(job.get('sector') or job.get('internType') or '').lower()
     domain = role_low + ' ' + sector_low
 
-    is_finance = any(k in domain for k in ['finance', 'account', 'banking', 'audit', 'tax'])
-    is_marketing = any(k in domain for k in ['market', 'sales', 'seo', 'content', 'brand'])
+    is_finance = any(k in domain for k in ['finance', 'account', 'banking', 'audit', 'tax', 'tally'])
+    is_marketing = any(k in domain for k in ['market', 'sales', 'seo', 'content', 'brand', 'business dev', 'b2b'])
     is_hr = any(k in domain for k in ['hr', 'human', 'recruit', 'talent'])
-    is_design = any(k in domain for k in ['design', 'archit', 'ui', 'ux', 'graphic', 'video'])
+    is_design = any(k in domain for k in ['design', 'archit', 'ui', 'ux', 'graphic', 'video', 'interior', 'textile', 'art'])
+    is_engineering = any(k in domain for k in ['mech', 'civil', 'electric', 'electronic', 'engineer', 'site', 'hardware', 'auto', 'aero', 'cad', 'ansys', 'manufacturing'])
+    is_operations = any(k in domain for k in ['operat', 'supply', 'logistic', 'manage', 'admin', 'event'])
     
     if missing:
         top_missing = missing[0]
@@ -584,7 +586,11 @@ def _build_fallback_explanation(student: dict, job: dict) -> dict:
         elif is_hr:
             day2_action = f"Develop a mock onboarding plan, sourcing strategy, or policy doc for {company} concerning {top_missing}."
         elif is_design:
-            day2_action = f"Create a wireframe, blueprint, or visual asset demonstrating {top_missing} tailored for {company}."
+            day2_action = f"Create a high-fidelity mockup, wireframe, or visual asset demonstrating {top_missing} tailored for {company}."
+        elif is_engineering:
+            day2_action = f"Produce a CAD blueprint, schematic, or structural analysis report simulating real-world constraints for {company}."
+        elif is_operations:
+            day2_action = f"Draft a workflow optimization diagram or logistics plan reducing overhead for {company} using {top_missing}."
         else:
             day2_action = f"Project Idea: Build a specific tool or solution for {company} using {top_missing}."
 
@@ -618,6 +624,16 @@ def _build_fallback_explanation(student: dict, job: dict) -> dict:
             day1_action = f"Study enterprise design systems, accessibility standards, and advanced visual hierarchy in {adv_skill}."
             day2_topic = "Portfolio Polish"
             day2_action = f"Refine an existing project with pixel-perfect precision and user-centered research backing."
+        elif is_engineering:
+            day1_topic = "Precision Engineering"
+            day1_action = f"Study material viability, thermal/structural stress, and advanced schematics using {adv_skill}."
+            day2_topic = "Professional Blueprint"
+            day2_action = f"Generate a robust, high-efficiency mechanical, civil, or electrical blueprint with tight industry tolerances."
+        elif is_operations:
+            day1_topic = "Logistics & Optimization"
+            day1_action = f"Examine lean management principles, supply chain resilience, and overhead reduction using {adv_skill}."
+            day2_topic = "Operations Strategy"
+            day2_action = f"Present a data-backed proposal identifying current industry bottlenecks and a viable solution mapping."
         else:
             day1_topic = f"Advanced {adv_skill}"
             day1_action = f"Explore complex production patterns and scalability best practices for {adv_skill}."
@@ -782,9 +798,15 @@ def process_matching(data: dict) -> list:
                 return True
             
         # 6. Engineering & Industrial Match (Mechanical, Auto, Civil, etc)
-        if any(sec in target_sector for sec in ['mechanical', 'automobile', 'civil', 'electrical', 'electronics', 'manufacturing', 'engineering', 'energy']):
-            eng_kws = ['mechanical', 'automobile', 'automotive', 'civil', 'electrical', 'electronic', 'manufacturing', 'construct', 'energy', 'power', 'engineer', 'cad', 'solidworks', 'autocad', 'catia', 'ansys', 'robotics', 'mechatronics', 'ev', 'renewable', 'site', 'circuit', 'embedded']
+        if any(sec in target_sector for sec in ['mechanical', 'automobile', 'civil', 'electrical', 'electronics', 'manufacturing', 'engineering', 'energy', 'fabrication']):
+            eng_kws = ['mechanical', 'automobile', 'automotive', 'civil', 'electrical', 'electronic', 'manufacturing', 'construct', 'energy', 'power', 'engineer', 'cad', 'solidworks', 'autocad', 'catia', 'ansys', 'robotics', 'mechatronics', 'ev', 'renewable', 'site', 'circuit', 'embedded', 'hardware']
             if any(kw in job_text for kw in eng_kws):
+                return True
+                
+        # 7. Design & Creative Match
+        if any(sec in target_sector for sec in ['design', 'creative', 'art', 'interior', 'textile', 'fashion', 'graphic']):
+            des_kws = ['design', 'creative', 'art', 'interior', 'textile', 'fashion', 'graphic', 'ui', 'ux', 'photoshop', 'illustrator', 'video', 'animation']
+            if any(kw in job_text for kw in des_kws):
                 return True
             
         return False

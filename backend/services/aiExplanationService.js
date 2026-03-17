@@ -10,10 +10,12 @@ const attachRoadmap = (internship) => {
     const roleIdStr = String(internship.role || '').toLowerCase() + " " + String(internship.sector || '').toLowerCase();
     
     // Domain Check Heuristics
-    const isFinance = /finance|account|banking|audit|tax/i.test(roleIdStr);
+    const isFinance = /finance|account|banking|audit|tax|tally/i.test(roleIdStr);
     const isHR = /hr|human|recruit|talent|admin/i.test(roleIdStr);
-    const isMechAuto = /mech|auto|cad|ansys|manufacturing/i.test(roleIdStr);
-    const isMarketing = /market|sales|seo|content|brand/i.test(roleIdStr);
+    const isEngineering = /mech|civil|electric|electronic|engineer|site|hardware|auto|aero|cad|ansys|manufacturing/i.test(roleIdStr);
+    const isMarketing = /market|sales|seo|content|brand|business dev|b2b/i.test(roleIdStr);
+    const isDesign = /design|archit|ui|ux|graphic|video|interior|textile|art/i.test(roleIdStr);
+    const isOperations = /operat|supply|logistic|manage|admin|event/i.test(roleIdStr);
 
     if (missing.length > 0) {
         const topMissing = missing[0];
@@ -22,8 +24,10 @@ const attachRoadmap = (internship) => {
         let day2Action = `Build a ${topMissing}-based solution that solves a common problem in the ${internship.sector || 'technical'} sector.`;
         if (isFinance) day2Action = `Complete a sample financial model, reconciliation or audit task relevant to ${internship.company} using ${topMissing}.`;
         else if (isHR) day2Action = `Develop a mock onboarding plan, sourcing strategy, or policy doc concerning ${topMissing}.`;
-        else if (isMechAuto) day2Action = `Create a CAD wireframe, physical blueprint, or stress analysis demonstrating ${topMissing}.`;
+        else if (isDesign) day2Action = `Create a high-fidelity mockup, wireframe, or visual asset demonstrating ${topMissing} tailored for ${internship.company}.`;
+        else if (isEngineering) day2Action = `Produce a CAD blueprint, schematic, or structural analysis report simulating real-world constraints using ${topMissing}.`;
         else if (isMarketing) day2Action = `Draft a mock campaign, competitor analysis, or social strategy using ${topMissing}.`;
+        else if (isOperations) day2Action = `Draft a workflow optimization diagram or logistics plan reducing overhead using ${topMissing}.`;
 
         roadmap = {
             summary: `Accelerated bridge to master ${topMissing} for ${role}.`,
@@ -61,16 +65,26 @@ const attachRoadmap = (internship) => {
             day1Action = `Dive into advanced talent acquisition analytics, retention strategy, and organizational behavior.`;
             day2Topic = "Execution Plan";
             day2Action = `Draft an executive-level presentation on culture building or process improvement using ${bestSkill}.`;
-        } else if (isMechAuto) {
+        } else if (isDesign) {
+            day1Topic = "Design Systems";
+            day1Action = `Study enterprise design systems, accessibility standards, and advanced visual hierarchy in ${bestSkill}.`;
+            day2Topic = "Portfolio Polish";
+            day2Action = `Refine an existing project with pixel-perfect precision and user-centered research backing.`;
+        } else if (isEngineering) {
             day1Topic = "Precision Engineering";
-            day1Action = `Study mechanical viability, material selection, and advanced failure simulations with ${bestSkill}.`;
-            day2Topic = "Design Blueprint";
-            day2Action = `Generate a robust high-efficiency mechanical blueprint or CAD render with tight industry tolerances.`;
+            day1Action = `Study material viability, thermal/structural stress, and advanced schematics using ${bestSkill}.`;
+            day2Topic = "Professional Blueprint";
+            day2Action = `Generate a robust, high-efficiency mechanical, civil, or electrical blueprint with tight industry tolerances.`;
         } else if (isMarketing) {
             day1Topic = "Growth Strategy";
             day1Action = `Analyze advanced funnel optimization, conversion metrics, and multi-channel strategies.`;
             day2Topic = "Performance Portfolio";
             day2Action = `Present an end-to-end performance marketing campaign showing high ROI data metrics.`;
+        } else if (isOperations) {
+            day1Topic = "Logistics & Optimization";
+            day1Action = `Examine lean management principles, supply chain resilience, and overhead reduction using ${bestSkill}.`;
+            day2Topic = "Operations Strategy";
+            day2Action = `Present a data-backed proposal identifying current industry bottlenecks and a viable solution mapping.`;
         }
 
         roadmap = {

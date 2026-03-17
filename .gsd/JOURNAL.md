@@ -18,3 +18,10 @@
 - Repaired `attachRoadmap` in the Node service to identify `internship.gap_analysis.missing_skills`, properly routing mismatched students to the "Fast Track" UI instead of incorrectly labelling them as 100% matched.
 - Injected identical domain-detection heuristics into Node's `attachRoadmap` as Python, ensuring any Node-generated roadmaps use proper terminology for HR, Finance, and Marketing instead of "high-load optimization".
 - Fixed the frontend `app.js` click handler to correctly pass `gap_analysis.missing_skills` to the project generator when the `💡 EXPLORE 2024-25 PROJECT IDEAS` button is clicked.
+
+## 2026-03-17 09:15 - Mass Expansion of the Domain Heuristics for the recommendation engine
+- After observing that "Electrical Engineering", "Textile Design" and other variants were slipping through the domain checks and receiving standard "Tech/Clean Code" suggestions, we expanded the system's awareness.
+- Added heuristics for `is_engineering` (capturing Mechanical, Civil, Electrical, Electronics, Hardware mapping), `is_design` (Interior, Textile, UI/UX, Graphic, Fashion), and `is_operations`.
+- The `generate_project_ideas` endpoint in `main.py` was updated to accurately reflect these expanded domains to produce intelligent, domain-specific projects.
+- `aiExplanationService.js` and `matcher.py: _build_fallback_explanation` were heavily refactored to check `isEngineering` and `isDesign` rather than just `isMechAuto` guaranteeing proper Day 1 / Day 2 assignments and phrasing across ALL sectors available in the frontend selector.
+- `matcher.py: is_preferred_sector_match` was updated with a new block exclusively matching Design keywords to accurately compute baseline domain appropriateness.

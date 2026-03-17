@@ -106,8 +106,10 @@ async def generate_project_ideas(request: Dict[str, Any]):
         sk_lower = clean_skill.lower()
         is_finance = any(k in sk_lower for k in ['finance', 'account', 'banking', 'audit', 'tax', 'tally', 'bookkeep'])
         is_hr = any(k in sk_lower for k in ['hr', 'human', 'recruit', 'talent'])
-        is_auto_mech = any(k in sk_lower for k in ['auto', 'mech', 'cad', 'ansys', 'manufacturing'])
-        is_marketing = any(k in sk_lower for k in ['market', 'sales', 'seo', 'content', 'brand'])
+        is_engineering = any(k in sk_lower for k in ['mech', 'civil', 'electric', 'electronic', 'engineer', 'site', 'hardware', 'auto', 'aero', 'cad', 'ansys', 'manufacturing'])
+        is_marketing = any(k in sk_lower for k in ['market', 'sales', 'seo', 'content', 'brand', 'business dev', 'b2b'])
+        is_design = any(k in sk_lower for k in ['design', 'archit', 'ui', 'ux', 'graphic', 'video', 'interior', 'textile', 'art'])
+        is_operations = any(k in sk_lower for k in ['operat', 'supply', 'logistic', 'manage', 'admin', 'event'])
 
         g_model = get_gemini_model()
         if not is_gemini_available() or g_model is None:
@@ -130,17 +132,29 @@ async def generate_project_ideas(request: Dict[str, Any]):
                     f"Compensation & Benefits Benchmarking: Comparing {company}'s offering against current industry standards.",
                     f"Modern Recruitment Strategy: Interview scorecards and sourcing techniques targeting {company}'s talent gaps."
                 ]
-            elif is_auto_mech:
+            elif is_engineering:
                 ideas = [
-                    f"3D CAD {clean_skill} Design: High-precision modeling of a mechanical component for {company}.",
-                    f"Finite Element Analysis (FEA): Simulating stress, heat, or impact on a robust vehicle or industrial part.",
-                    f"Manufacturing Process Optimization: Reducing assembly line time and material waste for {company}."
+                    f"3D CAD {clean_skill} Design: High-precision engineering schematic tailored for {company}.",
+                    f"Material Stress Test Simulation: Running advanced load/thermal analysis on industrial parts.",
+                    f"Workflow Process Optimization: Reducing manufacturing or site assembly time and material waste."
                 ]
             elif is_marketing:
                 ideas = [
                     f"B2B {clean_skill} Growth Strategy: Increasing funnel conversion for {company} in Q4.",
                     f"Brand Sentiment Audit: Analyzing customer lifecycle and social presence using {clean_skill}.",
                     f"Performance Marketing Campaign: High-ROI customer acquisition roadmap for {company}."
+                ]
+            elif is_design:
+                ideas = [
+                    f"High-Fidelity {clean_skill} Mockup: A visual rendering and user-centered design system.",
+                    f"Brand Asset Modernization: Refreshing outdated visual elements for {company}'s 2025 look.",
+                    f"Accessibility & Usability Audit: Overhauling core interaction flows using {clean_skill}."
+                ]
+            elif is_operations:
+                ideas = [
+                    f"Lean Logistics Protocol: Supply chain optimization and cost-reduction strategy for {company}.",
+                    f"Resource Allocation Dashboard: A high-level overview of {clean_skill} operations.",
+                    f"Event Operations Playbook: End-to-end execution guide mitigating critical bottlenecks."
                 ]
             elif "web" in sk_lower or "frontend" in sk_lower or "backend" in sk_lower:
                 ideas = [
@@ -167,9 +181,11 @@ async def generate_project_ideas(request: Dict[str, Any]):
         3. DO NOT force software concepts ("prototypes", "backends") unless the skill is programming.
            - If it's Accounting/Finance, suggest financial models, audits, ledgers, or Tableau visualizations.
            - If it's HR, suggest payroll analyses, onboarding playbooks, or retention strategies.
-           - If it's Mechanical/Civil, suggest CAD blueprints, FEA stress tests, or supply chain optimizations.
+           - If it's Engineering (Mechanical/Civil/Electrical), suggest CAD blueprints, FEA stress tests, circuitry, or supply chain optimizations.
+           - If it's Design (UI/Interior/Textile), suggest wireframes, mood boards, fabric mockups, or spatial layouts.
+           - If it's Operations/Logistics, suggest workflow diagrams, resource allocation, or event planning structures.
            - If it's Marketing, suggest campaign mockups, SEO audits, or conversion funnels.
-        4. Make them sound professional and actionable.
+        4. Make them sound professional and actionable. Always match the industry vertical of '{clean_skill}'.
         
         FORMAT (JSON ONLY):
         {{
